@@ -15,7 +15,7 @@ STAGE2DIR= stage2_bootloader
 KERNELDIR= kernel
 
 # Dependancies
-KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/*/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm))
+KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/*/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm $(KERNELDIR)/*/*.asm))
 
 # Compiler-/Linker flags
 NASMFLAGS= -Ox -f elf

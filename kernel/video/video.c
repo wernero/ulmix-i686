@@ -1,4 +1,5 @@
 #include "video.h"
+#include "util/string.h"
 
 static console_t *current_console;
 static size_t vprintf(console_t *console, const char *format, va_list ap);
@@ -99,20 +100,29 @@ static size_t vprintf(console_t *console, const char *format, va_list ap)
 {
     size_t len = 0;
     char *str = (char*)format;
-    while (*str != 0)
+    char strbuf[512];
+    while (*str)
     {
         if (*str == '%')
         {
             switch (*(++str))
             {
             case 'd':
+                itoa(va_arg(ap, int), strbuf);
+                len += puts(console, strbuf);
                 break;
             case 's':
                 len += puts(console, va_arg(ap, char*));
                 break;
+            case 'x':
+                itoxa(va_arg(ap, int), strbuf);
+                len += puts(console, strbuf);
+                break;
             default:
                 str++;
             }
+
+            str++;
             continue;
         }
 

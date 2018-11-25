@@ -1,6 +1,7 @@
 #include "util/util.h"
 #include "util/types.h"
 #include "video/video.h"
+#include "log.h"
 
 // .bss (ld)
 extern char _bss_start;
@@ -42,11 +43,20 @@ void main(multiboot_t* mb_struct)
 
     kprintf("***  ULMIX OPERATING SYSTEM v0.1  ***\n\n");
 
-    /*setup_gdt();
-    setup_isr();
-    setup_cpu();*/
+    klog(KLOG_INFO, "installing global descriptor table");
+    // setup_gd();
 
+    klog(KLOG_INFO, "setting up interrupt vector table");
+    //setup_isr();
+
+    klog(KLOG_INFO, "configuring CPU");
+    //setup_cpu();*/
+
+    klog(KLOG_INFO, "memory check");
     // memory_setup()
+
+    klog(KLOG_INFO, "setting up paging");
+    // paging
 
 
     //

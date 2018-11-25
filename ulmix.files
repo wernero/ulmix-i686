@@ -1,6 +1,13 @@
 kernel/kernel.asm
 kernel/kernel.ld
+kernel/log.c
+kernel/log.h
 kernel/main.c
+kernel/memory/gdt.c
+kernel/memory/gdt.h
+kernel/memory/gdtwrite.asm
+kernel/util/string.c
+kernel/util/string.h
 kernel/util/types.h
 kernel/util/util.c
 kernel/util/util.h
