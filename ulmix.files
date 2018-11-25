@@ -1,0 +1,15 @@
+kernel/kernel.asm
+kernel/kernel.ld
+kernel/main.c
+kernel/util/types.h
+kernel/util/util.c
+kernel/util/util.h
+kernel/video/video.c
+kernel/video/video.h
+stage1_bootloader/Fat12_BPB.inc
+stage1_bootloader/boot.asm
+stage2_bootloader/A20.inc
+stage2_bootloader/Fat12.inc
+stage2_bootloader/GetMemoryMap.inc
+stage2_bootloader/boot2.asm
+stage2_bootloader/gdt.inc
