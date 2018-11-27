@@ -20,6 +20,7 @@ static inline void outb(uint16_t port, uint8_t val)
     __asm__ volatile ("outb %0, %1" :: "a"(val), "Nd"(port));
 }
 
+
 void *memset(void *mem, uint8_t value, size_t len);
 void *memcpy(void *dest, void *src, size_t n);
 void *bzero(void *mem, size_t len);

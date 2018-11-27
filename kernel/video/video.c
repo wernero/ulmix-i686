@@ -39,7 +39,8 @@ void console_clear(console_t *console)
 
 static void scroll(console_t *console)
 {
-    int copy_length = (LINES - 1) * COLUMNS;
+    console->pos_y = LINES - 1;
+    int copy_length = (LINES - 1) * COLUMNS * 2;
     memcpy(console->vmem,
            console->vmem + COLUMNS*2,
            copy_length);
@@ -58,9 +59,10 @@ static void update(console_t *console)
     if (console->pos_x >= COLUMNS)
     {
         console->pos_x = 0;
-        if (++(console->pos_y) >= LINES)
+        if (++console->pos_y >= LINES)
         {
             scroll(console);
+            return;
         }
     }
     set_cursor(console->pos_x, console->pos_y);
@@ -72,10 +74,14 @@ static char putchar(console_t *console, char c)
     {
         console->pos_x = 0;
         console->pos_y++;
+        if (console->pos_y >= LINES)
+        {
+            scroll(console);
+        }
     }
     else
     {
-        size_t offset = console->pos_y * COLUMNS + (console->pos_x)++;
+        size_t offset = console->pos_y * COLUMNS + console->pos_x++;
         console->vmem[offset*2] = c;
         console->vmem[offset*2+1] = console->color;
     }

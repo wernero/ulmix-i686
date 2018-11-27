@@ -27,7 +27,7 @@ void setup_gdt()
 {
     gdt_descriptor_t gdt_descr;
     gdt_descr.size = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
-    gdt_descr.addr = (uint32_t)&gdt;
+    gdt_descr.addr = (uint32_t)gdt;
 
     setup_entry(0, 0, 0, 0, 0);
 

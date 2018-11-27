@@ -4,6 +4,7 @@
 #include "util/types.h"
 
 size_t strlen(char *str);
+void reverse(char *s);
 void itoa(int n, char *buf);
 void itoxa(int n, char *buf);
 

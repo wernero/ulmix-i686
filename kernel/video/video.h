@@ -6,7 +6,7 @@
 
 #define VIDEO_START 0xB8000
 #define COLUMNS     80
-#define LINES       30
+#define LINES       28
 
 typedef enum
 {

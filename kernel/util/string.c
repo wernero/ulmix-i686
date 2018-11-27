@@ -10,45 +10,58 @@ size_t strlen(char *str)
     return len;
 }
 
-void itoa(int n, char *buf)
+void reverse(char *s)
 {
-    int last_mult = 1;
-    for (int mult = 10; mult < 1000000000; mult *= 10)
+    int i, j;
+    char c;
+
+    for (i = 0, j = strlen(s)-1; i<j; i++, j--)
     {
-        if (n / mult == 0)
-        {
-            break;
-        }
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
+}
 
-        int rst = n % mult;
-        rst /= last_mult;
-        *(buf++) = '0' + rst;
-
-        last_mult = mult;
+static void _itoa(int n, char *str, int base)
+{
+    int i = 0, is_negative = 0;
+    if (n == 0)
+    {
+        str[i++] = '0';
+        str[i] = '\0';
+        return;
     }
 
-    *(buf++) = 0;
+    if (n < 0 && base == 10)
+    {
+        is_negative = 1;
+        n = -n;
+    }
+
+    while (n != 0)
+    {
+        int rem = n % base;
+        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+        n = n/base;
+    }
+
+    if (is_negative)
+    {
+        str[i++] = '-';
+    }
+
+    str[i] = '\0';
+    reverse(str);
+}
+
+
+void itoa(int n, char *buf)
+{
+    _itoa(n, buf, 10);
 }
 
 void itoxa(int n, char *buf)
 {
-    *(buf++) = '0';
-    *(buf++) = 'x';
-
-    int last_mult = 1;
-    for (int mult = 10; mult < 1000000000; mult *= 10)
-    {
-        if (n / mult == 0)
-        {
-            break;
-        }
-
-        int rst = n % mult;
-        rst /= last_mult;
-        *(buf++) = '0' + rst;
-
-        last_mult = mult;
-    }
-
-    *(buf++) = 0;
+    _itoa(n, buf, 16);
 }

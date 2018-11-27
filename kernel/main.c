@@ -1,11 +1,16 @@
 #include "util/util.h"
 #include "util/types.h"
 #include "video/video.h"
+#include "memory/gdt.h"
 #include "log.h"
+#include "interrupts.h"
+#include "cpu.h"
+#include "timer.h"
 
 // .bss (ld)
 extern char _bss_start;
 extern char _bss_end;
+extern char _kernel_end;
 
 typedef struct
 {
@@ -33,6 +38,11 @@ typedef struct
 } __attribute__((packed)) multiboot_t;
 
 
+void keyboard_handler(void)
+{
+    kprintf("TASTE GEDRUECKT\n");
+}
+
 void main(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
@@ -43,27 +53,36 @@ void main(multiboot_t* mb_struct)
 
     kprintf("***  ULMIX OPERATING SYSTEM v0.1  ***\n\n");
 
-    klog(KLOG_INFO, "installing global descriptor table");
-    // setup_gd();
+    kprintf("Kernel loaded at %x, size=%dB\n", 0x100000, (int)&_kernel_end - 0x100000);
+    kprintf("initializing system:\n");
 
-    klog(KLOG_INFO, "setting up interrupt vector table");
-    //setup_isr();
+    klog(KLOG_INFO, "GDT");
+    setup_gdt();
 
-    klog(KLOG_INFO, "configuring CPU");
-    //setup_cpu();*/
+    klog(KLOG_INFO, "IDT, ISR handlers");
+    setup_idt();
 
-    klog(KLOG_INFO, "memory check");
+    klog(KLOG_INFO, "System Timer\n");
+    setup_timer();
+
+    //klog(KLOG_INFO, "configuring CPU");
+    //setup_cpu();
+    //sti();//
+
+/*    klog(KLOG_INFO, "memory check");
     // memory_setup()
 
     klog(KLOG_INFO, "setting up paging");
-    // paging
+    // paging*/
 
+//    pic_init();
 
     //
     // TODO: debugging facilities
     //
 
-    cli();
-    hlt();
+    //cli();
+    for (;;)
+        hlt();
 }
 

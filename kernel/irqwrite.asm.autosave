@@ -1,0 +1,37 @@
+section .text
+
+global idt_write
+global irq_asm_handler
+global irq_asm_timer
+global irq_asm_syscall
+
+extern irq_timer
+extern irq_handler
+extern irq_syscall
+
+idt_write:
+    mov eax, [esp+4]
+    lidt [eax]
+    sti
+    ret
+    
+irq_asm_timer:
+    pusha
+    call irq_timer
+    popa
+    outb 0x20, 0x20 ; end of interrupt
+    iret
+
+irq_asm_handler:
+    pusha
+    ; TODO: get IRQ number and pass to irq_handler()
+    call irq_handler
+    popa
+    iret
+
+irq_asm_syscall:
+    pusha
+    ; TODO: pass syscall parameters to irq_syscall()
+    call irq_syscall
+    popa
+    iret

@@ -1,3 +1,10 @@
+kernel/cpu.c
+kernel/cpu.h
+kernel/drivers/keyboard.c
+kernel/drivers/keyboard.h
+kernel/interrupts.c
+kernel/interrupts.h
+kernel/irq.asm
 kernel/kernel.asm
 kernel/kernel.ld
 kernel/log.c
@@ -6,6 +13,8 @@ kernel/main.c
 kernel/memory/gdt.c
 kernel/memory/gdt.h
 kernel/memory/gdtwrite.asm
+kernel/timer.c
+kernel/timer.h
 kernel/util/string.c
 kernel/util/string.h
 kernel/util/types.h
