@@ -2,8 +2,7 @@
 #include "interrupts.h"
 #include "util/util.h"
 #include "util/types.h"
-
-#include "video/video.h" // temp
+#include "log.h"
 
 #define IRQ_TIMER   0x20        // IRQ 0 on PIC1
 #define OSCILLATOR  1193182     // constant
@@ -22,12 +21,16 @@ uint32_t timer_ticks = 0;
 void irq_timer(void)
 {
     timer_ticks++;
-    if (timer_ticks % 200 == 0)
-        kprintf("1 sec\n");
+}
+
+uint32_t uptime(void)
+{
+    return timer_ticks / TIMER_FREQ;
 }
 
 void setup_timer()
 {
+    klog(KLOG_DEBUG, "timer:setup_timer(): init");
     irq_install_raw_handler(IRQ_TIMER,
                             irq_asm_timer,
                             INT_GATE | INT_SUPV);

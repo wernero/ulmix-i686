@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "log.h"
 
 
 #define GDT_ENTRIES 6 // null, kcode, kdata, ucode, udata, tss
@@ -29,12 +30,14 @@ void setup_gdt()
     gdt_descr.size = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
     gdt_descr.addr = (uint32_t)gdt;
 
+    klog(KLOG_DEBUG, "Global Descriptor Table at address 0x%x", (uint32_t)&gdt_descr);
+
     setup_entry(0, 0, 0, 0, 0);
 
     setup_entry(1, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | CXR, GRAN_4K | OFF_32);  // kcode
     setup_entry(2, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | DRW, GRAN_4K | OFF_32);  // kdata
-    setup_entry(3, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | CXR, GRAN_4K | OFF_32);  // ucode
-    setup_entry(4, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | DRW, GRAN_4K | OFF_32);  // udata
+    setup_entry(3, 0, 0xFFFFF, VALID | ACC_USR | SYS_NON | CXR, GRAN_4K | OFF_32);  // ucode
+    setup_entry(4, 0, 0xFFFFF, VALID | ACC_USR | SYS_NON | DRW, GRAN_4K | OFF_32);  // udata
 
     // task state segment
     setup_entry(5, (uint32_t)&tss, sizeof(tss), 0xe9, 0x00);

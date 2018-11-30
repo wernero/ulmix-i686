@@ -1,6 +1,7 @@
 #include "interrupts.h"
 #include "log.h"
 #include "video/video.h"
+#include "exceptions.h"
 
 idt_entry_t idt[IDT_ENTRIES];
 interrupt_t interrupts[IDT_ENTRIES];
@@ -16,34 +17,9 @@ extern void idt_write(idt_descriptor_t *desc);
 extern void irq_asm_handler(void);
 extern char irq_asm_handler_end;
 
-
-static const char* const exceptions[] =
-{
-    "divide by zero",          "debug",                         "non-maskable interrupt",    "breakpoint",
-    "into detected overflow",  "out of Bounds",                 "invalid opcode",            "no coprocessor",
-    "double fault",            "coprocessor Segment Overrun",   "broken task state segment", "segment not present",
-    "stack fault",             "general Protection Fault",      "page fault",                "unknown interrupt",
-    "coprocessor fault",       "alignment Check",               "machine check",             "SIMD exception",
-    "reserved",                "reserved",                      "reserved",                  "reserved",
-    "reserved",                "reserved",                      "reserved",                  "reserved",
-    "reserved",                "reserved",                      "reserved",                  "reserved"
-};
-
 void irq_handler(uint32_t irq)
 {
-    if (irq < 32)
-    {
-        kprintf("exception: %s\n", exceptions[irq]);
-    }
-
-    if (interrupts[irq].handler_count)
-    {
-        interrupts[irq].handler();
-    }
-    else
-    {
-        kprintf("unknown interrupt #%d\n", irq);
-    }
+    klog(KLOG_DEBUG, "*** PIC IRQ #%d ***", irq);
 
     /* end of interrupt -> PIC */
     if (irq >= 32 && irq < 32+16)
@@ -86,23 +62,44 @@ void setup_idt(void)
             (uint32_t)&irq_asm_handler_end -
             (uint32_t)&irq_asm_handler;
 
-    for (int i = 0; i < IDT_ENTRIES; i++)
+    int i;
+    klog(KLOG_DEBUG, "setting up IDT exception handlers");
+    for (i = 0; i < 32; i++)
     {
-        set_idt_entry(i,
+        set_idt_entry(i, NULL, 0);
+    }
+    setup_exception_handlers();
+
+    klog(KLOG_DEBUG, "setting up IDT IRQ handlers");
+    for (i = 0; i < 16; i++)
+    {
+        set_idt_entry(i + 32,
                       irq_asm_handler + handler_size * i,
                       INT_GATE | INT_PRESENT | INT_SUPV);
         interrupts[i].handler_count = 0;
+        interrupts[i].executions = 0;
     }
+
+    for (i = 32+16; i < IDT_ENTRIES; i++)
+    {
+        set_idt_entry(i, NULL, 0);
+    }
+
+
 
     //set_idt_entry(0x80, irq_asm_syscall, INT_GATE | INT_PRESENT | INT_USER);
 
+
     pic_init();
+
+    klog(KLOG_DEBUG, "irq:idt_write(): applying IDT (lidt)");
     idt_write(&idt_desc);
 }
 
 
 static void pic_init()
 {
+    klog(KLOG_DEBUG, "interrupts:pic_init(): init & remap PIC");
     outb(0x20, 0x11);   // init PIC1
     outb(0xA0, 0x11);   // init PIC2
 

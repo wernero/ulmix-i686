@@ -31,8 +31,17 @@ typedef struct
 
 typedef struct
 {
+    uint32_t gs, fs, es, ds;
+    uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
+    uint32_t int_no, error;
+    uint32_t eip, cs, eflags, useresp, ss;
+} __attribute__((packed)) registers_t;
+
+typedef struct
+{
     void (*handler)(void);
     int handler_count;
+    uint32_t executions;
 } interrupt_t;
 
 void setup_idt(void);

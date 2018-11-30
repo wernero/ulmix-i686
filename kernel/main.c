@@ -2,14 +2,22 @@
 #include "util/types.h"
 #include "video/video.h"
 #include "memory/gdt.h"
-#include "log.h"
+#include "memory/paging.h"
 #include "interrupts.h"
-#include "cpu.h"
 #include "timer.h"
+#include "cpu.h"
+#include "log.h"
+
+#include "util/string.h"
+#include "memory/kheap.h"
+
+#include "drivers/serial.h"
+#include "drivers/keyboard.h"
 
 // .bss (ld)
 extern char _bss_start;
 extern char _bss_end;
+extern char _kernel_beg;
 extern char _kernel_end;
 
 typedef struct
@@ -38,51 +46,46 @@ typedef struct
 } __attribute__((packed)) multiboot_t;
 
 
-void keyboard_handler(void)
+void genfibonacci(void)
 {
-    kprintf("TASTE GEDRUECKT\n");
+
 }
 
 void main(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
+    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S\n", (int)&_kernel_beg, (int)&_kernel_end - (int)&_kernel_beg);
+    klog(KLOG_DEBUG, "initializing console");
     console_t console;
     console_init(&console, YELLOW, CYAN);
     console_clear(&console);
 
     kprintf("***  ULMIX OPERATING SYSTEM v0.1  ***\n\n");
-
-    kprintf("Kernel loaded at %x, size=%dB\n", 0x100000, (int)&_kernel_end - 0x100000);
     kprintf("initializing system:\n");
 
-    klog(KLOG_INFO, "GDT");
     setup_gdt();
-
-    klog(KLOG_INFO, "IDT, ISR handlers");
     setup_idt();
-
-    klog(KLOG_INFO, "System Timer\n");
     setup_timer();
 
-    //klog(KLOG_INFO, "configuring CPU");
-    //setup_cpu();
-    //sti();//
+    /*klog(KLOG_INFO, "CPU features\n");
+    setup_cpu();*/
 
-/*    klog(KLOG_INFO, "memory check");
-    // memory_setup()
+    uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
+    setup_paging(ram_available);
 
-    klog(KLOG_INFO, "setting up paging");
-    // paging*/
+    kprintf("RAM: %dM usable\n", ram_available / (1024*1024));
+    kprintf("paging enabled\n");
 
-//    pic_init();
+    //*((char *)0x1000000) = 5;
+    char *test = kmalloc(10, 1, "test");
+    strcpy(test, "Hello");
+
 
     //
     // TODO: debugging facilities
     //
 
-    //cli();
-    for (;;)
-        hlt();
+    for (;;) hlt();
 }
 

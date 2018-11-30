@@ -1,6 +1,6 @@
 #include "string.h"
 
-size_t strlen(char *str)
+size_t strlen(const char *str)
 {
     size_t len = 0;
     while (*str++)
@@ -21,6 +21,35 @@ void reverse(char *s)
         s[i] = s[j];
         s[j] = c;
     }
+}
+
+void strcat(char *dest, char *src)
+{
+    while (*(dest++) != 0);
+    dest--;
+    while (*src != 0)
+    {
+        *(dest++) = *(src++);
+    }
+    *dest = 0;
+}
+
+
+void bsize(uint32_t n, char *buf)
+{
+    char *unit;
+    uint32_t d;
+    if ((d = (n / (1024*1024*1024))) > 0)
+        unit = "G";
+    else if ((d = (n / (1024*1024))) > 0)
+        unit = "M";
+    else if ((d = (n / 1024)) > 0)
+        unit = "K";
+    else
+        unit = "B";
+
+    itoa(d, buf);
+    strcat(buf, unit);
 }
 
 static void _itoa(int n, char *str, int base)
@@ -53,6 +82,14 @@ static void _itoa(int n, char *str, int base)
 
     str[i] = '\0';
     reverse(str);
+}
+
+void strcpy(char *dest, char *src)
+{
+    while (*src)
+    {
+        *(dest++) = *(src++);
+    }
 }
 
 

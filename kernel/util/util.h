@@ -3,6 +3,8 @@
 
 #include "util/types.h"
 
+#define NULL 0
+
 static inline void nop(void) { __asm__ volatile ("nop"); }
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }
@@ -23,6 +25,7 @@ static inline void outb(uint16_t port, uint8_t val)
 
 void *memset(void *mem, uint8_t value, size_t len);
 void *memcpy(void *dest, void *src, size_t n);
+void *memmove(void *dest, void *src, size_t n);
 void *bzero(void *mem, size_t len);
 
 #endif
