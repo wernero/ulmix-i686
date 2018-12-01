@@ -23,6 +23,8 @@ extern void exc19(void);
 extern void exc20(void);
 extern void exc30(void);
 
+extern void page_fault_handler(uint32_t error, uint32_t fault_addr);
+
 
 static const char* const exceptions[] =
 {
@@ -44,6 +46,9 @@ void exc_handler(uint32_t exc)
         uint32_t cr2;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
         klog(KLOG_DEBUG, "page fault: faulting address: 0x%x\n", cr2);
+
+        page_fault_handler(2, cr2);
+        return;
     }
 
     cli();

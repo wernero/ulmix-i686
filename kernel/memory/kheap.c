@@ -70,9 +70,7 @@ void *kmalloc(size_t size, int alignment, char *description)
     block = find_free_block(&alignment_offset, size, alignment);
     if (block == NULL)
     {
-        // FAULT not enough memory!!!
-        // or fragmented?
-        klog(KLOG_FAILURE, "kheap: kmalloc(): not enough or fragmented heap memory");
+        klog(KLOG_PANIC, "kheap: kmalloc(): no more memory");
         return NULL;
     }
 
@@ -209,6 +207,7 @@ static void setup_pheap()
     // TODO: free up the space blocked by the static heap
     // so the stack can grow higher
 
+    kheap_size = GB1;
     heap = (kheap_entry_t*)GB3;
 
     heap->available = 1;
@@ -219,7 +218,7 @@ static void setup_pheap()
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
     pheap_enabled = 1;
-    klog(KLOG_DEBUG, "kheap: setup_pheap(): paged heap starting at 0x%x of size %d KiB", (uint32_t)heap, kheap_size / 1024);
+    klog(KLOG_DEBUG, "kheap: setup_pheap(): paged heap starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
 

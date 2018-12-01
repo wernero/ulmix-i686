@@ -46,7 +46,10 @@ void bsize(uint32_t n, char *buf)
     else if ((d = (n / 1024)) > 0)
         unit = "K";
     else
+    {
         unit = "B";
+        d = n;
+    }
 
     itoa(d, buf);
     strcat(buf, unit);
@@ -90,6 +93,7 @@ void strcpy(char *dest, char *src)
     {
         *(dest++) = *(src++);
     }
+    *dest = 0;
 }
 
 

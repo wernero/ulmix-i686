@@ -7,7 +7,8 @@ typedef enum
     KLOG_WARN,
     KLOG_FAILURE,
     KLOG_DEBUG,
-    KLOG_EXCEPTION
+    KLOG_EXCEPTION,
+    KLOG_PANIC
 } loglevel_t;
 
 void klog(loglevel_t lvl, const char *format, ...);

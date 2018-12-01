@@ -59,9 +59,18 @@ void klog(loglevel_t lvl, const char *format, ...)
         serial_open(TTYS1, 0);
     }
 
+
+
     va_list args;
     va_start(args, format);
     vsprintf(TTYS1, format, args);
     va_end(args);
     serial_putchar(TTYS1, '\n');
+
+    if (lvl == KLOG_PANIC || lvl == KLOG_FAILURE)
+    {
+        // kernel panic, stop operating
+        cli();
+        hlt();
+    }
 }

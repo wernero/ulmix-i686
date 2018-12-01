@@ -27,14 +27,58 @@ static pagetable_t *mk_pagetables(int n, int pgdir_offset, pagedir_t *dir, uint3
 
 extern void paging_enable(void);
 
+void page_fault_handler(uint32_t error, uint32_t fault_addr)
+{
+    if (error & 4) // occured in user mode?
+    {
+        if (error & 1)
+        {
+            // user tried to access kernel space
+            // send error and kill task
+        }
+        else
+        {
+            // page not present
+
+            if (1)
+            {
+                // check whether the user has a right to
+                // access and fix it
+            }
+            else
+            {
+                // issue SIGSEGV and kill
+            }
+        }
+    }
+    else
+    {
+        if (fault_addr >= GB3)
+        {
+            // kernel tried to access heap that's not yet allococated.
+            uint32_t pagedir_offset = (fault_addr >> 22) & 0x3ff;
+            uint32_t pagetab_offset = (fault_addr >> 12) & 0x3ff;
+            pagetable_t *pgtable = (pagetable_t*)(pagedir_kernel[pagedir_offset] & 0xfffff000);
+            uint32_t *entry = &(pgtable[pagetab_offset]);
+            *entry = get_free_page(PAG_SUPV | PAG_RDRW);
+        }
+        else
+        {
+            // kernel tried to access an unallocated memory region
+            // yet the behaviour is undefined
+            klog(KLOG_PANIC, "kernel tried to access non-mapped memory region (%x)", fault_addr);
+        }
+    }
+}
+
 void setup_paging(uint32_t phys_memory)
 {
     available_memory = phys_memory;
     setup_pagemgr(phys_memory); // MUST be called before paging_enable()
 
     mk_kernel_pagedir();
-
     apply_pagedir(pagedir_kernel);
+
     paging_enable();
     paging_enabled = 1;
 }

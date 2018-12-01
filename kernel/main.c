@@ -78,8 +78,12 @@ void main(multiboot_t* mb_struct)
     kprintf("paging enabled\n");
 
     //*((char *)0x1000000) = 5;
-    char *test = kmalloc(10, 1, "test");
+    char *test = kmalloc(5000, 1, "test1");
     strcpy(test, "Hello");
+    kprintf("found %s\n", test);
+    char *test2 = kmalloc(50, 1, "test2");
+    strcpy(test2, "hei 2");
+    kprintf("hihi %s\n", test2);
 
 
     //
