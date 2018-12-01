@@ -55,35 +55,33 @@ void bsize(uint32_t n, char *buf)
     strcat(buf, unit);
 }
 
-static void _itoa(int n, char *str, int base)
+static char get_letter(int n)
 {
-    int i = 0, is_negative = 0;
+    if (n < 10)
+        return '0' + n;
+    return 'a' - 10 + n;
+}
+
+static void _itoa(uint32_t n, char *str, uint32_t base)
+{
+    char *buf = str;
     if (n == 0)
     {
-        str[i++] = '0';
-        str[i] = '\0';
+        strcpy(buf, "0");
         return;
     }
 
-    if (n < 0 && base == 10)
+    int last_div = 1;
+    int div = base;
+
+    while (n / last_div != 0)
     {
-        is_negative = 1;
-        n = -n;
+        *(buf++) = get_letter((n % div) / last_div);
+        last_div = div;
+        div *= base;
     }
 
-    while (n != 0)
-    {
-        int rem = n % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-        n = n/base;
-    }
-
-    if (is_negative)
-    {
-        str[i++] = '-';
-    }
-
-    str[i] = '\0';
+    *buf = '\0';
     reverse(str);
 }
 
@@ -102,7 +100,14 @@ void itoa(int n, char *buf)
     _itoa(n, buf, 10);
 }
 
-void itoxa(int n, char *buf)
+void itoxa(uint32_t n, char *str)
 {
-    _itoa(n, buf, 16);
+    char *buf = str;
+    for (int i = 0; i < 8; i++)
+    {
+        *(buf++) = get_letter((n >> i*4) & 0xf);
+    }
+    *buf = 0;
+
+    reverse(str);
 }

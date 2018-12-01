@@ -54,15 +54,14 @@ void genfibonacci(void)
 void main(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
+    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S", (int)&_kernel_beg, (int)&_kernel_end - (int)&_kernel_beg);
 
-    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S\n", (int)&_kernel_beg, (int)&_kernel_end - (int)&_kernel_beg);
-    klog(KLOG_DEBUG, "initializing console");
     console_t console;
     console_init(&console, YELLOW, CYAN);
     console_clear(&console);
+    //splashscreen(&console);
 
-    kprintf("***  ULMIX OPERATING SYSTEM v0.1  ***\n\n");
-    kprintf("initializing system:\n");
+    kprintf("ULMIX Operating System. Ad majorem Dei Gloriam\n");
 
     setup_gdt();
     setup_idt();
@@ -74,16 +73,15 @@ void main(multiboot_t* mb_struct)
     uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
     setup_paging(ram_available);
 
-    kprintf("RAM: %dM usable\n", ram_available / (1024*1024));
-    kprintf("paging enabled\n");
 
-    //*((char *)0x1000000) = 5;
+    /*if ((char*)GB3)
+        kprintf("test");*/
     char *test = kmalloc(5000, 1, "test1");
-    strcpy(test, "Hello");
+    strcpy(test, "Hello");/*
     kprintf("found %s\n", test);
     char *test2 = kmalloc(50, 1, "test2");
     strcpy(test2, "hei 2");
-    kprintf("hihi %s\n", test2);
+    kprintf("hihi %s\n", test2);*/
 
 
     //

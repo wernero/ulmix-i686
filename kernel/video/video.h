@@ -30,6 +30,7 @@ void console_clear(console_t *console);
 void console_init(console_t *console,
                   vmem_color_t font_color,
                   vmem_color_t background_color);
+void splashscreen(console_t *console);
 
 size_t kprintf(const char *format, ...);
 

@@ -58,19 +58,19 @@ void setup_idt(void)
     idt_desc.size = 8 * IDT_ENTRIES - 1;
     idt_desc.addr = (uint32_t)idt;
 
+    klog(KLOG_DEBUG, "Interrupt Descriptor Table at address 0x%x", idt_desc.addr);
+
     uint32_t handler_size =
             (uint32_t)&irq_asm_handler_end -
             (uint32_t)&irq_asm_handler;
 
     int i;
-    klog(KLOG_DEBUG, "setting up IDT exception handlers");
     for (i = 0; i < 32; i++)
     {
         set_idt_entry(i, NULL, 0);
     }
     setup_exception_handlers();
 
-    klog(KLOG_DEBUG, "setting up IDT IRQ handlers");
     for (i = 0; i < 16; i++)
     {
         set_idt_entry(i + 32,
@@ -92,14 +92,13 @@ void setup_idt(void)
 
     pic_init();
 
-    klog(KLOG_DEBUG, "irq:idt_write(): applying IDT (lidt)");
+    klog(KLOG_DEBUG, "applying IDT (cpu lidt)");
     idt_write(&idt_desc);
 }
 
 
 static void pic_init()
 {
-    klog(KLOG_DEBUG, "interrupts:pic_init(): init & remap PIC");
     outb(0x20, 0x11);   // init PIC1
     outb(0xA0, 0x11);   // init PIC2
 

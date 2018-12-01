@@ -4,6 +4,12 @@
 static console_t *current_console;
 static size_t vprintf(console_t *console, const char *format, va_list ap);
 
+const char *splash =    "11000011001100000000110000001100111111001100000011"
+                        "11000011001100000000111100111100001100000011001100"
+                        "11000011001100000000110011001100001100000000110000"
+                        "11000011001100000000110000001100001100000011001100"
+                        "00111100001111111100110000001100111111001100000011";
+
 void console_init(console_t *console,
                   vmem_color_t font_color,
                   vmem_color_t background_color)
@@ -24,6 +30,22 @@ static void set_cursor(int x, int y)
     outb(0x3D5, (uint8_t) (pos & 0xFF));
     outb(0x3D4, 0x0E);
     outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+void splashscreen(console_t *console)
+{
+    int splash_lines = 5;
+    int splash_cols = strlen(splash) / splash_lines;
+
+    console_clear(console);
+    for (int i = 0; i < splash_lines; i++)
+    {
+        for (int j = 0; j < splash_cols; j++)
+        {
+            if (splash[i*splash_cols + j] == '1')
+                console->vmem[(i * COLUMNS + j) * 2 + 1] = BLACK;
+        }
+    }
 }
 
 void console_clear(console_t *console)

@@ -30,7 +30,7 @@ uint32_t uptime(void)
 
 void setup_timer()
 {
-    klog(KLOG_DEBUG, "timer:setup_timer(): init");
+    klog(KLOG_DEBUG, "IRQ0 Timer @ %dHz", TIMER_FREQ);
     irq_install_raw_handler(IRQ_TIMER,
                             irq_asm_timer,
                             INT_GATE | INT_SUPV);

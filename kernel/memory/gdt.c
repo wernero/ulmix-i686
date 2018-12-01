@@ -30,7 +30,7 @@ void setup_gdt()
     gdt_descr.size = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
     gdt_descr.addr = (uint32_t)gdt;
 
-    klog(KLOG_DEBUG, "Global Descriptor Table at address 0x%x", (uint32_t)&gdt_descr);
+    klog(KLOG_DEBUG, "Global Descriptor Table at address 0x%x", gdt_descr.addr);
 
     setup_entry(0, 0, 0, 0, 0);
 

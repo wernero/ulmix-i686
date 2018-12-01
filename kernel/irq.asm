@@ -49,9 +49,28 @@ exc%1:
     push dword 0
     %endif
     pushad
+
+    push ds
+    push es
+    push fs
+    push gs
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
     push dword %1
+    push dword [esp+52]
     call exc_handler
-    add esp, 4
+    add esp, 8
+
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
     popad
     add esp, 4
     iret

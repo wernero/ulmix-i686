@@ -38,17 +38,18 @@ static const char* const exceptions[] =
     "reserved",                "reserved",                      "reserved",                  "reserved"
 };
 
-void exc_handler(uint32_t exc)
+void exc_handler(uint32_t error, uint32_t exc)
 {
-    klog(KLOG_EXCEPTION, "exception: %s", exceptions[exc]);
+    //uint32_t error = *((uint32_t*)(esp - 48));
+    if (error == 2) klog(KLOG_DEBUG, "error is 2");
+    klog(KLOG_EXCEPTION, "exception: %s, error=%x", exceptions[exc], error);
     if (exc == 14)
     {
         uint32_t cr2;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
         klog(KLOG_DEBUG, "page fault: faulting address: 0x%x\n", cr2);
 
-        page_fault_handler(2, cr2);
-        return;
+        page_fault_handler(error, cr2);
     }
 
     cli();

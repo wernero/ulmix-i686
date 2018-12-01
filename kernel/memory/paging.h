@@ -3,7 +3,7 @@
 
 #include "util/types.h"
 
-#define PAG_RDRW    0x02
+#define PAG_RDWR    0x02
 #define PAG_RDONLY  0x00
 #define PAG_PRESENT 0x01
 #define PAG_SUPV    0x00
@@ -14,15 +14,22 @@
 #define PGDIR_SIZE      4096
 
 #define MB1         (1024*1024)
+#define MB4         (1024*4096)
 #define MB16        (4096*1024*4)
 #define GB1         (1024*1024*1024)
 #define GB3         0xc0000000
 #define GB4         0xffffffff
 
 typedef uint32_t pagedir_entry_t;
-typedef pagedir_entry_t pagedir_t;
 typedef uint32_t pagetable_entry_t;
-typedef pagetable_entry_t pagetable_t;
+typedef struct
+{
+    pagedir_entry_t pagetables[1024];
+} __attribute__((packed)) pagedir_t;
+typedef struct
+{
+    pagetable_entry_t pages[1024];
+} __attribute__((packed)) pagetable_t;
 
 
 uint32_t setup_memory(void *mmap, uint32_t mmap_len);

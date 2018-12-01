@@ -9,6 +9,8 @@ kernel/exceptions.h
 kernel/interrupts.c
 kernel/interrupts.h
 kernel/irq.asm
+kernel/kdebug.c
+kernel/kdebug.h
 kernel/kernel.asm
 kernel/kernel.ld
 kernel/log.c
