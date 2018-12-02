@@ -42,11 +42,13 @@ static pagetable_t *get_pagetable(int offset, pagedir_t *pagedir)
 {
     return (pagetable_t*)(pagedir->pagetables[offset] & 0xfffff000);
 }
-/*
-static void dump_pgtable(pagetable_entry_t entry)
+
+static pagetable_entry_t *get_pagetable_entry(uint32_t addr, pagedir_t *pagedir)
 {
-    klog(KLOG_DEBUG, "pagetable: %x", entry);
-}*/
+    uint32_t pagedir_offset = addr >> 22;
+    uint32_t pagetable_offset = (addr >> 12) & 0x000003ff;
+    return &(get_pagetable(pagedir_offset, pagedir)->pages[pagetable_offset]);
+}
 
 pagedir_t *mk_kernel_pagedir()
 {
@@ -93,9 +95,12 @@ void page_fault_handler(uint32_t error, uint32_t fault_addr)
     {
         if (fault_addr >= GB3)
         {
-            // kernel tried to access heap that's not yet allococated.+
-
-
+            // kernel tried to access heap that's not yet allococated.
+            pagetable_entry_t *entry = get_pagetable_entry(fault_addr, pagedir_kernel);
+            *entry = get_free_page(PAG_SUPV | PAG_RDWR);
+            klog(KLOG_DEBUG, "allocated new page for kernel heap: virt(0x%x) -> phys(0x%x)",
+                 fault_addr & 0xfffff000,
+                 *entry & 0xfffff000);
         }
         else
         {

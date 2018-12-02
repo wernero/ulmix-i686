@@ -40,20 +40,16 @@ static const char* const exceptions[] =
 
 void exc_handler(uint32_t error, uint32_t exc)
 {
-    //uint32_t error = *((uint32_t*)(esp - 48));
-    if (error == 2) klog(KLOG_DEBUG, "error is 2");
-    klog(KLOG_EXCEPTION, "exception: %s, error=%x", exceptions[exc], error);
+    klog(KLOG_EXCEPTION, "exception: %s, error=0x%x", exceptions[exc], error);
     if (exc == 14)
     {
         uint32_t cr2;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
-        klog(KLOG_DEBUG, "page fault: faulting address: 0x%x\n", cr2);
+        klog(KLOG_DEBUG, "faulting address: 0x%x", cr2);
 
         page_fault_handler(error, cr2);
     }
 
-    cli();
-    hlt();
 }
 
 void setup_exception_handlers(void)

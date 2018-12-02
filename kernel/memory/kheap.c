@@ -147,6 +147,7 @@ void kfree(void *mem)
     }
 
     int merged = 0;
+    entry->available = 1;
     kheap_entry_t *merged_entry;
     if (((kheap_entry_t*)entry->previous)->available)
     {

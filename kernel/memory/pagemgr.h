@@ -22,6 +22,8 @@
 #include "memory/paging.h"
 #include "util/types.h"
 
+#define DYNAMIC_START   MB16    // start dynamic allocation of pages at phys addr 16MB
+
 void                setup_pagemgr(uint32_t available_memory);
 pagetable_entry_t   get_free_page(int flags);
 void                release_page(void *page);

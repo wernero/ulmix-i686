@@ -3,9 +3,9 @@
 #include "util/util.h"
 #include "log.h"
 
+
 typedef struct
 {
-    uint32_t phys_address;
     uint8_t  references;
 } page_t;
 
@@ -18,14 +18,11 @@ static uint32_t pages;
  */
 void setup_pagemgr(uint32_t available_memory)
 {
-    uint32_t reserved = 1024*1024*16;               // first 16 MB are reserved
-                                                    // by the kernel
-    uint32_t dynamic = available_memory - reserved; // dynamic mem available
-    pages = dynamic / PAGESIZE;            // amount of available pages
+    uint32_t dynamic = available_memory - DYNAMIC_START;    // dynamic mem available
+    pages = dynamic / PAGESIZE;                             // amount of available pages
 
     if (dynamic % PAGESIZE != 0)
     {
-        pages++;
         klog(KLOG_WARN, "setup_pagemgr(): phys memory size not page aligned");
     }
 
@@ -37,6 +34,12 @@ void setup_pagemgr(uint32_t available_memory)
     {
         klog(KLOG_FAILURE, "setup_pagemgr(): kmalloc() returned NULL: no memory (!)");
     }
+
+    for (int i = 0; i < pages; i++)
+    {
+        // initialize page frames
+        dyn_pages[i].references = 0;
+    }
 }
 
 pagetable_entry_t get_free_page(int flags)
@@ -46,7 +49,8 @@ pagetable_entry_t get_free_page(int flags)
         if (dyn_pages[i].references == 0)
         {
             dyn_pages[i].references++;
-            return (dyn_pages[i].phys_address) | PAG_PRESENT | flags;
+            uint32_t page_addr = DYNAMIC_START + (i * PAGESIZE);
+            return page_addr | PAG_PRESENT | flags;
         }
     }
 
@@ -56,17 +60,17 @@ pagetable_entry_t get_free_page(int flags)
 
 void release_page(void *page)
 {
-    for (uint32_t i = 0; i < pages; i++)
+    uint32_t page_addr = (uint32_t)page;
+    if (page_addr < DYNAMIC_START || page_addr % PAGESIZE != 0)
     {
-        if ((uint32_t)page == dyn_pages[i].phys_address)
-        {
-            if (dyn_pages[i].references != 0)
-            {
-                dyn_pages[i].references--;
-                return;
-            }
-        }
+        klog(KLOG_WARN, "release_page(): invalid page address - possible memory leak");
     }
 
-    klog(KLOG_WARN, "release_page(): invalid page address - possible memory leak");
+    int array_offset = (page_addr / PAGESIZE) - (DYNAMIC_START / PAGESIZE);
+    if (dyn_pages[array_offset].references == 0)
+    {
+        klog(KLOG_WARN, "release_page(): invalid page address (page not allocated?) - possible mem leak");
+    }
+
+    dyn_pages[array_offset].references--;
 }

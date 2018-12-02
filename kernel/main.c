@@ -78,11 +78,12 @@ void main(multiboot_t* mb_struct)
     /*if ((char*)GB3)
         kprintf("test");*/
     char *test = kmalloc(5000, 1, "test1");
-    strcpy(test, "Hello");/*
+    strcpy(test, "Hello");
     kprintf("found %s\n", test);
     char *test2 = kmalloc(50, 1, "test2");
     strcpy(test2, "hei 2");
-    kprintf("hihi %s\n", test2);*/
+    kprintf("hihi %s\n", test2);
+    kfree(test2);
 
 
     /* Kernel main thread -> IDLE (interrupts still fire) */
