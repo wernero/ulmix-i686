@@ -1,7 +1,0 @@
-kernel/util
-kernel/video
-kernel
-kernel/memory
-kernel/drivers
-kernel/sched
-.

@@ -3,3 +3,8 @@
 *.o
 *.img
 serial.txt
+*.config
+*.creator
+*.user
+*.files
+*.includes
