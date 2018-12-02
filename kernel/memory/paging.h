@@ -1,6 +1,16 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+/*
+ * Before activating paging by calling setup_paging(), the function
+ * setup_memory() should be called with the respective multiboot structures
+ * as arguments to determine the size of physical memory.
+ *
+ * setup_memory()       detects available physical RAM
+ * setup_paging()       creates a virtual address space for the kernel and enables paging
+ * apply_pagedir()      switches virtual address space
+ */
+
 #include "util/types.h"
 
 #define PAG_RDWR    0x02
@@ -22,10 +32,12 @@
 
 typedef uint32_t pagedir_entry_t;
 typedef uint32_t pagetable_entry_t;
+
 typedef struct
 {
     pagedir_entry_t pagetables[1024];
 } __attribute__((packed)) pagedir_t;
+
 typedef struct
 {
     pagetable_entry_t pages[1024];

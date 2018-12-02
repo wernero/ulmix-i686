@@ -11,13 +11,14 @@ static int pheap_enabled = 0;
 static uint32_t kheap_size;
 static kheap_entry_t *heap;
 
-static void setup_heap(uint32_t heap_start);
-static void setup_pheap(void);
-static void *merge_blocks(kheap_entry_t *entry1, kheap_entry_t *entry2, char *description);
-static kheap_entry_t *mkblock(kheap_entry_t *previous, kheap_entry_t *next,
-                              int available, size_t size, void *start, void *description);
+static void             setup_heap      (uint32_t heap_start);
+static void             setup_pheap     (void);
+static void *           merge_blocks    (kheap_entry_t *entry1, kheap_entry_t *entry2, char *description);
+static kheap_entry_t *  find_free_block (size_t *alignment_offset, size_t size, int alignment);
+static kheap_entry_t *  mkblock         (kheap_entry_t *previous, kheap_entry_t *next,
+                                            int available, size_t size, void *start, void *description);
 
-void heap_dump(void); // debugging
+void heap_dump(void); // dump kheap linked list
 
 /*
  * find_free_block(): finds a free block in the heap linked list that meeets
@@ -59,7 +60,7 @@ void *kmalloc(size_t size, int alignment, char *description)
     if (alignment == 0) alignment = 1;
     if (!pheap_enabled)
     {
-        if (!heap_enabled)  setup_heap((uint32_t)0x600000);
+        if (!heap_enabled)  setup_heap((uint32_t)KHEAP_STATIC_LOCATION);
         if (!pheap_enabled && paging_enabled) setup_pheap();
     }
 

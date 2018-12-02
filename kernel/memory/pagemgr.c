@@ -54,11 +54,11 @@ pagetable_entry_t get_free_page(int flags)
     return NULL;
 }
 
-void release_page(pagetable_entry_t page)
+void release_page(void *page)
 {
     for (uint32_t i = 0; i < pages; i++)
     {
-        if ((page >> 16) == dyn_pages[i].phys_address)
+        if ((uint32_t)page == dyn_pages[i].phys_address)
         {
             if (dyn_pages[i].references != 0)
             {

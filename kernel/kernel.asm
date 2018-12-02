@@ -1,28 +1,27 @@
 [Bits 32]
-jmp KernelStart
 
-; http://www.lowlevel.eu/wiki/Multiboot
-GRUB_FLAGS           equ 10b                               ; Flags for GRUB header
-GRUB_MAGIC_NUMBER    equ 0x1BADB002                        ; Magic number for GRUB header
-GRUB_HEADER_CHECKSUM equ -(GRUB_MAGIC_NUMBER + GRUB_FLAGS) ; Checksum for GRUB header
-
-align 4
-MultiBootHeader:            ; This is the "multiboot" header for GRUB
-    dd GRUB_MAGIC_NUMBER
-    dd GRUB_FLAGS
-    dd GRUB_HEADER_CHECKSUM
-
+; Memory layout
+; 0-1M      video memory, bootloader stuff, etc
+; 1M ->     kernel binary, data, bss
+; <- 6M     kernel stack
+; 6M - 9M   pre-paging kernel heap
+; 9M - 16M  currently unused
+; 16M ->    dynamic allocation of both user and kernel stuff
+;           grows towards end of physical memory
 
 KernelStart:
     mov esp, 0x600000
 
+    ; enable CPU cache
     mov eax, cr0
-    and eax, 0x9FFFFFFF     ; Activate CPU cache
+    and eax, 0x9FFFFFFF
     mov cr0, eax
 
-    push ebx                ; EBX points to the multiboot structure created by the bootloader and containing e.g. the address of the memory map
 
-    extern main             ; entry point in ckernel.c
+    ; main.c: main()
+    ; ebx points to struct multiboot
+    push ebx
+    extern main
     call   main
 
     cli

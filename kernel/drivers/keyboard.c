@@ -3,7 +3,7 @@
 #include "util/util.h"
 #include "util/types.h"
 
-#include "video/video.h"
+#include "log.h"
 
 #define KBD_INTERRUPT   0x21
 
@@ -24,6 +24,6 @@ static void int_handler()
         if (inb(0x64)&1)
             scancode = inb(0x60);
 
-        kprintf("scancode=%d\n", scancode);
+        klog(KLOG_DEBUG, "scancode=%d\n", scancode);
     }
 }

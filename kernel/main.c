@@ -54,25 +54,26 @@ void genfibonacci(void)
 void main(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
-    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S", (int)&_kernel_beg, (int)&_kernel_end - (int)&_kernel_beg);
+    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S",
+         (int)&_kernel_beg,
+         (int)&_kernel_end - (int)&_kernel_beg);
 
     console_t console;
     console_init(&console, YELLOW, CYAN);
     console_clear(&console);
-    //splashscreen(&console);
 
-    kprintf("ULMIX Operating System. Ad majorem Dei Gloriam\n");
+    kprintf("ULMIX Operating System.\n");
 
     setup_gdt();
     setup_idt();
     setup_timer();
-
-    /*klog(KLOG_INFO, "CPU features\n");
-    setup_cpu();*/
+    // setup_cpu();
 
     uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
     setup_paging(ram_available);
 
+
+    /* Some tests to check provoke page faults: */
 
     /*if ((char*)GB3)
         kprintf("test");*/
@@ -84,10 +85,7 @@ void main(multiboot_t* mb_struct)
     kprintf("hihi %s\n", test2);*/
 
 
-    //
-    // TODO: debugging facilities
-    //
-
+    /* Kernel main thread -> IDLE (interrupts still fire) */
     for (;;) hlt();
 }
 
