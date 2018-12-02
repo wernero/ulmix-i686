@@ -21,6 +21,7 @@ LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s
 # Targets to build one asm or C file to an object file
 vpath %.o $(OBJDIR)
 %.o: %.c
+	mkdir -p $(OBJDIR)/$(@D)
 	$(CC) $< $(CCFLAGS) -o $(OBJDIR)/$@
 %.o: %.asm
 	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
@@ -41,6 +42,7 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNEL_OBJECTS)
 ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	rm -f ulmix.img
 	mkfs.msdos -C ulmix.img 1440
+	mkdir -p img
 	sudo mount -o loop ulmix.img img
 	sudo cp $(STAGE2DIR)/BOOT2.BIN img/BOOT2.BIN
 	sudo cp $(KERNELDIR)/KERNEL.BIN img/KERNEL.BIN
