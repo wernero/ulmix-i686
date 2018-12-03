@@ -17,9 +17,17 @@ idt_write:
 
 irq_asm_timer:
     pushad
+    push ds
+    push es
+    push fs
+    push gs
+    push esp
     call irq_timer
-    mov al, 0x20
-    out 0x20, al ; end of interrupt
+    mov esp, eax
+    pop gs
+    pop fs
+    pop es
+    pop ds
     popad
     iret
 

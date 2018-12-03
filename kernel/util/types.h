@@ -12,6 +12,7 @@ typedef unsigned int            uint32_t;
 typedef unsigned long long int  uint64_t;
 
 typedef uint32_t size_t;
+typedef int32_t ssize_t;
 
 
 typedef __builtin_va_list va_list;

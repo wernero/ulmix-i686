@@ -47,9 +47,7 @@ void irq_install_handler(int id, void (*handler)(void))
 
 void irq_install_raw_handler(int id, void (*handler)(void), int flags)
 {
-    cli();
     set_idt_entry(id, handler, flags | INT_PRESENT);
-    sti();
 }
 
 void setup_idt(void)
@@ -58,12 +56,14 @@ void setup_idt(void)
     idt_desc.size = 8 * IDT_ENTRIES - 1;
     idt_desc.addr = (uint32_t)idt;
 
-    klog(KLOG_DEBUG, "Interrupt Descriptor Table at address 0x%x", idt_desc.addr);
+    klog(KLOG_INFO, "Interrupt Descriptor Table at address 0x%x", idt_desc.addr);
 
     uint32_t handler_size =
             (uint32_t)&irq_asm_handler_end -
             (uint32_t)&irq_asm_handler;
 
+
+    // CPU exception handlers
     int i;
     for (i = 0; i < 32; i++)
     {
@@ -71,15 +71,19 @@ void setup_idt(void)
     }
     setup_exception_handlers();
 
+
+    // IO interrupts
     for (i = 0; i < 16; i++)
     {
         set_idt_entry(i + 32,
                       irq_asm_handler + handler_size * i,
                       INT_GATE | INT_PRESENT | INT_SUPV);
-        interrupts[i].handler_count = 0;
-        interrupts[i].executions = 0;
+        interrupts[i+32].handler_count = 0;
+        interrupts[i+32].executions = 0;
     }
 
+
+    // custom interrupts
     for (i = 32+16; i < IDT_ENTRIES; i++)
     {
         set_idt_entry(i, NULL, 0);
@@ -92,7 +96,7 @@ void setup_idt(void)
 
     pic_init();
 
-    klog(KLOG_DEBUG, "applying IDT (cpu lidt)");
+    klog(KLOG_INFO, "applying IDT (cpu lidt)");
     idt_write(&idt_desc);
 }
 

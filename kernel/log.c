@@ -56,7 +56,8 @@ void klog(loglevel_t lvl, const char *format, ...)
 {
     if (!initialized)
     {
-
+        serial_open(TTYS1, 0);
+        initialized = 1;
     }
 
 

@@ -30,9 +30,9 @@ void setup_gdt()
     gdt_descr.size = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
     gdt_descr.addr = (uint32_t)gdt;
 
-    klog(KLOG_DEBUG, "Global Descriptor Table at address 0x%x", gdt_descr.addr);
+    klog(KLOG_INFO, "Global Descriptor Table at address 0x%x", gdt_descr.addr);
 
-    setup_entry(0, 0, 0, 0, 0);
+    setup_entry(0, 0, 0, 0, 0); // null descriptor required by design
 
     setup_entry(1, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | CXR, GRAN_4K | OFF_32);  // kcode
     setup_entry(2, 0, 0xFFFFF, VALID | ACC_SUP | SYS_NON | DRW, GRAN_4K | OFF_32);  // kdata
@@ -52,5 +52,10 @@ void setup_gdt()
     tss.gs   = 0x10;
 
     gdt_write(&gdt_descr);
-    tss_write(&tss);
+    tss_write();
+}
+
+void update_tss(uint32_t esp0)
+{
+    tss.esp0 = esp0;
 }

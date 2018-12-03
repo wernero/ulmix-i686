@@ -64,14 +64,14 @@ void *kmalloc(size_t size, int alignment, char *description)
         if (!pheap_enabled && paging_enabled) setup_pheap();
     }
 
-    klog(KLOG_DEBUG, "kheap: kmalloc(): size=%S align=%S purpose=%s", size, alignment, description);
+    klog(KLOG_DEBUG, "kmalloc(): size=%S align=%S purpose=%s", size, alignment, description);
 
     size_t alignment_offset;
     kheap_entry_t *block;
     block = find_free_block(&alignment_offset, size, alignment);
     if (block == NULL)
     {
-        klog(KLOG_PANIC, "kheap: kmalloc(): no more memory");
+        klog(KLOG_PANIC, "kmalloc(): no more memory");
         return NULL;
     }
 
@@ -198,7 +198,7 @@ static void setup_heap(uint32_t heap_start)
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
     heap_enabled = 1;
-    klog(KLOG_DEBUG, "kheap: setup_heap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
+    klog(KLOG_INFO, "kheap: init pre-paging heap: starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
 /*
@@ -220,7 +220,7 @@ static void setup_pheap()
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
     pheap_enabled = 1;
-    klog(KLOG_DEBUG, "kheap: setup_pheap(): paged heap starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
+    klog(KLOG_INFO, "kheap: paged kernel heap: starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
 

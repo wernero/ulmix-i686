@@ -7,6 +7,9 @@
 #include "timer.h"
 #include "cpu.h"
 #include "log.h"
+#include "sched/task.h"
+#include "sched/scheduler.h"
+#include "drivers/devices.h"
 
 #include "util/string.h"
 #include "memory/kheap.h"
@@ -46,15 +49,24 @@ typedef struct
 } __attribute__((packed)) multiboot_t;
 
 
-void genfibonacci(void)
+void test1(void)
 {
+    // Test function for scheduler
+    klog(KLOG_DEBUG, "test function 1 running");
+    for (;;) hlt();
+}
 
+void test2(void)
+{
+    // Test function for scheduler
+    klog(KLOG_DEBUG, "test function 2 running");
+    for (;;) hlt();
 }
 
 void main(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
-    klog(KLOG_DEBUG, "kernel loaded at 0x%x, size=%S",
+    klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
          (int)&_kernel_beg,
          (int)&_kernel_end - (int)&_kernel_beg);
 
@@ -72,21 +84,24 @@ void main(multiboot_t* mb_struct)
     uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
     setup_paging(ram_available);
 
-
-    /* Some tests to check provoke page faults: */
-
-    /*if ((char*)GB3)
-        kprintf("test");*/
-    char *test = kmalloc(5000, 1, "test1");
-    strcpy(test, "Hello");
-    kprintf("found %s\n", test);
-    char *test2 = kmalloc(50, 1, "test2");
-    strcpy(test2, "hei 2");
-    kprintf("hihi %s\n", test2);
-    kfree(test2);
+    // scan for available devices and
+    // automatically configure them
+    scan_devices();
+    kprintf("paging enabled\n");
 
 
-    /* Kernel main thread -> IDLE (interrupts still fire) */
+    /* TESTING SCHEDULER */
+    klog(KLOG_DEBUG, "creating process 1");
+    int esp_test1 = 0;
+    mk_process(get_kernel_pagedir(), test1, esp_test1, "test process 1");
+
+    scheduler_enable();
+
+
+
+
+    /* infinite loop - won't be executed because scheduler doesn't recognize
+        this as a task and wont switch to it */
     for (;;) hlt();
 }
 

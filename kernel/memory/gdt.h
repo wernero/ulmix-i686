@@ -68,8 +68,9 @@ typedef struct
 } __attribute__((packed)) tss_entry_t;
 
 void setup_gdt(void);
+void update_tss(uint32_t esp0);
 
 void gdt_write(gdt_descriptor_t *gdt_ptr);
-void tss_write(tss_entry_t      *tss_ptr);
+void tss_write(void);
 
 #endif // GDT_H

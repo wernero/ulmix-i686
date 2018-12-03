@@ -2,10 +2,10 @@
 #define UTIL_H
 
 #include "util/types.h"
+#include "util/string.h"
 
 #define NULL 0
 
-static inline void nop(void) { __asm__ volatile ("nop"); }
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }
 static inline void cli(void) { __asm__ volatile ("cli"); }

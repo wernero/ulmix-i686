@@ -47,5 +47,6 @@ typedef struct
 uint32_t setup_memory(void *mmap, uint32_t mmap_len);
 void     setup_paging(uint32_t phys_memory);
 void     apply_pagedir(void *pagedir);
+pagedir_t *get_kernel_pagedir(void);
 
 #endif // PAGING_H

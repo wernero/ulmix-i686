@@ -26,6 +26,11 @@ pagedir_t *mk_kernel_pagedir(void);
 static void pagetables_map(int n, int offset, pagedir_t *pagedir, int flags, uint32_t phys_addr);
 static pagetable_entry_t *mk_pagetables(int n, int offset, pagedir_t *pagedir, int flags, char *description);
 
+pagedir_t *get_kernel_pagedir()
+{
+    return pagedir_kernel;
+}
+
 void setup_paging(uint32_t phys_memory)
 {
     available_memory = phys_memory;
@@ -36,6 +41,7 @@ void setup_paging(uint32_t phys_memory)
 
     paging_enable();
     paging_enabled = 1;
+    klog(KLOG_INFO, "paging enabled");
 }
 
 static pagetable_t *get_pagetable(int offset, pagedir_t *pagedir)
@@ -169,6 +175,6 @@ uint32_t setup_memory(void *mmap, uint32_t mmap_len)
         physical_size += entry->size;
     }
 
-    klog(KLOG_DEBUG, "setup_memory(): detected %S of physical memory", physical_size);
+    klog(KLOG_INFO, "setup_memory(): detected %S of physical memory", physical_size);
     return physical_size;
 }

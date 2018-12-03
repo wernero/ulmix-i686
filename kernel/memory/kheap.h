@@ -20,8 +20,8 @@
  * paging on    3GB                     1GB                     all virtual address spaces
  */
 
-#define KHEAP_STATIC_LOCATION   0x600000
-#define DEFAULT_KHEAP_SIZE      1024*1024*3
+#define KHEAP_STATIC_LOCATION   0x600000    // 6MB pre-paging heap start
+#define DEFAULT_KHEAP_SIZE      1024*1024*3 // 3MB pre-paging heap size
 
 #define DESC_LENGTH 21                      // Max length of debug description
 typedef struct

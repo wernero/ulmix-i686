@@ -54,24 +54,24 @@ void exc_handler(uint32_t error, uint32_t exc)
 
 void setup_exception_handlers(void)
 {
-    irq_install_raw_handler( 0,  exc0, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 1,  exc1, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 2,  exc2, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 3,  exc3, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 4,  exc4, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 5,  exc5, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 6,  exc6, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 7,  exc7, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler( 8,  exc8, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(10, exc10, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(11, exc11, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(12, exc12, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(13, exc13, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(14, exc14, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(16, exc16, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(17, exc17, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(18, exc18, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(19, exc19, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(20, exc20, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(30, exc30, INT_TRAP | INT_SUPV);
+    irq_install_raw_handler( 0,  exc0, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 1,  exc1, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 2,  exc2, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 3,  exc3, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 4,  exc4, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 5,  exc5, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 6,  exc6, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 7,  exc7, INT_GATE | INT_SUPV);
+    irq_install_raw_handler( 8,  exc8, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(10, exc10, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(11, exc11, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(12, exc12, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(13, exc13, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(14, exc14, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(16, exc16, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(17, exc17, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(18, exc18, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(19, exc19, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(20, exc20, INT_GATE | INT_SUPV);
+    irq_install_raw_handler(30, exc30, INT_GATE | INT_SUPV);
 }

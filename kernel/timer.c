@@ -2,6 +2,7 @@
 #include "interrupts.h"
 #include "util/util.h"
 #include "util/types.h"
+#include "sched/scheduler.h"
 #include "log.h"
 
 #define IRQ_TIMER   0x20        // IRQ 0 on PIC1
@@ -16,11 +17,20 @@
 
 /* in irq.asm: calls irq_timer() */
 extern void irq_asm_timer(void);
+extern scheduler_state_t scheduler_state;
 
 uint32_t timer_ticks = 0;
-void irq_timer(void)
+uint32_t irq_timer(uint32_t esp)
 {
     timer_ticks++;
+
+    if (timer_ticks % 200 == 0 && scheduler_state == SCHED_ACTIVE)
+    {
+        esp = schedule(esp);
+    }
+
+    outb(0x20, 0x20);
+    return esp;
 }
 
 uint32_t uptime(void)
@@ -30,10 +40,11 @@ uint32_t uptime(void)
 
 void setup_timer()
 {
-    klog(KLOG_DEBUG, "IRQ0 Timer @ %dHz", TIMER_FREQ);
+    klog(KLOG_INFO, "IRQ0 Timer @ %dHz", TIMER_FREQ);
     irq_install_raw_handler(IRQ_TIMER,
                             irq_asm_timer,
                             INT_GATE | INT_SUPV);
+
 
     uint16_t pit = OSCILLATOR / TIMER_FREQ;
     outb(PIT_CMD, PIT_CMD_CH0 | PIT_ACCESS | PIT_RATEGEN);

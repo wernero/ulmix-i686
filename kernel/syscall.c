@@ -1,18 +1,19 @@
 #include "syscall.h"
+#include "filesystem/filesystem.h"
 
 void *syscalls[] =
 {
     nop,                // 0
     nop,                // 1    exit()
     nop,                // 2    fork()
-    nop,                // 3    read()
-    nop,                // 4    write()
-    nop,                // 5    open()
-    nop,                // 6    close()
+    sc_read,            // 3    read()
+    sc_write,           // 4    write()
+    sc_open,            // 5    open()
+    sc_close,           // 6    close()
     nop,                // 7    waitpid()
-    nop,                // 8    creat()
-    nop,                // 9    link()
-    nop,                // 10   unlink()
+    sc_creat,           // 8    creat()
+    sc_link,            // 9    link()
+    sc_unlink,          // 10   unlink()
     nop,                // 11   execve()
     nop,                // 12   chdir()
     nop,                // 13   time()
@@ -21,7 +22,7 @@ void *syscalls[] =
     nop,                // 16   lchown16()
     nop,                // 17
     nop,                // 18   stat()
-    nop,                // 19   lseek()
+    sc_lseek,           // 19   lseek()
     nop,                // 20   getpid()
     nop,                // 21   mount()
     nop,                // 22   oldumount()
