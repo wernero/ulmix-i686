@@ -1,20 +1,22 @@
 #include "syscall.h"
+#include "sched/syscalls.h"
+#include "exec.h"
 #include "filesystem/filesystem.h"
 
 void *syscalls[] =
 {
     nop,                // 0
-    nop,                // 1    exit()
-    nop,                // 2    fork()
+    sc_exit,            // 1    exit()
+    sc_fork,            // 2    fork()
     sc_read,            // 3    read()
     sc_write,           // 4    write()
     sc_open,            // 5    open()
     sc_close,           // 6    close()
-    nop,                // 7    waitpid()
+    sc_waitpid,         // 7    waitpid()
     sc_creat,           // 8    creat()
     sc_link,            // 9    link()
     sc_unlink,          // 10   unlink()
-    nop,                // 11   execve()
+    sc_execve,          // 11   execve()
     nop,                // 12   chdir()
     nop,                // 13   time()
     nop,                // 14   mknod()
