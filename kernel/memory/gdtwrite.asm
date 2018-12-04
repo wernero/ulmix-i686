@@ -16,7 +16,7 @@ gdt_write:
     mov ss, ax
 
     jmp 0x08:.write
-.write
+.write:
     ret
 
 
