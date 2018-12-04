@@ -3,6 +3,9 @@
 #include "exec.h"
 #include "filesystem/filesystem.h"
 
+
+#define nop 0
+
 void *syscalls[] =
 {
     nop,                // 0
