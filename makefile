@@ -52,3 +52,8 @@ ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	dd if=$(STAGE1DIR)/boot.bin of=ulmix.img bs=512 count=1 conv=notrunc
 
 
+clean:
+	rm -rf $(OBJDIR)
+	rm -f $(KERNELDIR)/KERNEL.BIN
+	rm -f bochs.symbols
+	rm -f ulmix.img
