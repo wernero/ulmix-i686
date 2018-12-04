@@ -16,7 +16,7 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 # Compiler-/Linker flags
 NASMFLAGS= -Ox -f elf
 CCFLAGS= -c -g -std=c11 -march=i486 -mtune=generic -Wshadow -Wstrict-prototypes -m32 -Werror -Wall -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -I$(KERNELDIR) -fno-pic -fno-delete-null-pointer-checks
-LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s
+LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s -Map=out.map
 
 # Targets to build one asm or C file to an object file
 vpath %.o $(OBJDIR)
@@ -38,6 +38,8 @@ $(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
 
 $(KERNELDIR)/KERNEL.BIN: $(KERNEL_OBJECTS)
 	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -o $(KERNELDIR)/KERNEL.BIN
+	grep '^[ ]*0x' out.map | grep -v obj > bochs.symbols
+	rm -f out.map
 	
 ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	rm -f ulmix.img
@@ -50,3 +52,8 @@ ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	dd if=$(STAGE1DIR)/boot.bin of=ulmix.img bs=512 count=1 conv=notrunc
 
 
+clean:
+	rm -rf $(OBJDIR)
+	rm -f $(KERNELDIR)/KERNEL.BIN
+	rm -f bochs.symbols
+	rm -f ulmix.img

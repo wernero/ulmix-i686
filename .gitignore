@@ -3,8 +3,11 @@
 *.o
 *.img
 serial.txt
+serial.out
 *.config
 *.creator
 *.user
 *.files
 *.includes
+bochs.symbols
+log
