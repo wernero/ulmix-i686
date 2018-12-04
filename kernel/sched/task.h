@@ -5,7 +5,7 @@
 #include "memory/kheap.h"
 #include "memory/paging.h"
 
-typedef unsigned long pid_t;
+typedef signed long int pid_t;
 
 typedef enum
 {

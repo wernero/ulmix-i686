@@ -75,7 +75,6 @@ uint32_t schedule(uint32_t esp)
     thread_t *next = get_next_task();
     if (current_thread != next)
     {
-        klog(KLOG_DEBUG, "restoring %s", next->description);
         current_thread = next;
         update_tss(next->kstack.ebp);
 

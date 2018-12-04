@@ -3,10 +3,19 @@
 #include "util/string.h"
 #include "drivers/serial.h"
 
-
 static int initialized = 0;
 
-static void vsprintf(uint16_t ttys, const char *format, va_list ap)
+static void log_puts(char *s)
+{
+    serial_write(TTYS1, s, strlen(s));
+}
+
+static void log_putchar(char c)
+{
+    serial_putchar(TTYS1, c);
+}
+
+static void vsprintf(const char *format, va_list ap)
 {
     char strbuf[64];
     uint32_t n;
@@ -20,34 +29,34 @@ static void vsprintf(uint16_t ttys, const char *format, va_list ap)
             case 'd':
                 n = va_arg(ap, uint32_t);
                 itoa(n, strbuf);
-                serial_write(ttys, strbuf, strlen(strbuf));
+                log_puts(strbuf);
                 break;
             case 's':
                 str = va_arg(ap, char*);
-                serial_write(ttys, str, strlen(str));
+                log_puts(str);
                 break;
             case 'x':
             case 'X':
                 n = va_arg(ap, uint32_t);
                 itoxa(n, strbuf);
-                serial_write(ttys, strbuf, strlen(strbuf));
+                log_puts(strbuf);
                 break;
             case 'S':
                 n = va_arg(ap, uint32_t);
                 bsize(n, strbuf);
-                serial_write(ttys, strbuf, strlen(strbuf));
+                log_puts(strbuf);
                 break;
             case '%':
-                serial_putchar(ttys, '%');
+                log_putchar('%');
                 break;
             default:
-                serial_putchar(ttys, '?');
+                log_putchar('?');
             }
 
             continue;
         }
 
-        serial_putchar(ttys, format[i]);
+        log_putchar(format[i]);
     }
     va_end(ap);
 }
@@ -64,7 +73,7 @@ void klog(loglevel_t lvl, const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    vsprintf(TTYS1, format, args);
+    vsprintf(format, args);
     va_end(args);
     serial_putchar(TTYS1, '\n');
 

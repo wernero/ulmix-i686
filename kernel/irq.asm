@@ -59,9 +59,9 @@ irq_asm_timer:
 %endmacro
 
 irq_asm_handler:
-    IRQ_HANDLER 0
+    IRQ_HANDLER 32
 irq_asm_handler_end:
-%assign irq_no 32
+%assign irq_no 33
 %rep 16
        IRQ_HANDLER irq_no
        %assign irq_no irq_no+1

@@ -19,7 +19,14 @@ extern char irq_asm_handler_end;
 
 void irq_handler(uint32_t irq)
 {
-    klog(KLOG_DEBUG, "*** PIC IRQ #%d ***", irq);
+    if (interrupts[irq].handler_count)
+    {
+        interrupts[irq].handler();
+    }
+    else
+    {
+        klog(KLOG_DEBUG, "*** unhandled IRQ #%d", irq);
+    }
 
     /* end of interrupt -> PIC */
     if (irq >= 32 && irq < 32+16)

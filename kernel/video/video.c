@@ -1,7 +1,7 @@
 #include "video.h"
 #include "util/string.h"
 
-static console_t *current_console;
+console_t *current_console;
 static size_t vprintf(console_t *console, const char *format, va_list ap);
 
 const char *splash =    "11000011001100000000110000001100111111001100000011"
@@ -90,7 +90,7 @@ static void update(console_t *console)
     set_cursor(console->pos_x, console->pos_y);
 }
 
-static char putchar(console_t *console, char c)
+char putchar(console_t *console, char c)
 {
     if (c == '\n')
     {
@@ -112,7 +112,7 @@ static char putchar(console_t *console, char c)
     return c;
 }
 
-static size_t puts(console_t *console, char *str)
+size_t puts(console_t *console, char *str)
 {
     size_t len = 0;
     while (*str != 0)
@@ -139,6 +139,8 @@ static size_t vprintf(console_t *console, const char *format, va_list ap)
                 itoa(va_arg(ap, int), strbuf);
                 len += puts(console, strbuf);
                 break;
+            case 'c':
+                len += putchar(console, va_arg(ap, int));
             case 's':
                 len += puts(console, va_arg(ap, char*));
                 break;

@@ -1,6 +1,8 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
+#include "sched/task.h"
+
 pid_t sc_fork(void);
 void sc_exit(int status);
 

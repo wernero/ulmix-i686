@@ -21,9 +21,11 @@ extern char _kernel_end;
 static void kmainthread(void)
 {
     // Test function for scheduler
-    klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = %x", get_esp());
+    klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
-    // kernel main routine ;)
+    // scan for available devices and
+    // automatically configure them
+    scan_devices();
 
     for (;;) hlt();
 }
@@ -78,6 +80,8 @@ void main(multiboot_t* mb_struct)
 static void boot(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
+
+    klog(KLOG_INFO, "ULMIX boot");
     klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
          (int)&_kernel_beg,
          (int)&_kernel_end - (int)&_kernel_beg);
@@ -86,8 +90,6 @@ static void boot(multiboot_t* mb_struct)
     console_init(&console, YELLOW, CYAN);
     console_clear(&console);
 
-    kprintf("ULMIX Operating System.\n");
-
     setup_gdt();
     setup_idt();
     setup_timer();
@@ -95,10 +97,5 @@ static void boot(multiboot_t* mb_struct)
 
     uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
     setup_paging(ram_available);
-
-    // scan for available devices and
-    // automatically configure them
-    scan_devices();
-    kprintf("paging enabled\n");
 }
 

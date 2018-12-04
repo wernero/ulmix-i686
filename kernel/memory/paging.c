@@ -41,7 +41,7 @@ void setup_paging(uint32_t phys_memory)
 
     paging_enable();
     paging_enabled = 1;
-    klog(KLOG_INFO, "paging enabled");
+    klog(KLOG_INFO, "Paging enabled");
 }
 
 static pagetable_t *get_pagetable(int offset, pagedir_t *pagedir)
