@@ -10,3 +10,4 @@ serial.out
 *.files
 *.includes
 bochs.symbols
+log
