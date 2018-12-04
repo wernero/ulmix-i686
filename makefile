@@ -54,6 +54,6 @@ ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -f $(KERNELDIR)/KERNEL.BIN
+	rm -f $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	rm -f bochs.symbols
 	rm -f ulmix.img

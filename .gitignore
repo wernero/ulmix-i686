@@ -11,3 +11,4 @@ serial.out
 *.includes
 bochs.symbols
 log
+30M.sample
