@@ -61,6 +61,8 @@ void ata_init()
 
 static int identifiy(ata_drive_t *ata_drive)
 {
+    uint8_t status;
+
     outb(ata_drive->io_base + 6, ata_drive->drive_select);    // drive select
     outb(ata_drive->io_base + 2, 0x00);  // sector count = 0
     outb(ata_drive->io_base + 3, 0x00);  // lba low = 0
@@ -82,9 +84,7 @@ static int identifiy(ata_drive_t *ata_drive)
         return ATA_UNKNOWN;
     }
 
-    uint8_t status;
     while (((status = inb(ata_drive->io_base + 7)) & 0x09) == 0);
-
     if (status & 0x01)
     {
         return ATA_ERROR;
