@@ -1,7 +1,6 @@
 #include "util/util.h"
-#include "util/types.h"
-#include "video/video.h"
 #include "memory/gdt.h"
+#include "memory/kheap.h"
 #include "memory/paging.h"
 #include "interrupts.h"
 #include "timer.h"
@@ -11,17 +10,23 @@
 #include "sched/scheduler.h"
 #include "drivers/devices.h"
 
-#include "util/string.h"
-#include "memory/kheap.h"
-
-#include "drivers/serial.h"
-#include "drivers/keyboard.h"
+#include "video/video.h"
 
 // .bss (ld)
 extern char _bss_start;
 extern char _bss_end;
 extern char _kernel_beg;
 extern char _kernel_end;
+
+static void kmainthread(void)
+{
+    // Test function for scheduler
+    klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = %x", get_esp());
+
+    // kernel main routine ;)
+
+    for (;;) hlt();
+}
 
 typedef struct
 {
@@ -48,22 +53,29 @@ typedef struct
     uint16_t vbe_interface_len;
 } __attribute__((packed)) multiboot_t;
 
-
-void test1(void)
-{
-    // Test function for scheduler
-    klog(KLOG_DEBUG, "test function 1 running");
-    for (;;) hlt();
-}
-
-void test2(void)
-{
-    // Test function for scheduler
-    klog(KLOG_DEBUG, "test function 2 running");
-    for (;;) hlt();
-}
+static void boot(multiboot_t* mb_struct);
 
 void main(multiboot_t* mb_struct)
+{
+    boot(mb_struct);
+
+    // create the kernel main thread on this stack
+    process_kstack_t kmain_stack =
+    {
+        .esp = MB1*5,
+        .ebp = MB6,
+        .kstack = NULL
+    };
+    kmain_stack = kstack_init(kmain_stack, TYPE_KERNEL, kmainthread, 0, get_eflags());
+    mk_kernel_thread(kmain_stack, "kernel main thread");
+
+    // activate preemtive multitasking and wait for the
+    // scheduler to preemt this function and never restore it
+    scheduler_enable();
+    for (;;) hlt();
+}
+
+static void boot(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
     klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
@@ -88,20 +100,5 @@ void main(multiboot_t* mb_struct)
     // automatically configure them
     scan_devices();
     kprintf("paging enabled\n");
-
-
-    /* TESTING SCHEDULER */
-    klog(KLOG_DEBUG, "creating process 1");
-    int esp_test1 = 0;
-    mk_process(get_kernel_pagedir(), test1, esp_test1, "test process 1");
-
-    scheduler_enable();
-
-
-
-
-    /* infinite loop - won't be executed because scheduler doesn't recognize
-        this as a task and wont switch to it */
-    for (;;) hlt();
 }
 

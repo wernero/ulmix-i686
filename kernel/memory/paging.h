@@ -25,6 +25,7 @@
 
 #define MB1         (1024*1024)
 #define MB4         (1024*4096)
+#define MB6         (1024*1024*6)
 #define MB16        (4096*1024*4)
 #define GB1         (1024*1024*1024)
 #define GB3         0xc0000000

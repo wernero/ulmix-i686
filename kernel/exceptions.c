@@ -1,6 +1,9 @@
 #include "exceptions.h"
 #include "log.h"
 #include "util/util.h"
+#include "sched/task.h"
+
+extern thread_t *current_thread;
 
 extern void exc0(void);
 extern void exc1(void);
@@ -41,6 +44,17 @@ static const char* const exceptions[] =
 void exc_handler(uint32_t error, uint32_t exc)
 {
     klog(KLOG_EXCEPTION, "exception: %s, error=0x%x", exceptions[exc], error);
+
+    if (exc == 13)
+    {
+        if (current_thread != NULL)
+        {
+            klog(KLOG_DEBUG, "exception: caused by thread '%s'. Killing thread.", current_thread->description);
+            kill_thread(current_thread);
+            return;
+        }
+    }
+
     if (exc == 14)
     {
         uint32_t cr2;
@@ -48,8 +62,13 @@ void exc_handler(uint32_t error, uint32_t exc)
         klog(KLOG_DEBUG, "faulting address: 0x%x", cr2);
 
         page_fault_handler(error, cr2);
+        return;
     }
 
+
+    // Kernel panic
+    cli();
+    hlt();
 }
 
 void setup_exception_handlers(void)

@@ -129,6 +129,7 @@ void *kmalloc(size_t size, int alignment, char *description)
         new_block->size += excess_size;
     }
 
+    klog(KLOG_DEBUG, "kmalloc(): returned %x", new_block->start);
     return new_block->start;
 }
 
@@ -231,13 +232,15 @@ void heap_dump(void)
 {
     int i = 0;
     kheap_entry_t *entry;
+    klog(KLOG_DEBUG, "kheap: heap_dump(): %s HEAP CONTENTS", pheap_enabled ? "DYNAMIC PAGED" : "PRE-PAGING");
     for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
     {
-        klog(KLOG_DEBUG, "kheap: heap_dump(): #%d: alloc=%d, start=0x%x, size=%d KiB (%s)",
+        klog(KLOG_DEBUG, "kheap: heap_dump(): #%d: avail=%d, start=0x%x, size=%S (%s)",
              i++,
              entry->available,
              (uint32_t)entry->start,
-             entry->size / 1024);
+             entry->size,
+             entry->description);
     }
 }
 

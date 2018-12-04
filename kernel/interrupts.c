@@ -89,8 +89,6 @@ void setup_idt(void)
         set_idt_entry(i, NULL, 0);
     }
 
-
-
     //set_idt_entry(0x80, irq_asm_syscall, INT_GATE | INT_PRESENT | INT_USER);
 
 

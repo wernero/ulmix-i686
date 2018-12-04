@@ -19,23 +19,18 @@
 extern void irq_asm_timer(void);
 extern scheduler_state_t scheduler_state;
 
-uint32_t timer_ticks = 0;
+volatile uint32_t timer_ticks = 0;
 uint32_t irq_timer(uint32_t esp)
 {
     timer_ticks++;
 
-    if (timer_ticks % 200 == 0 && scheduler_state == SCHED_ACTIVE)
+    if (scheduler_state == SCHED_ACTIVE)
     {
         esp = schedule(esp);
     }
 
     outb(0x20, 0x20);
     return esp;
-}
-
-uint32_t uptime(void)
-{
-    return timer_ticks / TIMER_FREQ;
 }
 
 void setup_timer()

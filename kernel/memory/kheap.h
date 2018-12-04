@@ -37,4 +37,7 @@ typedef struct
 void *  kmalloc (size_t size, int alignment, char *description);
 void    kfree   (void *mem);
 
+// debug
+void heap_dump(void);
+
 #endif // KHEAP_H

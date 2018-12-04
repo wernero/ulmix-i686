@@ -21,6 +21,11 @@ irq_asm_timer:
     push es
     push fs
     push gs
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
     push esp
     call irq_timer
     mov esp, eax
@@ -33,9 +38,22 @@ irq_asm_timer:
 
 %macro IRQ_HANDLER 1
     pushad
+    push ds
+    push es
+    push fs
+    push gs
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
     push dword %1
     call irq_handler
     add esp, 4
+    pop gs
+    pop fs
+    pop es
+    pop ds
     popad
     iret
 %endmacro

@@ -4,11 +4,27 @@
 #include "util/types.h"
 #include "util/string.h"
 
+#define _KERNEL_STACK_BASE_ 1024*1024*6
+
 #define NULL 0
 
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }
 static inline void cli(void) { __asm__ volatile ("cli"); }
+
+static inline uint32_t get_eflags(void)
+{
+    uint32_t eflags;
+    __asm__ volatile ("pushf; pop %0" : "=r" (eflags));
+    return eflags;
+}
+
+static inline uint32_t get_esp(void)
+{
+    uint32_t esp;
+    __asm__ volatile ("mov %%esp, %0" : "=r" (esp));
+    return esp;
+}
 
 static inline uint8_t inb(uint16_t port)
 {
