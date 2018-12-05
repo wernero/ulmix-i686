@@ -11,3 +11,5 @@ serial.out
 *.includes
 bochs.symbols
 log
+hdd.img
+hdd.img.lock
