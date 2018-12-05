@@ -1,7 +1,34 @@
 #include "block.h"
 #include "interrupts.h"
+#include "memory/kheap.h"
 
 extern thread_t *current_thread;
+
+
+
+
+blocklist_t *blocker(void)
+{
+    blocklist_t *list = kmalloc(sizeof(blocklist_t), 1, "blocklist_t");
+    list->entries = 0;
+    return list;
+}
+
+void blocklist_add(blocklist_t *blocklist, thread_t *task)
+{
+    scheduler_block(task);
+    blocklist->threads[blocklist->entries++] = task;
+}
+
+void blocklist_unblock(blocklist_t *blocklist)
+{
+    for (int i = 0; i < blocklist->entries; i++)
+    {
+        scheduler_unblock(blocklist->threads[i]);
+    }
+    blocklist->entries = 0;
+}
+
 
 int waitirq(int irq)
 {

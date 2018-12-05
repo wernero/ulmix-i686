@@ -21,6 +21,16 @@ void scheduler_enable()
     scheduler_state = SCHED_ACTIVE;
 }
 
+static thread_t *get_next_task()
+{
+    task_queue_t *next_task = running_tasks->next_task;
+    while (next_task->task->state != RUNNING)
+    {
+        next_task = next_task->next_task;
+    }
+    return (running_tasks = next_task)->task;
+}
+
 void scheduler_disable(void)
 {
     scheduler_state = SCHED_PAUSED;
@@ -34,12 +44,17 @@ void scheduler_remove(thread_t *thread)
 
 void scheduler_force(void)
 {
-    // raise timer interrupt
+    // raise timer interrupt -> force task switch
     __asm__("int $0x20");
 }
 
 static void _insert(thread_t *thread, task_queue_t **queue)
 {
+    cli();
+    scheduler_state_t tmp = scheduler_state;
+    scheduler_state = SCHED_PAUSED;
+    sti();
+
     task_queue_t *new_entry = kmalloc(sizeof(task_queue_t), 1, "task_queue_t");
     new_entry->task = thread;
     new_entry->next_task = new_entry;
@@ -53,6 +68,8 @@ static void _insert(thread_t *thread, task_queue_t **queue)
         new_entry->next_task = (*queue)->next_task;
         (*queue)->next_task  = new_entry;
     }
+
+    scheduler_state = tmp;
 }
 
 void scheduler_insert(thread_t *thread)
@@ -86,16 +103,13 @@ uint32_t schedule(uint32_t esp)
 void scheduler_block(thread_t *thread)
 {
     thread->state = SUSPENDED;
+    if (thread == current_thread)
+        scheduler_force();
 }
 
-static thread_t *get_next_task()
+void scheduler_unblock(thread_t *thread)
 {
-    task_queue_t *next_task = running_tasks->next_task;
-    while (next_task->task->state != RUNNING)
-    {
-        next_task = next_task->next_task;
-    }
-    return (running_tasks = next_task)->task;
+    thread->state = RUNNING;
 }
 
 static void idle_task()
