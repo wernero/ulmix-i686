@@ -1,4 +1,6 @@
-cp hdd.img hdd.img.bak
+#!/bin/sh
+
+mv hdd.img hdd.img.bak
 
 rm hdd.img 
 
