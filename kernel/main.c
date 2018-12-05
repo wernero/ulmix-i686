@@ -86,11 +86,8 @@ static void boot(multiboot_t* mb_struct)
          (int)&_kernel_beg,
          (int)&_kernel_end - (int)&_kernel_beg);
 
-    console_t console;
-    console_init(&console, YELLOW, CYAN);
-    console_clear(&console);
-
     setup_gdt();
+    //setup_debugger();
     setup_idt();
     setup_timer();
     // setup_cpu();

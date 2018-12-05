@@ -3,6 +3,15 @@
 
 #include "util/util.h"
 
+typedef struct
+{
+    void (*fopen)(void);
+    void (*fread)(void);
+    void (*fwrite)(void);
+    void (*fseek)(void);
+    void (*fclose)(void);
+} partition_t;
+
 enum _whence
 {
     SEEK_SET,

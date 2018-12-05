@@ -6,6 +6,17 @@ void vfs_init()
 
 }
 
+
+
+
+
+
+
+
+
+
+
+// *****************************************************
 // Stubs for System calls
 
 int sc_open(const char *pathname, int flags)
