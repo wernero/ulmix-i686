@@ -1,19 +1,14 @@
 #include "log.h"
 #include "util/util.h"
 #include "util/string.h"
-#include "drivers/serial.h"
+#include "sched/sync.h"
 
-static int initialized = 0;
+extern int kdebug_enabled;
 
-static void log_puts(char *s)
-{
-    serial_write(TTYS1, s, strlen(s));
-}
+extern void log_puts(char *s);
+extern void log_putchar(char c);
 
-static void log_putchar(char c)
-{
-    serial_putchar(TTYS1, c);
-}
+extern mutex_t *log_mutex;
 
 static void vsprintf(const char *format, va_list ap)
 {
@@ -63,19 +58,18 @@ static void vsprintf(const char *format, va_list ap)
 
 void klog(loglevel_t lvl, const char *format, ...)
 {
-    if (!initialized)
+    if (kdebug_enabled)
     {
-        serial_open(TTYS1, 0);
-        initialized = 1;
+        mutex_lock(log_mutex);
+
+        va_list args;
+        va_start(args, format);
+        vsprintf(format, args);
+        va_end(args);
+        log_putchar('\n');
+
+        mutex_unlock(log_mutex);
     }
-
-
-
-    va_list args;
-    va_start(args, format);
-    vsprintf(format, args);
-    va_end(args);
-    serial_putchar(TTYS1, '\n');
 
     if (lvl == KLOG_PANIC || lvl == KLOG_FAILURE)
     {

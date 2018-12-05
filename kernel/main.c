@@ -9,8 +9,7 @@
 #include "sched/task.h"
 #include "sched/scheduler.h"
 #include "drivers/devices.h"
-
-#include "video/video.h"
+#include "kdebug.h"
 
 // .bss (ld)
 extern char _bss_start;
@@ -23,6 +22,7 @@ static void kmainthread(void)
     // Test function for scheduler
     klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
+    vfs_init();
     // scan for available devices and
     // automatically configure them
     scan_devices();
@@ -81,13 +81,14 @@ static void boot(multiboot_t* mb_struct)
 {
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
+    setup_gdt();
+
+    kdebug_init();
     klog(KLOG_INFO, "ULMIX boot");
     klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
          (int)&_kernel_beg,
          (int)&_kernel_end - (int)&_kernel_beg);
 
-    setup_gdt();
-    //setup_debugger();
     setup_idt();
     setup_timer();
     // setup_cpu();

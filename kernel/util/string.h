@@ -10,5 +10,6 @@ void itoa(int n, char *str);
 void itoxa(uint32_t n, char *str);
 void strcat(char *dest, char *src);
 void bsize(uint32_t n, char *buf);
+int strcmp(char *s1, char *s2);
 
 #endif // STRING_H

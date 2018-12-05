@@ -62,12 +62,8 @@ void scheduler_insert(thread_t *thread)
     _insert(thread, &running_tasks);
 }
 
-extern volatile uint32_t timer_ticks;
 uint32_t schedule(uint32_t esp)
 {
-    if (timer_ticks % 400 != 0)
-        return esp;
-
     if (current_thread != NULL)
         current_thread->kstack.esp = esp;
 
@@ -85,6 +81,11 @@ uint32_t schedule(uint32_t esp)
     }
 
     return current_thread->kstack.esp;
+}
+
+void scheduler_block(thread_t *thread)
+{
+    thread->state = SUSPENDED;
 }
 
 static thread_t *get_next_task()

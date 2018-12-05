@@ -19,13 +19,14 @@ extern char irq_asm_handler_end;
 
 void irq_handler(uint32_t irq)
 {
+    if (interrupts[irq].unblock != NULL)
+    {
+        interrupts[irq].unblock->state = RUNNING;
+    }
+
     if (interrupts[irq].handler_count)
     {
         interrupts[irq].handler();
-    }
-    else
-    {
-        klog(KLOG_DEBUG, "*** unhandled IRQ #%d", irq);
     }
 
     /* end of interrupt -> PIC */
@@ -50,6 +51,15 @@ void irq_install_handler(int id, void (*handler)(void))
 {
     interrupts[id].handler = handler;
     interrupts[id].handler_count++;
+    interrupts[id].unblock = NULL;
+}
+
+
+int unblock_on_irq(int irq, thread_t *task)
+{
+    // TEMPORARY !!!!
+    interrupts[irq].unblock = task;
+    return 0;
 }
 
 void irq_install_raw_handler(int id, void (*handler)(void), int flags)
@@ -90,14 +100,14 @@ void setup_idt(void)
     }
 
 
-    // custom interrupts
+    // custom interrupts have no handler yet
     for (i = 32+16; i < IDT_ENTRIES; i++)
     {
         set_idt_entry(i, NULL, 0);
     }
 
-    //set_idt_entry(0x80, irq_asm_syscall, INT_GATE | INT_PRESENT | INT_USER);
-
+    // System call interrupt
+    //set_idt_entry(0x80, irq_asm_syscall, INT_TRAP | INT_PRESENT | INT_USER);
 
     pic_init();
 

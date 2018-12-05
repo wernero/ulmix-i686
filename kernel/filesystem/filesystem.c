@@ -1,60 +1,129 @@
 #include "filesystem.h"
+#include "memory/kheap.h"
+#include "log.h"
 
+fnode_t root;
 
 void vfs_init()
 {
+    // create file system root
+    file_t froot =
+    {
+        .type = FILE_DIRECTORY,
+        .permissions = PERM_USER_READ | PERM_USER_WRITE | PERM_USER_EXEC
+                        | PERM_GRP_READ | PERM_GRP_EXEC
+                        | PERM_OTH_READ | PERM_OTH_EXEC,
+        .io_size = 0,
+        .drv_struct = NULL,
+        .group = 0,
+        .owner = 0,
+        .read = NULL,
+        .write = NULL,
+        .seek = NULL,
+        .name[0] = 0
+    };
+    root.meta = froot;
+    root.parent = NULL;
+    root.next = NULL;
+    root.previous = NULL;
+    root.children = NULL;
 
+    // make some directories:
+    if (mkdir(&root, "dev") == NULL)
+    {
+        klog(KLOG_DEBUG, "failed to create dir /dev");
+    }
 }
 
-
-
-
-
-
-
-
-
-
-
-// *****************************************************
-// Stubs for System calls
-
-int sc_open(const char *pathname, int flags)
+int mount(fnode_t *mount_point, file_t *device)
 {
-    return -1;
+    klog(KLOG_DEBUG, "mount() TEST");
+    if (mount_point == NULL)
+    {
+        klog(KLOG_DEBUG, "mount(): mount point is NULL");
+        return -1;
+    }
+
+    if (device == NULL)
+    {
+        klog(KLOG_DEBUG, "mount(): device is NULL");
+        return -1;
+    }
+
+    // load 2048 bytes from Hard disk -> 4 sectors
+    unsigned char buf[2048];
+    device->read(device->drv_struct, (char *)buf, 4);
+
+    unsigned char sig = buf[0x1b8];
+    klog(KLOG_DEBUG, "mount(): byte 1 of signature is %x", sig);
+
+    cli();
+    hlt();
+    return 0;
 }
 
-int sc_creat(const char *pathname, mode_t mode)
+static void insert_node(fnode_t *node, fnode_t *subnode)
 {
-    return -1;
+    if (node == NULL)
+    {
+        klog(KLOG_WARN, "insert_node(): parent node is NULL");
+        return;
+    }
+    if (subnode == NULL)
+    {
+        klog(KLOG_WARN, "insert_node(): subnode is NULL");
+        return;
+    }
+
+    subnode->parent = node;
+
+    if (node->children == NULL)
+    {
+        node->children = subnode;
+        subnode->next = subnode->previous = NULL;
+    }
+    else
+    {
+        subnode->next = node->children->next;
+        subnode->previous = node->children;
+        node->children->next = subnode;
+    }
 }
 
-ssize_t sc_write(int fd, const void *buf, size_t count)
+fnode_t *mkdir(fnode_t *directory, char *name)
 {
-    return -1;
+    file_t fdir =
+    {
+        .type = FILE_DIRECTORY,
+        .permissions = PERM_USER_READ | PERM_USER_WRITE | PERM_USER_EXEC
+                        | PERM_GRP_READ | PERM_GRP_EXEC
+                        | PERM_OTH_READ | PERM_OTH_EXEC,
+        .io_size = 0,
+        .drv_struct = NULL,
+        .group = 0,
+        .owner = 0,
+        .read = NULL,
+        .write = NULL,
+        .seek = NULL,
+    };
+    strcpy(fdir.name, name);
+    return mknod(directory, fdir);
 }
 
-ssize_t sc_read(int fd, const void *buf, size_t count)
+fnode_t *mknod(fnode_t *directory, file_t file)
 {
-    return -1;
+    if (directory == NULL)
+    {
+        klog(KLOG_WARN, "mknod(): parent directory is NULL");
+        return NULL;
+    }
+
+    fnode_t *node = kmalloc(sizeof(fnode_t), 1, "fnode_t");
+    node->meta = file;
+    node->children = NULL;
+    insert_node(directory, node);
+    return node;
 }
 
-int sc_close(int fd)
-{
-    return -1;
-}
 
-int sc_link(const char *oldpath, const char *newpath)
-{
-    return -1;
-}
 
-int sc_unlink(const char *pathname)
-{
-    return -1;
-}
-
-ssize_t sc_lseek(int fd, size_t offset, int whence)
-{
-    return -1;
-}

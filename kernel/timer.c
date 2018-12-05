@@ -7,7 +7,7 @@
 
 #define IRQ_TIMER   0x20        // IRQ 0 on PIC1
 #define OSCILLATOR  1193182     // constant
-#define TIMER_FREQ  200         // in Hz
+#define TIMER_FREQ  20           // in Hz
 
 #define PIT_CMD     0x43
 #define PIT_CH0     0x40

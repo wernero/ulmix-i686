@@ -1,23 +1,16 @@
 #include "ata.h"
 #include "util/util.h"
 #include "log.h"
+#include "memory/kheap.h"
+#include "drivers/devices.h"
 #include "interrupts.h"
+#include "sched/task.h"
+#include "sched/block.h"
+
+#define SECTOR_SIZE         512
 
 #define PRIMARY_ATA         0x1f0
-#define PRIM_SECTOR_COUNT   0x1f2
-#define PRIM_LBA_LOW        0x1f3
-#define PRIM_LBA_MID        0x1f4
-#define PRIM_LBA_HIGH       0x1f5
-#define PRIM_DRIVE_SELCT    0x1f6
-#define PRIM_CMD_STAT       0x1f7
-
 #define SECONDARY_ATA       0x170
-#define SEC_SECTOR_COUNT    0x172
-#define SEC_LBA_LOW         0x173
-#define SEC_LBA_MID         0x174
-#define SEC_LBA_HIGH        0x175
-#define SEC_DRIVE_SELCT     0x176
-#define SEC_CMD_STAT        0x177
 
 #define ATA_ERROR           0
 #define ATA_FOUND           1
@@ -31,35 +24,46 @@ typedef struct
     int id;
     int io_base;
     int drive_select;
+    size_t seek_offset;
     uint16_t data[256];
+    int irq;
 } ata_drive_t;
 
 static int get_drive_addr(int drive, ata_drive_t *ata_drive);
-static int identifiy(ata_drive_t *ata_drive);
+static void get_name(ata_drive_t *drive, char *buf);
+static int identify(ata_drive_t *ata_drive);
+static void waitBSY(ata_drive_t *drive);
+static void waitDRQ(ata_drive_t *drive);
 
-static void irq_primary(void);
-static void irq_secondary(void);
+static ssize_t ata_read(void *dev_struct, char *buf, size_t count);
+static ssize_t ata_write(void *dev_struct, char *buf, size_t count);
+static ssize_t ata_seek(void *dev_struct, size_t offset, int whence);
 
 void ata_init()
 {
-    irq_install_handler(0x2e, irq_primary);
-    irq_install_handler(0x2f, irq_secondary);
+
 
     ata_drive_t ata_drive;
     for (int i = 0; i < 4; i++)
     {
         get_drive_addr(i, &ata_drive);
-        int status = identifiy(&ata_drive);
+        int status = identify(&ata_drive);
         klog(KLOG_DEBUG, "ATA identify #%d: status = %s", i, errors[status]);
 
         if (status == ATA_FOUND)
         {
-            // register device
+            ata_drive_t *drive = kmalloc(sizeof(ata_drive_t), 1, "ata_drive_t");
+            *drive = ata_drive;
+
+            char drive_name[16];
+            get_name(&ata_drive, drive_name);
+
+            register_device(DEV_ATA_HDD, (void*)drive, SECTOR_SIZE, ata_read, ata_write, ata_seek, drive_name);
         }
     }
 }
 
-static int identifiy(ata_drive_t *ata_drive)
+static int identify(ata_drive_t *ata_drive)
 {
     uint8_t status;
 
@@ -91,17 +95,107 @@ static int identifiy(ata_drive_t *ata_drive)
     }
 
     repinsw(ata_drive->io_base, ata_drive->data, 256);
+    ata_drive->seek_offset = 0;
     return ATA_FOUND;
 }
 
-static void irq_primary(void)
+static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
 {
+    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
+    klog(KLOG_DEBUG, "ata_read(): PIO mode: reading %d sectors from ATA #%d", count, drive->id);
 
+    outb(drive->io_base + 6, drive->drive_select);  // drive select
+    outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
+    outb(drive->io_base + 3, (drive->seek_offset >> 6) & 0xff);
+    outb(drive->io_base + 4, 0x00);
+    outb(drive->io_base + 3, 0x00);
+    outb(drive->io_base + 2, count & 0xff);         // count low
+    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);
+    outb(drive->io_base + 4, (drive->seek_offset >> 2) & 0xff);
+    outb(drive->io_base + 5, (drive->seek_offset >> 4) & 0xff);
+
+    waitBSY(drive);
+    outb(drive->io_base + 7, 0x24); // READ SECTORS EXT
+    for (size_t i = 0; i < count; i++)
+    {
+        waitBSY(drive);
+        waitDRQ(drive);
+
+        repinsw(drive->io_base, (uint16_t*)(buf + SECTOR_SIZE * i), 256);
+    }
+    return count;
 }
 
-static void irq_secondary(void)
+static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
 {
+    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
+    klog(KLOG_DEBUG, "ata_read(): PIO mode: writing %d sectors to ATA #%d", count, drive->id);
 
+    outb(drive->io_base + 6, drive->drive_select);  // drive select
+    outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
+    outb(drive->io_base + 3, (drive->seek_offset >> 6) & 0xff);
+    outb(drive->io_base + 4, 0x00);
+    outb(drive->io_base + 3, 0x00);
+    outb(drive->io_base + 2, count & 0xff);         // count low
+    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);
+    outb(drive->io_base + 4, (drive->seek_offset >> 2) & 0xff);
+    outb(drive->io_base + 5, (drive->seek_offset >> 4) & 0xff);
+
+    waitBSY(drive);
+    outb(drive->io_base + 7, 0x34); // WRITE SECTORS EXT
+    for (size_t i = 0; i < count; i++)
+    {
+        waitBSY(drive);
+        waitDRQ(drive);
+
+        outw(drive->io_base, buf[0]);
+    }
+
+    outb(drive->io_base + 7, 0xe7); // CACHE FLUSH
+    waitBSY(drive);
+    return count;
+}
+
+static ssize_t ata_seek(void *dev_struct, size_t offset, int whence)
+{
+    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
+
+    switch(whence)
+    {
+    case SEEK_SET:
+        drive->seek_offset = offset;
+        break;
+    case SEEK_CUR:
+        drive->seek_offset += offset;
+        break;
+    default:
+        return -1;
+    }
+
+    return drive->seek_offset;
+}
+
+/*static void waitRDY(ata_drive_t *drive)
+{
+    while (inb(drive->io_base + 7) & 0x40);
+}*/
+
+static void waitBSY(ata_drive_t *drive)
+{
+    while (inb(drive->io_base + 7) & 0x80);
+}
+
+static void waitDRQ(ata_drive_t *drive)
+{
+    while(!(inb(drive->io_base + 7) & 0x08));
+}
+
+static void get_name(ata_drive_t *drive, char *buf)
+{
+    strcpy(buf, "ata");
+    int len = strlen(buf);
+    buf[len] = '0' + drive->id;
+    buf[len + 1] = 0;
 }
 
 static int get_drive_addr(int drive, ata_drive_t *ata_drive)
@@ -111,19 +205,23 @@ static int get_drive_addr(int drive, ata_drive_t *ata_drive)
     {
     case 0:
         ata_drive->io_base = PRIMARY_ATA;
-        ata_drive->drive_select = 0xa0;
+        ata_drive->drive_select = 0x40;
+        ata_drive->irq = 0x2e;
         break;
     case 1:
         ata_drive->io_base = PRIMARY_ATA;
-        ata_drive->drive_select = 0xb0;
+        ata_drive->drive_select = 0x50;
+        ata_drive->irq = 0x2e;
         break;
     case 2:
         ata_drive->io_base = SECONDARY_ATA;
-        ata_drive->drive_select = 0xa0;
+        ata_drive->drive_select = 0x40;
+        ata_drive->irq = 0x2f;
         break;
     case 3:
         ata_drive->io_base = SECONDARY_ATA;
-        ata_drive->drive_select = 0xb0;
+        ata_drive->drive_select = 0x50;
+        ata_drive->irq = 0x2f;
         break;
     default:
         return -1;

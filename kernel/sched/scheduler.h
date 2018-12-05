@@ -22,6 +22,7 @@ void scheduler_disable(void);
 void scheduler_insert(thread_t *thread);
 void scheduler_remove(thread_t *thread);
 void scheduler_force(void);
+void scheduler_block(thread_t *thread);
 uint32_t schedule(uint32_t esp);
 
 #endif // SCHEDULER_H

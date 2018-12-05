@@ -2,6 +2,7 @@
 #define INTERRUPTS_H
 
 #include "util/types.h"
+#include "sched/task.h"
 
 typedef struct
 {
@@ -34,9 +35,11 @@ typedef struct
     void (*handler)(void);
     int handler_count;
     uint32_t executions;
+    thread_t *unblock;
 } interrupt_t;
 
 void setup_idt(void);
+int unblock_on_irq(int irq, thread_t *task);
 void irq_install_handler(int id, void (*handler)(void));
 void irq_install_raw_handler(int id, void (*handler)(void), int flags);
 
