@@ -13,6 +13,7 @@ mkfs.ext2 /dev/loop1
 
 mkdir /mnt/hd1p1 ; mount /dev/loop1 /mnt/hd1p1
 touch /mnt/hd1p1/this-is-a-disk-image
+echo "this is a disk image" > /mnt/hd1p1/readme.txt
 
 umount /mnt/hd1p1/
 losetup -l
