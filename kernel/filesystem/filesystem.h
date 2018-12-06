@@ -16,8 +16,8 @@ typedef struct
 
 typedef struct
 {
-    int (*fs_probe)(file_t *device, mbr_entry_t part);
-    int (*fs_mount)(fnode_t *mountpoint, file_t *device, mbr_entry_t part);
+    int (*fs_probe)(fd_t *device, mbr_entry_t part);
+    int (*fs_mount)(fnode_t *mountpoint, fd_t *device, mbr_entry_t part);
     fd_t *(*fs_open)(fnode_t *file);
     ssize_t (*fs_read)(fd_t *file, char *buf, size_t count);
     ssize_t (*fs_write)(fd_t *file, char *buf, size_t count);
@@ -27,7 +27,7 @@ typedef struct
 
 void init_filesystems(void);
 int  install_fs(filesystem_t *fs);
-int  disk_mount(fnode_t *mount_point, file_t *device);
+int  disk_mount(fnode_t *mount_point, fd_t *device);
 
 
 #endif // FILESYSTEM_H

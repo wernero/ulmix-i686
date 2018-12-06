@@ -23,9 +23,8 @@ void vfs_init()
         .drv_struct = NULL,
         .group = 0,
         .owner = 0,
-        .read = NULL,
-        .write = NULL,
-        .seek = NULL,
+        .open = NULL,
+        .close = NULL,
         .name[0] = 0
     };
     root.meta = froot;
@@ -75,9 +74,8 @@ fnode_t *mkdir(fnode_t *directory, char *name)
         .drv_struct = NULL,
         .group = 0,
         .owner = 0,
-        .read = NULL,
-        .write = NULL,
-        .seek = NULL,
+        .open = NULL,
+        .close = NULL,
     };
     strcpy(fdir.name, name);
     return mknod(directory, fdir);

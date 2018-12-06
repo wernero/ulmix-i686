@@ -7,6 +7,7 @@
 filesystem_t *supported_filesystems[SUP_FS_COUNT];
 
 static int is_mbr(unsigned char *sec1);
+static int part_mount(fnode_t *mount_point, fd_t *device, mbr_entry_t partition);
 
 void init_filesystems()
 {
@@ -30,30 +31,11 @@ int install_fs(filesystem_t *fs)
     return -1;
 }
 
-int part_mount(fnode_t *mount_point, file_t *device, mbr_entry_t partition)
+int disk_mount(fnode_t *mount_point, fd_t *device)
 {
-    /* part_mount() is test subject (!) */
-
-    klog(KLOG_DEBUG, "part_mount(): mounting partition: start=0x%x, size=%S, bootable=%d, fs_type=%s",
-         partition.start_sector * 512, partition.sector_count * 512, partition.bootable,
-         (partition.system_id == 0x83) ? "linux-native" : "unknown");
-
-    for (int i = 0; i < SUP_FS_COUNT; i++)
-    {
-        filesystem_t *pfs = supported_filesystems[i];
-        if (pfs != NULL && (pfs->fs_probe(device, partition) >= 0))
-        {
-            klog(KLOG_DEBUG, "part_mount(): partition is of type %s", pfs->name);
-
-            return pfs->fs_mount(mount_point, device, partition);
-        }
-    }
-    return -1;
-}
-
-int disk_mount(fnode_t *mount_point, file_t *device)
-{
-    /* disk_mount() is test subject (!) */
+    /* disk_mount() is test subject (!)
+     * TODO: proper error handling
+     */
 
     if (mount_point == NULL)
     {
@@ -67,11 +49,11 @@ int disk_mount(fnode_t *mount_point, file_t *device)
         return -1;
     }
 
-    klog(KLOG_DEBUG, "disk_mount(): mounting device %s", device->name);
+    klog(KLOG_DEBUG, "disk_mount(): mounting device %s", device->file->name);
 
     // 1. load Master Boot Record (first sector)
     unsigned char mbr[512];
-    device->read(device->drv_struct, (char*)mbr, 1);
+    device->read(device, (char*)mbr, 1);
 
     // 2. Verify
     if (!is_mbr(mbr))
@@ -103,6 +85,27 @@ int disk_mount(fnode_t *mount_point, file_t *device)
     }
 
     return 0;
+}
+
+static int part_mount(fnode_t *mount_point, fd_t *device, mbr_entry_t partition)
+{
+    /* part_mount() is test subject (!) */
+
+    klog(KLOG_DEBUG, "part_mount(): mounting partition: start=0x%x, size=%S, bootable=%d, fs_type=%s",
+         partition.start_sector * 512, partition.sector_count * 512, partition.bootable,
+         (partition.system_id == 0x83) ? "linux-native" : "unknown");
+
+    for (int i = 0; i < SUP_FS_COUNT; i++)
+    {
+        filesystem_t *pfs = supported_filesystems[i];
+        if (pfs != NULL && (pfs->fs_probe(device, partition) >= 0))
+        {
+            klog(KLOG_DEBUG, "part_mount(): partition is of type %s", pfs->name);
+
+            return pfs->fs_mount(mount_point, device, partition);
+        }
+    }
+    return -1;
 }
 
 static int is_mbr(unsigned char *sec1)

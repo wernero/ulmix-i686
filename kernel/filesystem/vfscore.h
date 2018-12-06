@@ -33,40 +33,48 @@ enum _whence
     SEEK_END
 };
 
-typedef struct
+typedef struct _fdesc fd_t;
+typedef struct _nfile file_t;
+struct _nfile
 {
     file_type_t     type;       // special file type
     size_t          io_size;    // 1 = character device, block size for block devices
-    void*           drv_struct; // points to a driver-internal data structure that describes the device
+    void*           drv_struct; // points to a driver-internal data structure
+                                // that describes the device and can be used as an
+                                // identifier to the driver
 
-    ssize_t (*read) (void* drv_struct, char *buf, size_t count);
-    ssize_t (*write)(void* drv_struct, char *buf, size_t count);
-    ssize_t (*seek) (void* drv_struct, size_t offset, int whence);
+    fd_t *(*open)(file_t *file);
+    int (*close)(fd_t *fd);
 
     uint16_t permissions;
-
     uid_t owner;
     gid_t group;
 
     char name[64];
-} file_t;
+};
 
 typedef struct _fnode fnode_t;
 struct _fnode
 {
-    file_t meta;
+    file_t   meta;
     fnode_t *parent;
     fnode_t *previous;
     fnode_t *next;
     fnode_t *children;
 };
 
-typedef struct
+struct _fdesc
 {
     file_t *file;
     size_t seek_offset;
-} fd_t;
+    void* fdi_struct; // points to a driver-internal data structure
+                      // that describes the device and can be used as an
+                      // identifier to the driver
 
+    ssize_t (*read) (fd_t *fd, char *buf, size_t count);
+    ssize_t (*write)(fd_t *fd, char *buf, size_t count);
+    ssize_t (*seek) (fd_t *fd, size_t offset, int whence);
+};
 
 
 void vfs_init(void);
