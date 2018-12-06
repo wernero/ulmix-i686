@@ -12,4 +12,5 @@ serial.out
 bochs.symbols
 log
 hdd.img
+hdd.img.bak
 hdd.img.lock

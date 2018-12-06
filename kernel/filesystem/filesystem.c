@@ -50,12 +50,14 @@ int mount(fnode_t *mount_point, file_t *device)
         return -1;
     }
 
-    // load 2048 bytes from Hard disk -> 4 sectors
-    unsigned char buf[2048];
-    device->read(device->drv_struct, (char *)buf, 4);
+    // load 4096 bytes from Hard disk -> 8 sectors
+    unsigned char buf[4096];
+    device->read(device->drv_struct, (char *)buf, 8);
 
-    unsigned char sig = buf[0x1b8];
+    unsigned char sig = buf[0x638];
     klog(KLOG_DEBUG, "mount(): byte 1 of signature is %x", sig);
+    sig = buf[0x639];
+    klog(KLOG_DEBUG, "mount(): byte 2 of signature is %x", sig);
 
     cli();
     hlt();

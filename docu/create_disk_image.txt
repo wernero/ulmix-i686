@@ -1,3 +1,7 @@
+
+based on infos from https://www.thegeekstuff.com/2017/05/sfdisk-examples/
+
+
 [root@retropie ulmix]# bximage -mode=create -hd=30M -sectsize=512 -q test.img
 ========================================================================
                                 bximage
