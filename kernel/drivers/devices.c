@@ -53,5 +53,8 @@ void register_device(device_type_t type, void *drv_struct, size_t io_size,
         klog(KLOG_WARN, "error: failed to register device file /dev/%s", f.name);
     }
 
-    mount(get_node("/"), &f);
+    if (disk_mount(get_node("/"), &f) < 0)
+    {
+        klog(KLOG_WARN, "error: could not mount device /dev/%s", f.name);
+    }
 }

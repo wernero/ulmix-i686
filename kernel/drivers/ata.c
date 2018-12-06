@@ -102,7 +102,7 @@ static int identify(ata_drive_t *ata_drive)
 static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
 {
     ata_drive_t *drive = ((ata_drive_t*)dev_struct);
-    klog(KLOG_DEBUG, "ata_read(): PIO mode: reading %d sectors from ATA #%d", count, drive->id);
+    klog(KLOG_DEBUG, "ata_read(): read count=%d offset=%d from ATA #%d", count, drive->seek_offset, drive->id);
 
     outb(drive->io_base + 6, drive->drive_select);  // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
