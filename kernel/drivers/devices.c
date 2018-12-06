@@ -78,17 +78,30 @@ void register_device(device_type_t type, void *drv_struct, size_t io_size,
 static ssize_t dev_read(fd_t *fd, char *buf, size_t count)
 {
     dev_t *dev = (dev_t*)(fd->file->drv_struct);
+    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_CUR);
     return dev->read(dev->drv_struct, buf, count);
 }
 
 static ssize_t dev_write(fd_t *fd, char *buf, size_t count)
 {
     dev_t *dev = (dev_t*)(fd->file->drv_struct);
+    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_CUR);
     return dev->write(dev->drv_struct, buf, count);
 }
 
 static ssize_t dev_seek(fd_t *fd, size_t offset, int whence)
 {
-    dev_t *dev = (dev_t*)(fd->file->drv_struct);
-    return dev->seek(dev->drv_struct, offset, whence);
+    switch (whence)
+    {
+    case SEEK_SET:
+        fd->seek_offset = offset;
+        break;
+    case SEEK_CUR:
+        fd->seek_offset += offset;
+        break;
+    case SEEK_END:
+    default:
+        return -1;
+    }
+    return 0;
 }
