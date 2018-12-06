@@ -78,14 +78,14 @@ void register_device(device_type_t type, void *drv_struct, size_t io_size,
 static ssize_t dev_read(fd_t *fd, char *buf, size_t count)
 {
     dev_t *dev = (dev_t*)(fd->file->drv_struct);
-    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_CUR);
+    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_SET);
     return dev->read(dev->drv_struct, buf, count);
 }
 
 static ssize_t dev_write(fd_t *fd, char *buf, size_t count)
 {
     dev_t *dev = (dev_t*)(fd->file->drv_struct);
-    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_CUR);
+    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_SET);
     return dev->write(dev->drv_struct, buf, count);
 }
 
