@@ -83,6 +83,7 @@ static void boot(multiboot_t* mb_struct)
 
     setup_gdt();
 
+
     kdebug_init();
     klog(KLOG_INFO, "ULMIX boot");
     klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
