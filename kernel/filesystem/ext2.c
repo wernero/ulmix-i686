@@ -47,9 +47,6 @@ static int ext2_mount(fnode_t *mountpoint, fd_t *device)
 {
     /*
      *                          --- HDD DRIVER ---
-     * please note that 'fd_t device' is the file descriptor for the raw hard disk
-     * -> does not respect partition boundaries! Always add mbr_entry_t.start_sector
-     * as offset when performing an i/o operation on the hard disk!
      *
      * I/O Sector size:         device->file->io_size
      * Current seek offset:     device->seek_offset
