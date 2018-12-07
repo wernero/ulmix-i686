@@ -51,6 +51,7 @@ struct _process_t
     pid_t           ppid;
     pagedir_t*      pagedir;
     thread_t*       threads;
+    int             nofault;
     char            description[DESC_LENGTH];
 };
 
