@@ -1,5 +1,12 @@
 #include "fs_syscalls.h"
+#include "filesystem/path.h"
+#include "filesystem/vfscore.h"
 
+#define O_APPEND    0x01
+#define O_CREAT     0x02
+#define O_RDONLY    0x04
+#define O_RDWR      0x08
+#define O_WRONLY    0x10
 
 int sc_open(const char *pathname, int flags)
 {
