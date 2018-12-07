@@ -126,7 +126,7 @@ process_kstack_t kstack_init(process_kstack_t kstack, int thread_type, void *sta
 
     if (!kernel_thread)
     {
-        // these values are only pushed onto the pre-thread
+        // these values are only pushed onto the per-thread
         // kernel stack by user mode tasks
         *(--ksp) = ds;                  // user mode ss  = user ds
         *(--ksp) = user_esp;            // user mode esp = user_esp
