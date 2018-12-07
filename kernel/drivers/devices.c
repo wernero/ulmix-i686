@@ -1,7 +1,9 @@
 #include "devices.h"
 #include "drivers/ata.h"
 #include "memory/kheap.h"
+#include "filesystem/partitions.h"
 #include "log.h"
+#include "filesystem/path.h"
 
 static fd_t *dev_open(file_t *file);
 static int dev_close(fd_t *fd);
@@ -13,26 +15,6 @@ void scan_devices()
 {
     ata_init();
     // ... more devices
-}
-
-
-
-static fd_t *dev_open(file_t *file)
-{
-    fd_t *fdev = kmalloc(sizeof(fd_t), 1, "fd_t");
-    fdev->file = file;
-    fdev->seek_offset = 0;
-    fdev->read = dev_read;
-    fdev->write = dev_write;
-    fdev->seek = dev_seek;
-    fdev->fdi_struct = NULL;
-    return fdev;
-}
-
-static int dev_close(fd_t *fd)
-{
-    kfree(fd);
-    return 0;
 }
 
 void register_device(device_type_t type, void *drv_struct, size_t io_size,
@@ -68,11 +50,35 @@ void register_device(device_type_t type, void *drv_struct, size_t io_size,
         klog(KLOG_WARN, "error: failed to register device file /dev/%s", f.name);
     }
 
-    fd_t *device = f.open(&f);
-    if (disk_mount(get_node("/"), device) < 0)
+    fd_t *device;
+    switch (type)
     {
-        klog(KLOG_WARN, "error: could not mount device /dev/%s", f.name);
+    case DEV_ATA_HDD:
+        device = f.open(&devn->meta);
+        install_disk(device);
+        break;
+
+    default:
+        return;
     }
+}
+
+static fd_t *dev_open(file_t *file)
+{
+    fd_t *fdev = kmalloc(sizeof(fd_t), 1, "fd_t");
+    fdev->file = file;
+    fdev->seek_offset = 0;
+    fdev->read = dev_read;
+    fdev->write = dev_write;
+    fdev->seek = dev_seek;
+    fdev->fdi_struct = NULL;
+    return fdev;
+}
+
+static int dev_close(fd_t *fd)
+{
+    kfree(fd);
+    return 0;
 }
 
 static ssize_t dev_read(fd_t *fd, char *buf, size_t count)

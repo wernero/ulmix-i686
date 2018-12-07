@@ -5,7 +5,6 @@
 
 fnode_t root;
 
-static int insert_child_node(fnode_t *parent, fnode_t *child);
 
 void vfs_init()
 {
@@ -40,7 +39,7 @@ void vfs_init()
     }
 }
 
-static int insert_child_node(fnode_t *parent, fnode_t *child)
+int insert_child_node(fnode_t *parent, fnode_t *child)
 {
     if (parent == NULL || child == NULL)
         return -1;

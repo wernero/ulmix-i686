@@ -7,7 +7,8 @@
 typedef enum
 {
     DEV_FLOPPY,
-    DEV_ATA_HDD
+    DEV_ATA_HDD,
+    DEV_PARTITION
 } device_type_t;
 
 typedef struct

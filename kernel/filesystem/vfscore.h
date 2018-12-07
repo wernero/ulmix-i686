@@ -46,6 +46,8 @@ struct _nfile
     fd_t *(*open)(file_t *file);
     int (*close)(fd_t *fd);
 
+    size_t size;
+
     uint16_t permissions;
     uid_t owner;
     gid_t group;
@@ -80,5 +82,6 @@ struct _fdesc
 void vfs_init(void);
 fnode_t *mknod(fnode_t *directory, file_t file);
 fnode_t *mkdir(fnode_t *directory, char *name);
+int insert_child_node(fnode_t *parent, fnode_t *child);
 
 #endif // VFSCORE_H

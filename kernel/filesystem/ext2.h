@@ -68,7 +68,6 @@ typedef struct
 {
     superblock_extended_t superblock;
     uint32_t block_size;
-    uint32_t part_offset;
 } ext2fd_t;
 
 void install_ext2(void);
