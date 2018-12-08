@@ -25,7 +25,7 @@ int install_disk(fd_t *device)
     // determine partition table format:
     if (device == NULL)
     {
-        klog(KLOG_DEBUG, "disk_mount(): could not read device");
+        klog(KLOG_DEBUG, "install_disk(): could not read device");
         return -1;
     }
 
@@ -34,12 +34,12 @@ int install_disk(fd_t *device)
     device->read(device, (char*)mbr, 1);
     if (!is_mbr(mbr))
     {
-        klog(KLOG_DEBUG, "disk_mount(): partition table format not recognized");
+        klog(KLOG_DEBUG, "install_disk(): partition table format not recognized");
         return -1;
     }
 
     // read MBR partition table
-    klog(KLOG_DEBUG, "disk_mount(): reading MBR partition table:");
+    klog(KLOG_DEBUG, "install_disk(): reading MBR partition table:");
     for (int i = 0; i < 4; i++)
     {
         mbr_entry_t entry;
