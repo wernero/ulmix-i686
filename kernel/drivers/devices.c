@@ -13,6 +13,8 @@ static ssize_t dev_seek(fd_t *fd, size_t offset, int whence);
 
 void scan_devices()
 {
+    klog(KLOG_DEBUG, "scanning devices\n");
+
     ata_init();
     // ... more devices
 }
