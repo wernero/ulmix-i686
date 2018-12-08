@@ -1,7 +1,7 @@
 #ifndef EXT2_H
 #define EXT2_H
 
-#include "filesystem/filesystem.h"
+#include "util/util.h"
 
 typedef struct
 {

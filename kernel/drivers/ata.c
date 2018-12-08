@@ -6,6 +6,7 @@
 #include "interrupts.h"
 #include "sched/task.h"
 #include "sched/block.h"
+#include "filesystem/fs_syscalls.h"
 
 #define SECTOR_SIZE         512
 
@@ -41,8 +42,6 @@ static ssize_t ata_seek(void *dev_struct, size_t offset, int whence);
 
 void ata_init()
 {
-
-
     ata_drive_t ata_drive;
     for (int i = 0; i < 4; i++)
     {
@@ -58,7 +57,16 @@ void ata_init()
             char drive_name[16];
             get_name(&ata_drive, drive_name);
 
-            register_device(DEV_ATA_HDD, (void*)drive, SECTOR_SIZE, ata_read, ata_write, ata_seek, drive_name);
+            struct fops_struct fops =
+            {
+                .open = NULL,       // not implemented yet
+                .release = NULL,    //      -"-
+                .read = ata_read,
+                .write = ata_write,
+                .seek = ata_seek
+            };
+
+            register_bd(drive_name, (void*)drive, fops, 0);
         }
     }
 }

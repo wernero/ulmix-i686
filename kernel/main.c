@@ -10,6 +10,7 @@
 #include "sched/scheduler.h"
 #include "drivers/devices.h"
 #include "kdebug.h"
+#include "filesystem/vfscore.h"
 
 // .bss (ld)
 extern char _bss_start;
@@ -22,10 +23,10 @@ static void kmainthread(void)
     // Test function for scheduler
     klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
-    vfs_init();
-    // scan for available devices and
-    // automatically configure them
+
     scan_devices();
+    vfs_init();
+
 
     for (;;) hlt();
 }

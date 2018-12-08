@@ -1,115 +1,54 @@
 #include "devices.h"
 #include "drivers/ata.h"
+#include "drivers/partitions.h"
 #include "memory/kheap.h"
-#include "filesystem/partitions.h"
 #include "log.h"
-#include "filesystem/path.h"
 
-static fd_t *dev_open(file_t *file);
-static int dev_close(fd_t *fd);
-static ssize_t dev_read(fd_t *fd, char *buf, size_t count);
-static ssize_t dev_write(fd_t *fd, char *buf, size_t count);
-static ssize_t dev_seek(fd_t *fd, size_t offset, int whence);
+static void insert_device(struct gendisk_struct *bd);
+struct gendisk_struct *devices[20];
+int device_index = 0;
 
 void scan_devices()
 {
-    klog(KLOG_DEBUG, "scanning devices\n");
+    klog(KLOG_DEBUG, "scanning devices");
 
     ata_init();
     // ... more devices
 }
 
-void register_device(device_type_t type, void *drv_struct, size_t io_size,
-            ssize_t (*read) (void* drv_struct, char *buf, size_t count),
-            ssize_t (*write)(void* drv_struct, char *buf, size_t count),
-            ssize_t (*seek) (void* drv_struct, size_t offset, int whence),
-            char *dev_name)
+struct gendisk_struct *find_device(char *name)
 {
-    dev_t *dev = kmalloc(sizeof(dev_t), 1, "dev_t");
-    dev->drv_struct = drv_struct;
-    dev->read = read;
-    dev->write = write;
-    dev->seek = seek;
-
-    file_t f =
+    for (int i = 0; i < device_index; i++)
     {
-        .type = FILE_DEVICE,
-        .io_size = io_size,
-        .drv_struct = dev,
-
-        .open = dev_open,
-        .close = dev_close,
-
-        .group = 0,
-        .owner = 0,
-        .permissions = PERM_USER_READ | PERM_USER_WRITE
-    };
-    strcpy(f.name, dev_name);
-
-    fnode_t *devn;
-    if ((devn = mknod(get_node("/dev"), f)) == NULL)
-    {
-        klog(KLOG_WARN, "error: failed to register device file /dev/%s", f.name);
+        if (strcmp(name, devices[i]->name) == 0)
+        {
+            return devices[i];
+        }
     }
 
-    fd_t *device;
-    switch (type)
+    return NULL;
+}
+
+int register_bd(char *name, void *drv_struct, struct fops_struct fops, size_t capacity)
+{
+    struct gendisk_struct *bd = kmalloc(sizeof(struct gendisk_struct), 1, "gendisk_struct");
+    strcpy(bd->name, name);
+    bd->fops = fops;
+    bd->lock = mutex();
+    bd->capacity = capacity;
+    bd->part_count = 0;
+    bd->drv_struct = drv_struct;
+
+    if (part_scan(bd) < 0)
     {
-    case DEV_ATA_HDD:
-        device = f.open(&devn->meta);
-        install_disk(device);
-        break;
-
-    default:
-        return;
+        klog(KLOG_DEBUG, "register_bd(): %s: partition scan failed", name);
     }
-}
 
-static fd_t *dev_open(file_t *file)
-{
-    fd_t *fdev = kmalloc(sizeof(fd_t), 1, "fd_t");
-    fdev->file = file;
-    fdev->seek_offset = 0;
-    fdev->read = dev_read;
-    fdev->write = dev_write;
-    fdev->seek = dev_seek;
-    fdev->fdi_struct = NULL;
-    return fdev;
-}
-
-static int dev_close(fd_t *fd)
-{
-    kfree(fd);
+    insert_device(bd);
     return 0;
 }
 
-static ssize_t dev_read(fd_t *fd, char *buf, size_t count)
+static void insert_device(struct gendisk_struct *bd)
 {
-    dev_t *dev = (dev_t*)(fd->file->drv_struct);
-    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_SET);
-    return dev->read(dev->drv_struct, buf, count);
-}
-
-static ssize_t dev_write(fd_t *fd, char *buf, size_t count)
-{
-    dev_t *dev = (dev_t*)(fd->file->drv_struct);
-    dev->seek(dev->drv_struct, fd->seek_offset, SEEK_SET);
-    return dev->write(dev->drv_struct, buf, count);
-}
-
-static ssize_t dev_seek(fd_t *fd, size_t offset, int whence)
-{
-    switch (whence)
-    {
-    case SEEK_SET:
-        fd->seek_offset = offset;
-        break;
-    case SEEK_CUR:
-        fd->seek_offset += offset;
-        break;
-    case SEEK_END:
-    default:
-        return -1;
-    }
-    return 0;
+    devices[device_index++] = bd;
 }

@@ -2,11 +2,8 @@
 #define PARTITIONS_H
 
 #include "drivers/devices.h"
-#include "filesystem/vfscore.h"
-#include "util/util.h"
 
-typedef struct _mbr_entry mbr_entry_t;
-struct _mbr_entry
+struct mbr_entry_struct
 {
     int bootable;           // bootable = 1
     int is_lba48;           // uses LBA48 addressing (for more than 2TB of addressable space)
@@ -16,6 +13,6 @@ struct _mbr_entry
     int id;                 // partition #
 };
 
-int install_disk(fd_t *device);
+int part_scan(struct gendisk_struct *bd);
 
 #endif // PARTITIONS_H

@@ -3,6 +3,12 @@
 
 #include "util/util.h"
 
+enum _whence
+{
+    SEEK_SET,
+    SEEK_CUR,
+    SEEK_END
+};
 
 /* file system related system calls */
 
