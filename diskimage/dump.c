@@ -377,6 +377,21 @@ int main() {
 					   				break;
 					   			case 13: // double indirect
 					   				printf("inode data double indirect\n");
+							   		fptr_pos = ftell(fptr); // save current position
+
+
+					   				fseek(fptr,block_to_address(id.i_block[n]), SEEK_SET);
+						   			fread(&ext2_inode_indirect_ptr, sizeof(ext2_inode_indirect_ptr), 1, fptr);
+
+						   			for(j = 0; j < 256; j++) {
+
+						   				printf("%d - %d: i_block[ %d ] double indrect [ %d ]: %x\n",g ,i+1, n, j, block_to_address(ext2_inode_indirect_ptr[j]));
+
+						   			}
+
+							   		fseek(fptr,fptr_pos, SEEK_SET); // return to current position
+
+
 					   				break;
 					   			case 14: // triple indirect
 					   				printf("inode data triple indirect\n");
