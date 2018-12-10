@@ -4,17 +4,17 @@ mv hdd.img hdd.img.bak
 
 rm hdd.img 
 
-bximage -mode=create -hd=30M -sectsize=512 -q hdd.img
+bximage -mode=create -hd=30M -q hdd.img
 sfdisk hdd.img < sfdisk.layout
 sfdisk -l hdd.img
 
-losetup -o 512 --sizelimit 30965248 /dev/loop1 hdd.img
-mkfs.ext2 /dev/loop1
+sudo losetup -o 512 --sizelimit 30965248 /dev/loop1 hdd.img
+sudo mkfs.ext2 /dev/loop1
 
-mkdir /mnt/hd1p1 ; mount /dev/loop1 /mnt/hd1p1
-touch /mnt/hd1p1/this-is-a-disk-image
-echo "this is a disk image" > /mnt/hd1p1/readme.txt
+sudo mkdir /mnt/hd1p1 ; mount /dev/loop1 /mnt/hd1p1
+sudo touch /mnt/hd1p1/this-is-a-disk-image
+sudo echo "this is a disk image" > /mnt/hd1p1/readme.txt
 
-umount /mnt/hd1p1/
-losetup -l
-losetup -D
+sudo umount /mnt/hd1p1/
+sudo losetup -l
+sudo losetup -D
