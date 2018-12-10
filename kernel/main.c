@@ -21,7 +21,7 @@ extern char _kernel_end;
 static void kmainthread(void)
 {
     // Test function for scheduler
-    klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
+    klog(KLOG_INFO, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
 
     scan_devices();

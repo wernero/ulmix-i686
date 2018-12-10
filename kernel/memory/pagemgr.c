@@ -26,7 +26,7 @@ void setup_pagemgr(uint32_t available_memory)
         klog(KLOG_WARN, "setup_pagemgr(): phys memory size not page aligned");
     }
 
-    klog(KLOG_DEBUG, "setup_pagemgr(): %d dynamically allocatable pages (%S)",
+    klog(KLOG_INFO, "setup_pagemgr(): %d dynamically allocatable pages (%S)",
          pages, dynamic);
 
     dyn_pages = kmalloc(sizeof(page_t) * pages, 1, "pagemgr array");
