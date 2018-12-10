@@ -6,10 +6,8 @@
 #include "video/video.h"
 
 int kdebug_enabled = 0;
-mutex_t *log_mutex;
 struct tty_struct *debug_tty = NULL;
 
-#define DEBUG_SERIAL 1
 
 void kdebug_init()
 {
@@ -18,20 +16,19 @@ void kdebug_init()
         tty_focus(debug_tty);
 
     serial_open(TTYS1, 0);
-    log_mutex = mutex();
 
     kdebug_enabled = 1;
 }
 
-void log_puts(char *s)
+void log_puts(int oflags, char *s)
 {
     int l = strlen(s);
-    tty_write(debug_tty, s, l);
-    serial_write(TTYS1, s, l);
+    if (oflags & OUT_TTY)       tty_write(debug_tty, s, l);
+    if (oflags & OUT_SERIAL)    serial_write(TTYS1, s, l);
 }
 
-void log_putchar(char c)
+void log_putchar(int oflags, char c)
 {
-    tty_putchar(debug_tty, c);
-    serial_putchar(TTYS1, c);
+    if (oflags & OUT_TTY)       tty_putchar(debug_tty, c);
+    if (oflags & OUT_SERIAL)    serial_putchar(TTYS1, c);
 }
