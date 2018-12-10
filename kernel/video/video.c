@@ -4,11 +4,14 @@
 
 static void clear(struct tty_struct *tty);
 static void scroll(struct tty_struct *tty);
+static void set_cursor(struct tty_struct *tty);
+static void _tty_putchar(struct tty_struct *tty, char c);
 
 void tty_focus(struct tty_struct *tty)
 {
     tty->vmem = (char*)VIDEO_START;
     memcpy(tty->vmem, tty->tty_mem, LINES*COLUMNS*2);
+    set_cursor(tty);
 }
 
 struct tty_struct *tty_open(void)
@@ -28,8 +31,9 @@ ssize_t tty_write(struct tty_struct *tty, char *buf, int len)
     int i;
     for (i = 0; i < len; i++)
     {
-        tty_putchar(tty, buf[i]);
+        _tty_putchar(tty, buf[i]);
     }
+    set_cursor(tty);
     return i;
 }
 
@@ -46,9 +50,16 @@ static void scroll(struct tty_struct *tty)
     }
 
     tty->pos_y = LINES - 1;
+    set_cursor(tty);
 }
 
 void tty_putchar(struct tty_struct *tty, char c)
+{
+    _tty_putchar(tty, c);
+    set_cursor(tty);
+}
+
+static void _tty_putchar(struct tty_struct *tty, char c)
 {
     int pos = (tty->pos_y * COLUMNS + tty->pos_x) * 2;
 
@@ -93,5 +104,18 @@ static void clear(struct tty_struct *tty)
 
     tty->pos_x = 0;
     tty->pos_y = 0;
+    set_cursor(tty);
 }
 
+static void set_cursor(struct tty_struct *tty)
+{
+    if (tty->vmem == tty->tty_mem)
+        return;
+
+    int pos = tty->pos_y * COLUMNS + tty->pos_x;
+
+    outb(0x3d4, 0x0f);
+    outb(0x3d5, (unsigned char)(pos & 0xff));
+    outb(0x3d4, 0x0e);
+    outb(0x3d5, (unsigned char)((pos >> 8) & 0xff));
+}
