@@ -10,15 +10,15 @@ typedef struct
 } page_t;
 
 static page_t *dyn_pages;
-static uint32_t pages;
+static unsigned long pages;
 
 /*
  * setup_pagemgr(): sets up dynamic page allocation for paging
  * this has to be called BEFORE paging is set up
  */
-void setup_pagemgr(uint32_t available_memory)
+void setup_pagemgr(unsigned long available_memory)
 {
-    uint32_t dynamic = available_memory - DYNAMIC_START;    // dynamic mem available
+    unsigned long dynamic = available_memory - DYNAMIC_START;    // dynamic mem available
     pages = dynamic / PAGESIZE;                             // amount of available pages
 
     if (dynamic % PAGESIZE != 0)
@@ -44,12 +44,12 @@ void setup_pagemgr(uint32_t available_memory)
 
 pagetable_entry_t get_free_page(int flags)
 {
-    for (uint32_t i = 0; i < pages; i++)
+    for (unsigned long i = 0; i < pages; i++)
     {
         if (dyn_pages[i].references == 0)
         {
             dyn_pages[i].references++;
-            uint32_t page_addr = DYNAMIC_START + (i * PAGESIZE);
+            unsigned long page_addr = DYNAMIC_START + (i * PAGESIZE);
             return page_addr | PAG_PRESENT | flags;
         }
     }
@@ -60,7 +60,7 @@ pagetable_entry_t get_free_page(int flags)
 
 void release_page(void *page)
 {
-    uint32_t page_addr = (uint32_t)page;
+    unsigned long page_addr = (unsigned long)page;
     if (page_addr < DYNAMIC_START || page_addr % PAGESIZE != 0)
     {
         klog(KLOG_WARN, "release_page(): invalid page address - possible memory leak");
