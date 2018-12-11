@@ -1,175 +1,121 @@
 #include "video.h"
 #include "util/string.h"
+#include "memory/kheap.h"
 
-console_t *current_console;
-static size_t vprintf(console_t *console, const char *format, va_list ap);
+static void clear(struct tty_struct *tty);
+static void scroll(struct tty_struct *tty);
+static void set_cursor(struct tty_struct *tty);
+static void _tty_putchar(struct tty_struct *tty, char c);
 
-const char *splash =    "11000011001100000000110000001100111111001100000011"
-                        "11000011001100000000111100111100001100000011001100"
-                        "11000011001100000000110011001100001100000000110000"
-                        "11000011001100000000110000001100001100000011001100"
-                        "00111100001111111100110000001100111111001100000011";
-
-void console_init(console_t *console,
-                  vmem_color_t font_color,
-                  vmem_color_t background_color)
+void tty_focus(struct tty_struct *tty)
 {
-    console->color = font_color | (background_color << 4);
-    console->pos_x = 0;
-    console->pos_y = 0;
-    console->vmem = (char *)VIDEO_START;
-
-    current_console = console;
+    tty->vmem = (char*)VIDEO_START;
+    memcpy(tty->vmem, tty->tty_mem, LINES*COLUMNS*2);
+    set_cursor(tty);
 }
 
-static void set_cursor(int x, int y)
+struct tty_struct *tty_open(void)
 {
-    uint16_t pos = y * COLUMNS + x;
+    struct tty_struct *tty = kmalloc(sizeof(struct tty_struct), 1, "tty_struct");
+    tty->pos_x = 0;
+    tty->pos_y = 0;
+    tty->vmem = tty->tty_mem;
+    tty->color = WHITE | (BLACK << 4);
 
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t) (pos & 0xFF));
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+    clear(tty);
+    return tty;
 }
 
-void splashscreen(console_t *console)
+ssize_t tty_write(struct tty_struct *tty, char *buf, int len)
 {
-    int splash_lines = 5;
-    int splash_cols = strlen(splash) / splash_lines;
-
-    console_clear(console);
-    for (int i = 0; i < splash_lines; i++)
+    int i;
+    for (i = 0; i < len; i++)
     {
-        for (int j = 0; j < splash_cols; j++)
-        {
-            if (splash[i*splash_cols + j] == '1')
-                console->vmem[(i * COLUMNS + j) * 2 + 1] = BLACK;
-        }
+        _tty_putchar(tty, buf[i]);
     }
+    set_cursor(tty);
+    return i;
 }
 
-void console_clear(console_t *console)
+static void scroll(struct tty_struct *tty)
 {
-    for (size_t i = 0; i < COLUMNS*LINES*2; i+=2)
+    int src = COLUMNS * 2;
+    int len = COLUMNS * (LINES - 1) * 2;
+    memmove(tty->vmem, (void*)(tty->vmem + src), len);
+
+    for (int i = len; i < COLUMNS*LINES*2; i += 2)
     {
-        console->vmem[i] = 0;
-        console->vmem[i+1] = console->color;
+        tty->vmem[i] = 0;
+        tty->vmem[i+1] = tty->color;
     }
-    set_cursor(console->pos_x = 0,
-               console->pos_y = 0);
+
+    tty->pos_y = LINES - 1;
+    set_cursor(tty);
 }
 
-static void scroll(console_t *console)
+void tty_putchar(struct tty_struct *tty, char c)
 {
-    console->pos_y = LINES - 1;
-    int copy_length = (LINES - 1) * COLUMNS * 2;
-    memcpy(console->vmem,
-           console->vmem + COLUMNS*2,
-           copy_length);
-
-    char *last_line = console->vmem + copy_length;
-    for (int i = 0; i < COLUMNS*2; i+=2)
-    {
-        last_line[i] = 0;
-        last_line[i+1] = console->color;
-    }
-    set_cursor(0, LINES-1);
+    _tty_putchar(tty, c);
+    set_cursor(tty);
 }
 
-static void update(console_t *console)
+static void _tty_putchar(struct tty_struct *tty, char c)
 {
-    if (console->pos_x >= COLUMNS)
-    {
-        console->pos_x = 0;
-        if (++console->pos_y >= LINES)
-        {
-            scroll(console);
-            return;
-        }
-    }
-    set_cursor(console->pos_x, console->pos_y);
-}
+    int pos = (tty->pos_y * COLUMNS + tty->pos_x) * 2;
 
-char putchar(console_t *console, char c)
-{
     if (c == '\n')
     {
-        console->pos_x = 0;
-        console->pos_y++;
-        if (console->pos_y >= LINES)
+        for (int i = pos; tty->pos_x < COLUMNS; i += 2)
         {
-            scroll(console);
+            tty->vmem[i] = 0;
+            tty->vmem[i+1] = tty->color;
+            tty->pos_x++;
         }
+
+        tty->pos_x = 0;
+        tty->pos_y++;
     }
     else
     {
-        size_t offset = console->pos_y * COLUMNS + console->pos_x++;
-        console->vmem[offset*2] = c;
-        console->vmem[offset*2+1] = console->color;
+        tty->vmem[pos] = c;
+        tty->vmem[pos + 1] = tty->color;
+        tty->pos_x++;
     }
 
-    update(console);
-    return c;
-}
-
-size_t puts(console_t *console, char *str)
-{
-    size_t len = 0;
-    while (*str != 0)
+    if (tty->pos_x >= COLUMNS)
     {
-        putchar(console, *str);
-        str++;
-        len++;
+        tty->pos_y++;
+        tty->pos_x = 0;
     }
-    return len;
-}
 
-static size_t vprintf(console_t *console, const char *format, va_list ap)
-{
-    size_t len = 0;
-    char *str = (char*)format;
-    char strbuf[512];
-    while (*str)
+    if (tty->pos_y >= LINES)
     {
-        if (*str == '%')
-        {
-            switch (*(++str))
-            {
-            case 'd':
-                itoa(va_arg(ap, int), strbuf);
-                len += puts(console, strbuf);
-                break;
-            case 'c':
-                len += putchar(console, va_arg(ap, int));
-            case 's':
-                len += puts(console, va_arg(ap, char*));
-                break;
-            case 'x':
-                itoxa(va_arg(ap, int), strbuf);
-                len += puts(console, strbuf);
-                break;
-            default:
-                str++;
-            }
-
-            str++;
-            continue;
-        }
-
-        putchar(console, *str);
-        len++;
-        str++;
+        scroll(tty);
     }
-
-    return len;
 }
 
-size_t kprintf(const char *format, ...)
+static void clear(struct tty_struct *tty)
 {
-    va_list ap;
-    va_start(ap, format);
-    size_t ret = vprintf(current_console, format, ap);
-    va_end(ap);
+    for (int i = 0; i < (LINES*COLUMNS*2); i += 2)
+    {
+        tty->vmem[i] = 0;
+        tty->vmem[i+1] = tty->color;
+    }
 
-    return ret;
+    tty->pos_x = 0;
+    tty->pos_y = 0;
+    set_cursor(tty);
+}
+
+static void set_cursor(struct tty_struct *tty)
+{
+    if (tty->vmem == tty->tty_mem)
+        return;
+
+    int pos = tty->pos_y * COLUMNS + tty->pos_x;
+
+    outb(0x3d4, 0x0f);
+    outb(0x3d5, (unsigned char)(pos & 0xff));
+    outb(0x3d4, 0x0e);
+    outb(0x3d5, (unsigned char)((pos >> 8) & 0xff));
 }

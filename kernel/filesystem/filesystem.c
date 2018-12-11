@@ -43,7 +43,8 @@ int kmount(const char *mountpoint, char *device, int partition)
         filesystem_t *pfs = supported_filesystems[i];
         if (pfs != NULL && (pfs->fs_probe(disk, partition) >= 0))
         {
-            klog(KLOG_INFO, "kmount(): start=0x%x, size=%S, type=%s",
+            klog(KLOG_INFO, "kmount(): disk=%s, start=0x%x, size=%S, type=%s",
+                 device,
                  disk->part_list[partition].sector_offset * 512,
                  disk->part_list[partition].sector_count * 512,
                  pfs->name);

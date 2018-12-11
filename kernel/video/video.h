@@ -18,22 +18,19 @@ typedef enum
 
 } vmem_color_t;
 
-typedef struct
+struct tty_struct
 {
     int pos_x;
     int pos_y;
+    char tty_mem[LINES*COLUMNS*2];
     char *vmem;
     uint8_t color;
-} console_t;
+};
 
-void console_clear(console_t *console);
-void console_init(console_t *console,
-                  vmem_color_t font_color,
-                  vmem_color_t background_color);
-void splashscreen(console_t *console);
-size_t puts(console_t *console, char *str);
-char putchar(console_t *console, char c);
+struct tty_struct *tty_open(void);
+ssize_t tty_write(struct tty_struct *tty, char *buf, int len);
+void tty_putchar(struct tty_struct *tty, char c);
+void tty_focus(struct tty_struct *tty);
 
-size_t kprintf(const char *format, ...);
 
 #endif // VIDEO_H

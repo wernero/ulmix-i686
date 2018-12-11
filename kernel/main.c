@@ -21,7 +21,7 @@ extern char _kernel_end;
 static void kmainthread(void)
 {
     // Test function for scheduler
-    klog(KLOG_DEBUG, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
+    klog(KLOG_INFO, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
 
     scan_devices();
@@ -83,7 +83,6 @@ static void boot(multiboot_t* mb_struct)
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
     setup_gdt();
-
 
     kdebug_init();
     klog(KLOG_INFO, "ULMIX boot");

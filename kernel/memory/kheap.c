@@ -199,7 +199,7 @@ static void setup_heap(uint32_t heap_start)
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
     heap_enabled = 1;
-    klog(KLOG_INFO, "kheap: init pre-paging heap: starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
+    klog(KLOG_INFO, "setup_heap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
 /*
@@ -221,7 +221,7 @@ static void setup_pheap()
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
     pheap_enabled = 1;
-    klog(KLOG_INFO, "kheap: paged kernel heap: starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
+    klog(KLOG_INFO, "setup_pheap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
 

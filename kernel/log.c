@@ -3,14 +3,13 @@
 #include "util/string.h"
 #include "sched/sync.h"
 
+
 extern int kdebug_enabled;
 
-extern void log_puts(char *s);
-extern void log_putchar(char c);
+extern void log_puts(int oflags, char *s);
+extern void log_putchar(int oflags, char c);
 
-extern mutex_t *log_mutex;
-
-static void vsprintf(const char *format, va_list ap)
+static void vsprintf(int oflags, const char *format, va_list ap)
 {
     char strbuf[64];
     uint32_t n;
@@ -24,34 +23,34 @@ static void vsprintf(const char *format, va_list ap)
             case 'd':
                 n = va_arg(ap, uint32_t);
                 itoa(n, strbuf);
-                log_puts(strbuf);
+                log_puts(oflags, strbuf);
                 break;
             case 's':
                 str = va_arg(ap, char*);
-                log_puts(str);
+                log_puts(oflags, str);
                 break;
             case 'x':
             case 'X':
                 n = va_arg(ap, uint32_t);
                 itoxa(n, strbuf);
-                log_puts(strbuf);
+                log_puts(oflags, strbuf);
                 break;
             case 'S':
                 n = va_arg(ap, uint32_t);
                 bsize(n, strbuf);
-                log_puts(strbuf);
+                log_puts(oflags, strbuf);
                 break;
             case '%':
-                log_putchar('%');
+                log_putchar(oflags, '%');
                 break;
             default:
-                log_putchar('?');
+                log_putchar(oflags, '?');
             }
 
             continue;
         }
 
-        log_putchar(format[i]);
+        log_putchar(oflags, format[i]);
     }
     va_end(ap);
 }
@@ -60,15 +59,18 @@ void klog(loglevel_t lvl, const char *format, ...)
 {
     if (kdebug_enabled)
     {
-        mutex_lock(log_mutex);
+        int output_flags = OUT_SERIAL;
+        if (lvl == KLOG_PANIC ||
+                lvl == KLOG_INFO ||
+                lvl == KLOG_WARN ||
+                lvl == KLOG_FAILURE)
+            output_flags |= OUT_TTY;
 
         va_list args;
         va_start(args, format);
-        vsprintf(format, args);
+        vsprintf(output_flags, format, args);
         va_end(args);
-        log_putchar('\n');
-
-        mutex_unlock(log_mutex);
+        log_putchar(output_flags, '\n');
     }
 
     if (lvl == KLOG_PANIC || lvl == KLOG_FAILURE)
@@ -78,3 +80,4 @@ void klog(loglevel_t lvl, const char *format, ...)
         hlt();
     }
 }
+

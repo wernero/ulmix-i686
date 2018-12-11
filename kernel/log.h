@@ -1,6 +1,9 @@
 #ifndef LOG_H
 #define LOG_H
 
+#define OUT_SERIAL  0x01
+#define OUT_TTY     0x02
+
 typedef enum
 {
     KLOG_INFO,          // display on assoc tty
@@ -10,6 +13,7 @@ typedef enum
     KLOG_EXCEPTION,     // kernel log only
     KLOG_PANIC          // display on all ttys
 } loglevel_t;
+
 
 void klog(loglevel_t lvl, const char *format, ...);
 
