@@ -19,8 +19,8 @@
 extern void irq_asm_timer(void);
 extern scheduler_state_t scheduler_state;
 
-volatile uint32_t timer_ticks = 0;
-uint32_t irq_timer(uint32_t esp)
+volatile unsigned long timer_ticks = 0;
+unsigned long irq_timer(uint32_t esp)
 {
     timer_ticks++;
 
