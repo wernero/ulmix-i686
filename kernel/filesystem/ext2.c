@@ -40,30 +40,6 @@ static int ext2_probe(struct gendisk_struct *bd, int partition)
 
 static int ext2_mount(const char *mountpoint, struct gendisk_struct *bd, int partition)
 {
-    /*
-     *                          --- HDD DRIVER ---
-     *
-     * I/O Sector size:         device->file->io_size
-     * Current seek offset:     device->seek_offset
-     * read from HDD:           device->read(device, <buffer>, <sector-count>)
-     * change seek offset:      device->seek(device, <sector-offset>, SEEK_SET)
-     *                          device->seek(device, <sector-offset>, SEEK_CUR)
-     *
-     * write to HDD:            device->write(device, <buffer>, <sector-count>)
-     *                          (not tested yet, but should work)
-     *
-     *                           --- FILESYSTEM ---
-     *
-     * the filesystem expects the ext2 driver to create a model of fnode_t's of the
-     * ext2 tree, when mount() is called.
-     *
-     * create an fnode_t:       mknod(fnode_t parent, file_t new_node)
-     */
-
-    // get superblock and store in the ext2 descriptor
-    ext2fd_t *ext2descriptor = kmalloc(sizeof(ext2fd_t), 1, "ext2fd_t");
-    get_superblock(bd, &(bd->part_list[partition]), (unsigned char*)&(ext2descriptor->superblock));
-    ext2descriptor->block_size = 1024 << ext2descriptor->superblock.base_fields.block_size_log;
 
 
     // for now
