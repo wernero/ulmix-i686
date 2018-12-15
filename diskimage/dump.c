@@ -359,7 +359,7 @@ int main() {
 				   		} // end directory
 
 
-					   	if(id.i_mode & 0x8000) {   // inode is a directory entry
+					   	if(id.i_mode & 0x8000) {   // inode is a file entry
 
 					   		switch(n) {
 					   			case 12: // single indirect
@@ -404,7 +404,7 @@ int main() {
 								   			for(k = 0; k < 256; k++) {
 
 								   				if(block_to_address(ext2_inode_double_indirect_ptr[k]) > 0) {
-									   				printf("%d - %d: i_block[ %d ] 2nd double indrect [ %d %x ]: %x\n",g ,i+1, n, k, double_indirect, block_to_address(ext2_inode_double_indirect_ptr[k]));
+									   				printf("%d - %d: i_block[ %d ] double indrect [ %d %d %x ]: %x\n",g ,i+1, n, j, k, double_indirect, block_to_address(ext2_inode_double_indirect_ptr[k]));
 
 								   				}
 
