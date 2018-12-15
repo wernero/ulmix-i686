@@ -215,12 +215,13 @@ long block_to_address(__u32 block) {
 int main() {
 
 	int n;
-	int g,i,j;
+	int g,i,j,k;
 	struct ext2_super_block sb;
 	struct ext2_group_desc gd[10];
 	struct ext2_inode id;
 
 	__u32 ext2_inode_indirect_ptr[256];
+	__u32 ext2_inode_double_indirect_ptr[256];
 
 	int num_block_groups = 0;
 
@@ -278,7 +279,9 @@ int main() {
    	for(g=0; g < num_block_groups; g++)
    	{
 
-   		long fptr_pos = 0;
+   		long fptr_pos = 0;   		
+   		long fptr_pos2 = 0;
+   		__u32 double_indirect = 0;
 
 	   	// jump to Inode data
 	   	fseek(fptr,block_to_address(gd[g].bg_inode_table),SEEK_SET);
@@ -385,7 +388,32 @@ int main() {
 
 						   			for(j = 0; j < 256; j++) {
 
-						   				printf("%d - %d: i_block[ %d ] double indrect [ %d ]: %x\n",g ,i+1, n, j, block_to_address(ext2_inode_indirect_ptr[j]));
+						   				double_indirect = block_to_address(ext2_inode_indirect_ptr[j]);
+
+						   				if(double_indirect > 0) {
+
+
+
+							   				printf("%d - %d: i_block[ %d ] double indrect [ %d ]: %x\n",g ,i+1, n, j, double_indirect );
+
+
+									   		fptr_pos2 = ftell(fptr); // save current position
+							   				fseek(fptr,double_indirect, SEEK_SET);
+								   			fread(&ext2_inode_double_indirect_ptr, sizeof(ext2_inode_double_indirect_ptr), 1, fptr);
+
+								   			for(k = 0; k < 256; k++) {
+
+								   				if(block_to_address(ext2_inode_double_indirect_ptr[k]) > 0) {
+									   				printf("%d - %d: i_block[ %d ] 2nd double indrect [ %d %x ]: %x\n",g ,i+1, n, k, double_indirect, block_to_address(ext2_inode_double_indirect_ptr[k]));
+
+								   				}
+
+
+								   			}
+
+									   		fseek(fptr,fptr_pos2, SEEK_SET); // return to current position
+
+									   	}
 
 						   			}
 
