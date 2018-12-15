@@ -2,13 +2,15 @@
 #include "filesystem/filesystem.h"
 #include "log.h"
 
+struct dir_struct root;
+
 void vfs_init()
 {
-    // init VFS
+    root.mountpoint = 0;
 
     init_filesystems();
 
-    if (kmount("/", "ata0", 0) < 0) // -> ata0, partition 0
+    if (kmount(&root, "ata0", 0) < 0) // -> ata0, partition 0
     {
         klog(KLOG_FAILURE, "unable to mount root fs");
     }

@@ -2,6 +2,14 @@
 #define FS_SYSCALLS_H
 
 #include "util/util.h"
+#include "filesystem/vfscore.h"
+
+struct file_struct // file descriptor
+{
+    struct direntry_struct *direntry;
+
+    // fops, ...
+};
 
 enum _whence
 {

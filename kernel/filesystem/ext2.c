@@ -7,7 +7,9 @@
 
 
 static int ext2_probe(struct gendisk_struct *bd, int partition);
-static int ext2_mount(const char *mountpoint, struct gendisk_struct *bd, int partition);
+static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, int partition);
+static int ext2_get_direntry(struct dir_struct *miss);
+static int ext2_get_inode(struct dir_struct *parent, unsigned long inode_no);
 
 void install_ext2()
 {
@@ -15,6 +17,8 @@ void install_ext2()
 
     ext2fs->fs_probe = ext2_probe;
     ext2fs->fs_mount = ext2_mount;
+    ext2fs->fs_get_direntry = ext2_get_direntry;
+    ext2fs->fs_get_inode = ext2_get_inode;
     ext2fs->name = "ext2";
 
     install_fs(ext2fs);
@@ -38,10 +42,23 @@ static int ext2_probe(struct gendisk_struct *bd, int partition)
     return -1;
 }
 
-static int ext2_mount(const char *mountpoint, struct gendisk_struct *bd, int partition)
+static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, int part)
 {
-
+    // get inode 2
+    // parse & fill out
 
     // for now
+    return 0;
+}
+
+static int ext2_get_direntry(struct dir_struct *miss)
+{
+    // TODO
+    return 0;
+}
+
+static int ext2_get_inode(struct dir_struct *parent, unsigned long inode_no)
+{
+    // TODO
     return 0;
 }

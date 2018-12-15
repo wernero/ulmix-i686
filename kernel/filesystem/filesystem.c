@@ -30,7 +30,7 @@ int install_fs(filesystem_t *fs)
     return -1;
 }
 
-int kmount(const char *mountpoint, char *device, int partition)
+int kmount(struct dir_struct *mountpoint, char *device, int partition)
 {
     struct gendisk_struct *disk;
     if ((disk = find_device(device)) == NULL)

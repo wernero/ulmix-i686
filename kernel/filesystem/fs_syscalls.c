@@ -1,6 +1,5 @@
 #include "fs_syscalls.h"
 //#include "filesystem/path.h"
-#include "filesystem/vfscore.h"
 
 #define O_APPEND    0x01
 #define O_CREAT     0x02
@@ -10,6 +9,11 @@
 
 int sc_open(const char *pathname, int flags)
 {
+    // lookup path
+    /*struct direntry_struct *file;*/
+
+
+
     return -1;
 }
 

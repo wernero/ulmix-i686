@@ -35,6 +35,7 @@ typedef struct
 typedef struct
 {
     superblock_base_t base_fields;
+
     uint32_t first_inode_non_reserved;
     uint16_t inode_size;
     uint16_t backup_blockgroup;
