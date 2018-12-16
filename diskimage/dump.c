@@ -287,6 +287,7 @@ int main() {
 	   	fseek(fptr,block_to_address(gd[g].bg_inode_table),SEEK_SET);
 
 	   	printf("reading inode data for block group %d\n", g);
+	   	printf("size inode struct %x\n", sizeof(struct ext2_inode));
 
 	   	// read inode data for group
 	   	for(i=0; i < sb.s_inodes_per_group; i++)
