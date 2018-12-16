@@ -66,7 +66,7 @@ void ata_init()
                 .seek = ata_seek
             };
 
-            register_bd(drive_name, (void*)drive, fops, 0);
+            register_bd(MAJOR_ATA0 + i, drive_name, (void*)drive, fops, 0);
         }
     }
 }
@@ -137,7 +137,7 @@ static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
 static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
 {
     ata_drive_t *drive = ((ata_drive_t*)dev_struct);
-    klog(KLOG_DEBUG, "ata_read(): PIO mode: writing %d sectors to ATA #%d", count, drive->id);
+    klog(KLOG_DEBUG, "ata_write(): PIO mode: writing %d sectors to ATA #%d", count, drive->id);
 
     outb(drive->io_base + 6, drive->drive_select);  // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high

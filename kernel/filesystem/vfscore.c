@@ -10,7 +10,7 @@ void vfs_init()
 
     init_filesystems();
 
-    if (kmount(&root, "ata0", 0) < 0) // -> ata0, partition 0
+    if (kmount(&root, MAJOR_ATA0, 0) < 0) // -> ata0, partition 0
     {
         klog(KLOG_WARN, "unable to mount root fs"); // actually FAILURE!!!
     }

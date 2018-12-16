@@ -16,7 +16,7 @@ typedef struct
 
 void init_filesystems(void);
 int  install_fs(filesystem_t *fs);
-int kmount(struct dir_struct *mountpoint, char *device, int partition);
+int kmount(struct dir_struct *mountpoint, int major, int partition);
 
 
 #endif // FILESYSTEM_H

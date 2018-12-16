@@ -16,11 +16,11 @@ void scan_devices()
     // ... more devices
 }
 
-struct gendisk_struct *find_device(char *name)
+struct gendisk_struct *find_device(int major)
 {
     for (int i = 0; i < device_index; i++)
     {
-        if (strcmp(name, devices[i]->name) == 0)
+        if (major == devices[i]->major)
         {
             return devices[i];
         }
@@ -29,12 +29,13 @@ struct gendisk_struct *find_device(char *name)
     return NULL;
 }
 
-int register_bd(char *name, void *drv_struct, struct fops_struct fops, size_t capacity)
+int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity)
 {
     struct gendisk_struct *bd = kmalloc(sizeof(struct gendisk_struct), 1, "gendisk_struct");
     strcpy(bd->name, name);
     bd->fops = fops;
     bd->lock = mutex();
+    bd->major = major;
     bd->capacity = capacity;
     bd->part_count = 0;
     bd->drv_struct = drv_struct;

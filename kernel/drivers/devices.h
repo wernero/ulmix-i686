@@ -4,6 +4,12 @@
 #include "util/util.h"
 #include "sched/sync.h"
 
+#define MAJOR_ATA0  8
+#define MAJOR_ATA1  9
+#define MAJOR_ATA2  10
+#define MAJOR_ATA3  11
+#define MAJOR_AUDIO 12
+
 struct fops_struct
 {
     int (*open)(void *drv_struct); // probably add access modes (readonly, writeonly, readwrite)
@@ -28,13 +34,14 @@ struct gendisk_struct
     char name[16];
     size_t capacity;
     int part_count;
+    int major;
     void *drv_struct;
     struct hd_struct part_list[4]; // 4 partitions
     struct fops_struct fops;
 };
 
 void scan_devices(void);
-struct gendisk_struct *find_device(char *name);
-int register_bd(char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
+struct gendisk_struct *find_device(int major);
+int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
 
 #endif // DEVICES_H
