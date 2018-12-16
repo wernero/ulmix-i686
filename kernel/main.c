@@ -67,6 +67,7 @@ void main(multiboot_t* mb_struct)
 {
     boot(mb_struct);
 
+    // creating kernel process
     kprocess = mk_process(pagedir_kernel,   // address space
                           TYPE_KERNEL,      // process type
                           kmainthread,      // entry point
