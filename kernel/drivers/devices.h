@@ -30,18 +30,31 @@ struct hd_struct
 
 struct gendisk_struct
 {
+    int major;
     mutex_t *lock;
     char name[16];
     size_t capacity;
     int part_count;
-    int major;
     void *drv_struct;
     struct hd_struct part_list[4]; // 4 partitions
     struct fops_struct fops;
 };
 
+struct chardev_struct
+{
+    int major;
+    char name[16];
+    struct fops_struct fops;
+};
+
+typedef union
+{
+    struct gendisk_struct *gendisk;
+    struct chardev_struct *chardev;
+} gendevice_t;
+
 void scan_devices(void);
-struct gendisk_struct *find_device(int major);
+struct gendisk_struct *find_gendisk(int major);
 int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
 
 #endif // DEVICES_H

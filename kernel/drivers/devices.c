@@ -4,8 +4,9 @@
 #include "memory/kheap.h"
 #include "log.h"
 
-static void insert_device(struct gendisk_struct *bd);
-struct gendisk_struct *devices[20];
+static void insert_gendisk(struct gendisk_struct *bd);
+static void insert_chardev(struct chardev_struct *cd);
+gendevice_t devices[20];
 int device_index = 0;
 
 void scan_devices()
@@ -16,13 +17,26 @@ void scan_devices()
     // ... more devices
 }
 
-struct gendisk_struct *find_device(int major)
+struct gendisk_struct *find_gendisk(int major)
 {
     for (int i = 0; i < device_index; i++)
     {
-        if (major == devices[i]->major)
+        if (major == devices[i].gendisk->major)
         {
-            return devices[i];
+            return devices[i].gendisk;
+        }
+    }
+
+    return NULL;
+}
+
+struct chardev_struct *find_chardev(int major)
+{
+    for (int i = 0; i < device_index; i++)
+    {
+        if (major == devices[i].chardev->major)
+        {
+            return devices[i].chardev;
         }
     }
 
@@ -45,11 +59,31 @@ int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops
         klog(KLOG_DEBUG, "register_bd(): %s: partition scan failed", name);
     }
 
-    insert_device(bd);
+    insert_gendisk(bd);
     return 0;
 }
 
-static void insert_device(struct gendisk_struct *bd)
+int register_cd(int major, char *name, struct fops_struct fops)
 {
-    devices[device_index++] = bd;
+    struct chardev_struct *cd = kmalloc(sizeof(struct chardev_struct), 1, "chardev_struct");
+    cd->fops = fops;
+    cd->major = major;
+    strcpy(cd->name, name);
+
+    insert_chardev(cd);
+    return 0;
+}
+
+static void insert_gendisk(struct gendisk_struct *bd)
+{
+    gendevice_t dev;
+    dev.gendisk = bd;
+    devices[device_index++] = dev;
+}
+
+static void insert_chardev(struct chardev_struct *cd)
+{
+    gendevice_t dev;
+    dev.chardev = cd;
+    devices[device_index++] = dev;
 }
