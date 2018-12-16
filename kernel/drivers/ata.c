@@ -112,15 +112,22 @@ static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
     ata_drive_t *drive = ((ata_drive_t*)dev_struct);
     klog(KLOG_DEBUG, "ata_read(): read count=%d offset=%d from ATA #%d", count, drive->seek_offset, drive->id);
 
+    // https://wiki.osdev.org/ATA_PIO_Mode
+    // +2 R/W - Sector Counter Register
+    // +3 R/W - Sector Number Register
+    // +4 R/W - Cylinder Low Register
+    // +5 R/W - Cylinder High Register
+    // +6 R/W - Drive / Head Register
+
     outb(drive->io_base + 6, drive->drive_select);  // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
-    outb(drive->io_base + 3, (drive->seek_offset >> 6) & 0xff);
+    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);    // byte 4
     outb(drive->io_base + 4, 0x00);
-    outb(drive->io_base + 3, 0x00);
+    outb(drive->io_base + 5, 0x00);
     outb(drive->io_base + 2, count & 0xff);         // count low
-    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);
-    outb(drive->io_base + 4, (drive->seek_offset >> 2) & 0xff);
-    outb(drive->io_base + 5, (drive->seek_offset >> 4) & 0xff);
+    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);          // byte 1
+    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);     // byte 2
+    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);    // byte 3
 
     waitBSY(drive);
     outb(drive->io_base + 7, 0x24); // READ SECTORS EXT
@@ -141,13 +148,13 @@ static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
 
     outb(drive->io_base + 6, drive->drive_select);  // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
-    outb(drive->io_base + 3, (drive->seek_offset >> 6) & 0xff);
+    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);        // byte 4
     outb(drive->io_base + 4, 0x00);
-    outb(drive->io_base + 3, 0x00);
+    outb(drive->io_base + 5, 0x00);
     outb(drive->io_base + 2, count & 0xff);         // count low
-    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);
-    outb(drive->io_base + 4, (drive->seek_offset >> 2) & 0xff);
-    outb(drive->io_base + 5, (drive->seek_offset >> 4) & 0xff);
+    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);              // byte 1
+    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);         // byte 2
+    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);        // byte 3
 
     waitBSY(drive);
     outb(drive->io_base + 7, 0x34); // WRITE SECTORS EXT
@@ -213,22 +220,22 @@ static int get_drive_addr(int drive, ata_drive_t *ata_drive)
     {
     case 0:
         ata_drive->io_base = PRIMARY_ATA;
-        ata_drive->drive_select = 0x40;
+        ata_drive->drive_select = 0x40; // 0x40
         ata_drive->irq = 0x2e;
         break;
     case 1:
         ata_drive->io_base = PRIMARY_ATA;
-        ata_drive->drive_select = 0x50;
+        ata_drive->drive_select = 0x50; // 0x50
         ata_drive->irq = 0x2e;
         break;
     case 2:
         ata_drive->io_base = SECONDARY_ATA;
-        ata_drive->drive_select = 0x40;
+        ata_drive->drive_select = 0x40; // 0x40
         ata_drive->irq = 0x2f;
         break;
     case 3:
         ata_drive->io_base = SECONDARY_ATA;
-        ata_drive->drive_select = 0x50;
+        ata_drive->drive_select = 0x50; // 0x50
         ata_drive->irq = 0x2f;
         break;
     default:
