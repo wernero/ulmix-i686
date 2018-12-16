@@ -6,14 +6,11 @@
 #define DESC_LEN 32
 
 thread_t *current_thread = NULL;
-static pid_t pid_counter = 1;
+static pid_t pid_counter = 0;
 
 static pid_t new_pid(void);
 
-static thread_t *mk_thread(thread_type_t thread_type, process_t *process, pid_t tid, process_kstack_t kstack, char *description);
-
-
-process_t *mk_process(pagedir_t *pagedir, void (*entry)(void), uint32_t esp, char *description)
+process_t *mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void), size_t kstack_size, uint32_t esp, char *description)
 {
     uint32_t user_eflags = get_eflags(); // *** temporary!
 
@@ -21,13 +18,11 @@ process_t *mk_process(pagedir_t *pagedir, void (*entry)(void), uint32_t esp, cha
     strcpy(process->description, description);
     process->description[DESC_LENGTH - 1] = 0;
     process->pid = new_pid();
-    process->threads = mk_thread(TYPE_USER, process, 0, mk_kstack(TYPE_USER, (void*)entry, 2048, esp, user_eflags), description);
+    process->type = type;
+    process->thread_count = 0;
+    process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags), description);
     process->pagedir = pagedir;
 
-    if (current_thread != NULL && current_thread->process != NULL)
-        process->ppid = current_thread->process->pid;
-    else
-        process->ppid = 0;
     return process;
 }
 
@@ -46,31 +41,21 @@ void kill_thread(thread_t *thread)
     scheduler_enable();
 }
 
-/*
- * mk_kernel_thread(): creates a thread of type 'kernel' and starts it.
- * 'kstack' specifies it's stack.
- */
-thread_t *mk_kernel_thread(process_kstack_t kstack, char *description)
-{
-    thread_t *kthread = mk_thread(TYPE_KERNEL, NULL, 0, kstack, description);
-    return kthread;
-}
 
 /*
  * mk_thread(): create a thread_t structure with the specified values and insert
  * it into the scheduler queue (i.e. run it)
  * 'process'
  */
-static thread_t *mk_thread(thread_type_t thread_type, process_t *process, pid_t tid, process_kstack_t kstack, char *description)
+thread_t *mk_thread(process_t *process, process_kstack_t kstack, char *description)
 {
     thread_t *thread = kmalloc(sizeof(thread_t), 1, "thread_t");
     strcpy(thread->description, description);
     thread->description[DESC_LENGTH - 1] = 0;
     thread->next_thread = NULL;
     thread->state = RUNNING;
-    thread->tid = tid;
+    thread->tid = ++process->thread_count;
     thread->priority = 0; // not yet used
-    thread->type = thread_type;
     thread->process = process;
     thread->kstack = kstack;
     scheduler_insert(thread);

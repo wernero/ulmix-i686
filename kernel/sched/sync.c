@@ -38,9 +38,10 @@ void mutex_lock(mutex_t *mutex)
 
 void mutex_unlock(mutex_t *mutex)
 {
-    /*if (!mutex->blocked)
+    if (!mutex->blocked)
         return;
 
     mutex->blocked = 0;
-    blocklist_unblock(mutex->blocklist);*/
+
+    // unblock thread(s)
 }

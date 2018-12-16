@@ -18,7 +18,7 @@ typedef struct
 
 
 static uint32_t available_memory;
-static pagedir_t *pagedir_kernel;
+pagedir_t *pagedir_kernel;
 
 extern void paging_enable(void);
 void page_fault_handler(uint32_t error, uint32_t fault_addr);

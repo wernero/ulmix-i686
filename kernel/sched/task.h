@@ -36,11 +36,11 @@ struct _thread_t
     pid_t               tid;
     process_t*          process;
     thread_state_t      state;
-    thread_type_t       type;
     int                 priority;
 
     process_kstack_t    kstack;
 
+    unsigned long       ksp; // only used if type==kernel
     thread_t*           next_thread;
     char                description[DESC_LENGTH];
 };
@@ -48,17 +48,18 @@ struct _thread_t
 struct _process_t
 {
     pid_t           pid;
-    pid_t           ppid;
+    thread_type_t   type;
     pagedir_t*      pagedir;
     thread_t*       threads;
+    int             thread_count;
     int             nofault;
     char            description[DESC_LENGTH];
 };
-
-process_t *         mk_process(pagedir_t *pagedir, void (*entry)(void), uint32_t esp, char *description);
-thread_t *          mk_kernel_thread(process_kstack_t kstack, char *description);
+process_t *         mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void), size_t kstack_size, uint32_t esp, char *description);
 process_kstack_t    kstack_init(process_kstack_t kstack, int thread_type, void *start_addr, uint32_t user_esp, uint32_t eflags);
 process_kstack_t    mk_kstack(thread_type_t thread_type, void *entry, size_t stack_size, uint32_t user_esp, uint32_t eflags);
+thread_t *mk_thread(process_t *process, process_kstack_t kstack, char *description);
+
 void                kill_thread(thread_t *thread);
 
 #endif // TASK_H

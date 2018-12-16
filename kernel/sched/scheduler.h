@@ -30,5 +30,7 @@ void scheduler_remove(thread_t *thread);
 void scheduler_block(thread_t *thread);
 void scheduler_unblock(thread_t *thread);
 
+void idle_task(void);
+
 
 #endif // SCHEDULER_H

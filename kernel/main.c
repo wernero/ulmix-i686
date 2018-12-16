@@ -18,6 +18,9 @@ extern char _bss_end;
 extern char _kernel_beg;
 extern char _kernel_end;
 
+extern pagedir_t *pagedir_kernel;
+static process_t *kprocess;
+
 static void kmainthread(void)
 {
     // Test function for scheduler
@@ -27,6 +30,8 @@ static void kmainthread(void)
     scan_devices();
     vfs_init();
 
+
+    heap_dump();
 
     for (;;) hlt();
 }
@@ -62,19 +67,18 @@ void main(multiboot_t* mb_struct)
 {
     boot(mb_struct);
 
-    // create the kernel main thread on this stack
-    process_kstack_t kmain_stack =
-    {
-        .esp = MB1*5,
-        .ebp = MB6,
-        .kstack = NULL
-    };
-    kmain_stack = kstack_init(kmain_stack, TYPE_KERNEL, kmainthread, 0, get_eflags());
-    mk_kernel_thread(kmain_stack, "kernel main thread");
+    kprocess = mk_process(pagedir_kernel,   // address space
+                          TYPE_KERNEL,      // process type
+                          kmainthread,      // entry point
+                          2048,             // kernel stack size
+                          -1,               // esp = kernel stack esp
+                          "[KERNEL]");
+    mk_thread(kprocess, mk_kstack(TYPE_KERNEL, idle_task, 1024, -1, get_eflags()), "idle task");
 
-    // activate preemtive multitasking and wait for the
+    // activate preemtive multitasking and force the
     // scheduler to preemt this function and never restore it
     scheduler_enable();
+    scheduler_force();
     for (;;) hlt();
 }
 

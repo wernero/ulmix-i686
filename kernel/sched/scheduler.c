@@ -9,13 +9,11 @@ static task_queue_t *running_tasks = NULL;
 
 extern thread_t *current_thread;
 static thread_t *get_next_task(void);
-static void idle_task(void);
 
 void scheduler_enable()
 {
     if (scheduler_state == SCHED_DISABLED)
     {
-        mk_kernel_thread(mk_kstack(TYPE_KERNEL, idle_task, 1024, 0, get_eflags()), "idle task");
         klog(KLOG_INFO, "scheduler_enable(): activating Multitasking");
     }
     scheduler_state = SCHED_ACTIVE;
@@ -84,17 +82,14 @@ uint32_t schedule(uint32_t esp)
     if (current_thread != NULL)
         current_thread->kstack.esp = esp;
 
-
     thread_t *next = get_next_task();
     if (current_thread != next)
     {
-        current_thread = next;
-        update_tss(next->kstack.ebp);
+        if (next->process->pagedir != current_thread->process->pagedir)
+            apply_pagedir(next->process->pagedir);
 
-        if (current_thread->process != NULL)
-        {
-            apply_pagedir(current_thread->process->pagedir);
-        }
+        update_tss(next->kstack.ebp);
+        current_thread = next;
     }
 
     return current_thread->kstack.esp;
@@ -112,7 +107,7 @@ void scheduler_unblock(thread_t *thread)
     thread->state = RUNNING;
 }
 
-static void idle_task()
+void idle_task()
 {
     for (;;) hlt();
 }
