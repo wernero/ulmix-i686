@@ -14,6 +14,9 @@ will generate debug symbols and write them into the bochs.symbols file, which
 can then be accessed via the bochs debugger. The core kernel source files are
 contained in the 'kernel' directory.
 
+To compile, you should be under a Unix-like environment and have the binutils
+and nasm programs installed.
+
 It currently supports the i386 architecture (32bit x86) and has the following
 features:
 
