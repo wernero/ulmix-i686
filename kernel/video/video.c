@@ -39,9 +39,9 @@ ssize_t tty_write(struct tty_struct *tty, char *buf, int len)
 
 static void scroll(struct tty_struct *tty)
 {
-    int src = COLUMNS * 2;
-    int len = COLUMNS * (LINES - 1) * 2;
-    memmove(tty->vmem, (void*)(tty->vmem + src), len);
+//    int src = COLUMNS * 2;
+    int len = COLUMNS * (LINES - 2) * 2;
+//    memmove(tty->vmem, (void*)(tty->vmem + src), len);
 
     for (int i = len; i < COLUMNS*LINES*2; i += 2)
     {
@@ -49,7 +49,8 @@ static void scroll(struct tty_struct *tty)
         tty->vmem[i+1] = tty->color;
     }
 
-    tty->pos_y = LINES - 1;
+//    tty->pos_y = LINES - 1;
+    tty->pos_y = 0;
     set_cursor(tty);
 }
 
