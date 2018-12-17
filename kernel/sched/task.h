@@ -4,6 +4,7 @@
 #include "util/util.h"
 #include "memory/kheap.h"
 #include "memory/paging.h"
+#include <filesystem/vfscore.h>
 
 typedef signed long int pid_t;
 
@@ -53,6 +54,8 @@ struct _process_t
     thread_t*       threads;
     int             thread_count;
     int             nofault;
+    struct dir_struct
+                    *working_dir;
     char            description[DESC_LENGTH];
 };
 process_t *         mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void), size_t kstack_size, uint32_t esp, char *description);
