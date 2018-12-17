@@ -37,6 +37,8 @@ typedef struct
 void *  kmalloc (size_t size, int alignment, char *description);
 void    kfree   (void *mem);
 
+int pheap_valid_addr(unsigned long fault_addr);
+
 // debug
 void heap_dump(void);
 

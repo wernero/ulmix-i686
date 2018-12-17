@@ -66,6 +66,9 @@ void klog(loglevel_t lvl, const char *format, ...)
                 lvl == KLOG_FAILURE)
             output_flags |= OUT_TTY;
 
+        if  (lvl == KLOG_PANIC)
+            log_puts(output_flags, ">>> PANIC <<<\n");
+
         va_list args;
         va_start(args, format);
         vsprintf(output_flags, format, args);

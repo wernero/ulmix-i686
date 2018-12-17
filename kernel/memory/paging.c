@@ -102,17 +102,25 @@ void page_fault_handler(uint32_t error, uint32_t fault_addr)
         if (fault_addr >= GB3)
         {
             // kernel tried to access heap that's not yet allococated.
-            pagetable_entry_t *entry = get_pagetable_entry(fault_addr, pagedir_kernel);
-            *entry = get_free_page(PAG_SUPV | PAG_RDWR);
-            klog(KLOG_DEBUG, "allocated new page for kernel heap: virt(0x%x) -> phys(0x%x)",
-                 fault_addr & 0xfffff000,
-                 *entry & 0xfffff000);
+            if (pheap_valid_addr(fault_addr))
+            {
+                pagetable_entry_t *entry = get_pagetable_entry(fault_addr, pagedir_kernel);
+                *entry = get_free_page(PAG_SUPV | PAG_RDWR);
+                klog(KLOG_DEBUG, "allocated new page for kernel heap: virt(0x%x) -> phys(0x%x)",
+                     fault_addr & 0xfffff000,
+                     *entry & 0xfffff000);
+            }
+            else
+            {
+                klog(KLOG_PANIC, "kernel accessed non allocated heap location 0x%x (corrupt pointer?)",
+                     fault_addr);
+            }
         }
         else
         {
             // kernel tried to access an unallocated memory region
             // yet the behaviour is undefined
-            klog(KLOG_PANIC, "kernel tried to access non-mapped memory region (%x)", fault_addr);
+            klog(KLOG_PANIC, "kernel tried to access unmapped memory region (%x)", fault_addr);
         }
     }
 }

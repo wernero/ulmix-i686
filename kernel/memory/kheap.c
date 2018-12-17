@@ -49,6 +49,30 @@ static kheap_entry_t *find_free_block(size_t *alignment_offset, size_t size, int
     return NULL;
 }
 
+
+/**
+ * pheap_valid_addr() verifies that 'fault_addr' is a allocated heap region.
+ */
+int pheap_valid_addr(unsigned long fault_addr)
+{
+    if (fault_addr < GB3)
+        return 0;
+
+    if (!pheap_enabled)
+        return 1;
+
+    kheap_entry_t *entry;
+    for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
+    {
+        if (entry->available
+                && fault_addr >= (unsigned long)entry->start
+                && fault_addr < ((unsigned long)entry->start + entry->size))
+            return 1;
+    }
+
+    return 0;
+}
+
 /*
  * kmalloc(): allocate a block of memory on the kernel heap
  * the block of memory can be aligned to start at an address divisable by 'alignment'.
