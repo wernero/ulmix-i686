@@ -85,7 +85,8 @@ uint32_t schedule(uint32_t esp)
     thread_t *next = get_next_task();
     if (current_thread != next)
     {
-        if (next->process->pagedir != current_thread->process->pagedir)
+        if (current_thread != NULL &&
+                next->process->pagedir != current_thread->process->pagedir)
             apply_pagedir(next->process->pagedir);
 
         update_tss(next->kstack.ebp);
