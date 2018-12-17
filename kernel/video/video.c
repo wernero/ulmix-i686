@@ -41,7 +41,7 @@ static void scroll(struct tty_struct *tty)
 {
     int src = COLUMNS * 2;
     int len = COLUMNS * (LINES - 1) * 2;
-    memmove(tty->vmem, (void*)(tty->vmem + src), len);
+    memcpy(tty->vmem, (void*)(tty->vmem + src), len);
 
     for (int i = len; i < COLUMNS*LINES*2; i += 2)
     {
