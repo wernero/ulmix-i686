@@ -50,7 +50,6 @@ static void scroll(struct tty_struct *tty)
     }
 
     tty->pos_y = LINES - 1;
-    tty->pos_y = 0;
     set_cursor(tty);
 }
 
