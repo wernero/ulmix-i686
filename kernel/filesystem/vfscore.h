@@ -54,7 +54,7 @@ struct sb_struct
     unsigned long s_overhead_last;  /* Last calculated overhead */
     unsigned long s_blocks_last;    /* Last seen block count */
 
-    struct gd_struct s_group_desc;
+    struct gd_struct *s_group_desc;
 
     void * s_es; /* Pointer to the super block in the buffer */
 
@@ -95,6 +95,8 @@ struct dir_struct
 {
     int mountpoint;
     struct sb_struct *sb;
+    struct gendisk_struct *bd;
+    struct hd_struct *partition;
     char name[256];
     unsigned long inode_no;
 

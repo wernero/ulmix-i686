@@ -16,3 +16,4 @@ hdd.img.bak
 hdd.img.lock
 diskimage/*.txt
 diskimage/dump
+snapshot.txt

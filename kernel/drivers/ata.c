@@ -119,18 +119,18 @@ static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
     // +5 R/W - Cylinder High Register
     // +6 R/W - Drive / Head Register
 
-    outb(drive->io_base + 6, drive->drive_select);  // drive select
-    outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
-    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);    // byte 4
+    outb(drive->io_base + 6, drive->drive_select);                      // drive select
+    outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high      // TODO >> 24??
+    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);        // byte 4
     outb(drive->io_base + 4, 0x00);
     outb(drive->io_base + 5, 0x00);
-    outb(drive->io_base + 2, count & 0xff);         // count low
-    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);          // byte 1
-    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);     // byte 2
-    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);    // byte 3
+    outb(drive->io_base + 2, count & 0xff);                             // count low
+    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);              // byte 1
+    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);         // byte 2
+    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);        // byte 3
 
     waitBSY(drive);
-    outb(drive->io_base + 7, 0x24); // READ SECTORS EXT
+    outb(drive->io_base + 7, 0x24);                                     // READ SECTORS EXT
     for (size_t i = 0; i < count; i++)
     {
         waitBSY(drive);
@@ -146,18 +146,18 @@ static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
     ata_drive_t *drive = ((ata_drive_t*)dev_struct);
     klog(KLOG_DEBUG, "ata_write(): PIO mode: writing %d sectors to ATA #%d", count, drive->id);
 
-    outb(drive->io_base + 6, drive->drive_select);  // drive select
-    outb(drive->io_base + 2, (count >> 8) & 0xff);  // count high
+    outb(drive->io_base + 6, drive->drive_select);                      // drive select
+    outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high     // >> 24 ???
     outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);        // byte 4
     outb(drive->io_base + 4, 0x00);
     outb(drive->io_base + 5, 0x00);
-    outb(drive->io_base + 2, count & 0xff);         // count low
+    outb(drive->io_base + 2, count & 0xff);                             // count low
     outb(drive->io_base + 3, (drive->seek_offset) & 0xff);              // byte 1
     outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);         // byte 2
     outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);        // byte 3
 
     waitBSY(drive);
-    outb(drive->io_base + 7, 0x34); // WRITE SECTORS EXT
+    outb(drive->io_base + 7, 0x34);                                     // WRITE SECTORS EXT
     for (size_t i = 0; i < count; i++)
     {
         waitBSY(drive);
