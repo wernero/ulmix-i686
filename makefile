@@ -44,11 +44,11 @@ $(KERNELDIR)/KERNEL.BIN: $(KERNEL_OBJECTS)
 ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
 	rm -f ulmix.img
 	mkfs.msdos -C ulmix.img 1440
-	mkdir -p img
-	sudo mount -o loop ulmix.img img
-	sudo cp $(STAGE2DIR)/BOOT2.BIN img/BOOT2.BIN
-	sudo cp $(KERNELDIR)/KERNEL.BIN img/KERNEL.BIN
-	sudo umount img
+	mkdir -p mnt
+	sudo mount -o loop ulmix.img mnt
+	sudo cp $(STAGE2DIR)/BOOT2.BIN mnt/BOOT2.BIN
+	sudo cp $(KERNELDIR)/KERNEL.BIN mnt/KERNEL.BIN
+	sudo umount mnt
 	dd if=$(STAGE1DIR)/boot.bin of=ulmix.img bs=512 count=1 conv=notrunc
 
 
