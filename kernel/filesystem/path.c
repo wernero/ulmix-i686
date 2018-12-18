@@ -6,7 +6,7 @@ extern thread_t *current_thread;
 
 static char *strccpy(char *dest, char *src, char terminator);
 
-int namei(char *path, struct direntry_struct *node)
+int namei(char *path, struct direntry_struct **node)
 {
     struct dir_struct *working_dir = current_thread->process->working_dir;
     if (path[0] == '/')
@@ -30,7 +30,7 @@ int namei(char *path, struct direntry_struct *node)
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
                     return -1;
 
-                node = entry;
+                *node = entry;
                 return 0;
             }
 

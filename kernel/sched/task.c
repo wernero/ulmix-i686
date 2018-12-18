@@ -22,6 +22,7 @@ process_t *mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void
     process->thread_count = 0;
     process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags), description);
     process->pagedir = pagedir;
+    process->files[0] = NULL;
 
     return process;
 }

@@ -1,20 +1,66 @@
 #include "fs_syscalls.h"
-//#include "filesystem/path.h"
+#include "filesystem/path.h"
+#include <errno.h>
+#include <sched/task.h>
 
-#define O_APPEND    0x01
-#define O_CREAT     0x02
-#define O_RDONLY    0x04
-#define O_RDWR      0x08
-#define O_WRONLY    0x10
-
-int sc_open(const char *pathname, int flags)
+extern thread_t *current_thread;
+static int insert_fd(struct file_struct *fd)
 {
-    // lookup path
-    /*struct direntry_struct *file;*/
+    process_t *p = current_thread->process;
 
+    for (int i = 0; i < MAX_FILES; i++)
+    {
+        if (p->files[i] == NULL)
+        {
+            p->files[i] = fd;
+            return i;
+        }
+    }
 
+    return -ENOBUFS;
+}
 
-    return -1;
+int sc_open(char *pathname, int flags)
+{
+    struct direntry_struct *node;
+    if (namei(pathname, &node) < 0)
+    {
+        return -ENOENT;
+    }
+
+    struct inode_struct *inode = (struct inode_struct*)node->payload;
+
+    // for now, don't allow to open directories
+    if (node->type == DIRECTORY)
+        return -EISDIR;
+
+    // create file descriptor
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct");
+    fd->direntry = node;
+    fd->open_mode = flags;
+
+    if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
+    {
+        // MUTEX!!!
+        if (inode->read_opens > 0 || inode->write_opens > 0)
+        {
+            return -EMFILE;
+        }
+
+        inode->write_opens++;
+    }
+    else
+    {
+        // MUTEX!!!
+        if (inode->write_opens > 0)
+        {
+            return -EMFILE;
+        }
+
+        inode->read_opens++;
+    }
+
+    return insert_fd(fd);
 }
 
 int sc_creat(const char *pathname, int mode)
@@ -22,19 +68,35 @@ int sc_creat(const char *pathname, int mode)
     return -1;
 }
 
-ssize_t sc_write(int fd, const void *buf, size_t count)
+ssize_t sc_write(int fd, void *buf, size_t count)
 {
-    return -1;
+    struct file_struct *fds = current_thread->process->files[fd];
+    if (fds == NULL)
+        return -EBADF;
+
+    return fds->fops.write(fds, buf, count);
 }
 
-ssize_t sc_read(int fd, const void *buf, size_t count)
+ssize_t sc_read(int fd, void *buf, size_t count)
 {
-    return -1;
+    struct file_struct *fds = current_thread->process->files[fd];
+    if (fds == NULL)
+        return -EBADF;
+
+    return fds->fops.write(fds, buf, count);
 }
 
 int sc_close(int fd)
 {
-    return -1;
+    struct file_struct *fds = current_thread->process->files[fd];
+    if (fds == NULL)
+        return -EBADF;
+
+    //struct inode_struct *inode = (struct inode_struct*)fds->direntry->payload;
+
+    // free resources
+
+    return 0;
 }
 
 int sc_link(const char *oldpath, const char *newpath)
@@ -49,5 +111,9 @@ int sc_unlink(const char *pathname)
 
 ssize_t sc_lseek(int fd, size_t offset, int whence)
 {
-    return -1;
+    struct file_struct *fds = current_thread->process->files[fd];
+    if (fds == NULL)
+        return -EBADF;
+
+    return fds->fops.seek(fds, offset, whence);
 }

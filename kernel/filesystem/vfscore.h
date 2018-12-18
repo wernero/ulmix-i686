@@ -88,7 +88,10 @@ struct sb_struct
 
 struct inode_struct
 {
-    // TODO: fill in
+    unsigned int read_opens;    // how many times is the file open for read?
+    unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
+
+
 };
 
 struct dir_struct

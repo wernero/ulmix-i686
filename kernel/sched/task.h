@@ -46,6 +46,7 @@ struct _thread_t
     char                description[DESC_LENGTH];
 };
 
+#define MAX_FILES 32 // max file descriptors a process can have
 struct _process_t
 {
     pid_t           pid;
@@ -56,6 +57,8 @@ struct _process_t
     int             nofault;
     struct dir_struct
                     *working_dir;
+    struct file_struct *
+                    files[MAX_FILES];
     char            description[DESC_LENGTH];
 };
 process_t *         mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void), size_t kstack_size, uint32_t esp, char *description);
