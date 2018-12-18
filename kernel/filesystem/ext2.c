@@ -16,7 +16,7 @@ static int ext2_get_inode(struct dir_struct *parent, unsigned long inode_no);
 
 void install_ext2()
 {
-    filesystem_t *ext2fs = kmalloc(sizeof(filesystem_t), 1, "filesystem_t");
+    struct filesystem_struct *ext2fs = kmalloc(sizeof(struct filesystem_struct), 1, "filesystem_struct");
 
     ext2fs->fs_probe = ext2_probe;
     ext2fs->fs_mount = ext2_mount;
@@ -65,7 +65,7 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
     int group_descriptor_size = 0x0;
     struct gd_struct * current_gds;
     {
-        
+
     };
 
     int i;
@@ -88,7 +88,7 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
         );
 
 
-    
+
 
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
@@ -100,11 +100,11 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
     mountpoint->sb->s_inodes_per_group = superblock->inodes_per_group;
 
     // how many blocks do we have
-    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct rouund up 
+    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct rouund up
 
     group_descriptor_size = (((mountpoint->sb->s_gdb_count * sizeof(blockgroup_descriptor_t)) / 0x200) + 1) * 0x200;
 //    group_descriptor_size = 0x400;
-    
+
     group_descriptor_buf = kmalloc(group_descriptor_size, 1, "group_descriptor_buf");
 
     bd->fops.seek(bd->drv_struct, mountpoint->partition->sector_offset + (group_descriptor_offset / 512), SEEK_SET);
@@ -154,7 +154,7 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
     mountpoint->inode_no = 2; // root inode of a partition is always 2
 
 
-    ext2_get_direntry(mountpoint); // get directories entries for 
+    ext2_get_direntry(mountpoint); // get directories entries for
 
 
     // for now

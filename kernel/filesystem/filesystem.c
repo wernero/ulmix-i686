@@ -5,7 +5,7 @@
 #include "log.h"
 
 #define SUP_FS_COUNT 10
-filesystem_t *supported_filesystems[SUP_FS_COUNT];
+struct filesystem_struct *supported_filesystems[SUP_FS_COUNT];
 
 
 void init_filesystems()
@@ -16,7 +16,7 @@ void init_filesystems()
     install_ext2();
 }
 
-int install_fs(filesystem_t *fs)
+int install_fs(struct filesystem_struct *fs)
 {
     for (int i = 0; i < SUP_FS_COUNT; i++)
     {
@@ -30,6 +30,11 @@ int install_fs(filesystem_t *fs)
     return -1;
 }
 
+int direntry_get_inode(struct direntry_struct *file)
+{
+    return file->directory->sb->fs->fs_get_inode(file->directory, file->inode_no);
+}
+
 int kmount(struct dir_struct *mountpoint, int major, int partition)
 {
     struct gendisk_struct *disk;
@@ -41,7 +46,7 @@ int kmount(struct dir_struct *mountpoint, int major, int partition)
 
     for (int i = 0; i < SUP_FS_COUNT; i++)
     {
-        filesystem_t *pfs = supported_filesystems[i];
+        struct filesystem_struct *pfs = supported_filesystems[i];
         if (pfs != NULL && (pfs->fs_probe(disk, partition) >= 0))
         {
             klog(KLOG_INFO, "kmount(): major=%d, start=0x%x, size=%S, type=%s",

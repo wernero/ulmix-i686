@@ -19,6 +19,7 @@ struct direntry_struct
     unsigned long inode_no;
     void *payload;
 
+    struct dir_struct *directory;
     struct direntry_struct *next;
 };
 
@@ -35,8 +36,10 @@ struct gd_struct
     struct gd_struct *bg_next;
 };
 
+struct filesystem_struct;
 struct sb_struct
 {
+    struct filesystem_struct *fs;
 
     unsigned long s_inodes_total;
     unsigned long s_blocks_total;
@@ -104,6 +107,15 @@ struct dir_struct
     unsigned long inode_no;
 
     struct direntry_struct *entries;
+};
+
+struct filesystem_struct
+{
+    int (*fs_probe)(struct gendisk_struct *bd, int part);
+    int (*fs_mount)(struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
+    int (*fs_get_direntry)(struct dir_struct *miss);
+    int (*fs_get_inode)(struct dir_struct *parent, unsigned long inode_no);
+    char *name;
 };
 
 void vfs_init(void);
