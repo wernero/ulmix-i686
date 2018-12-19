@@ -89,10 +89,9 @@ exc%1:
     mov gs, ax
 
     push dword %1
-    push dword [esp+52]
     push esp
     call exc_handler
-    add esp, 12
+    add esp, 8
 
     popad
 

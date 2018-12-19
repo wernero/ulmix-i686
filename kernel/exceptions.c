@@ -46,7 +46,7 @@ void exc_handler(struct exc_context_struct *context)
     uint32_t error = context->error_code;
     uint32_t exc = context->exc;
 
-    klog(KLOG_EXCEPTION, "EXCEPTION: #%d -> %s, error=0x%x", exc, exceptions[exc], error);
+    klog(KLOG_EXCEPTION, "EXCEPTION: #%d -> %s, error=0x%x, eip=0x%x", exc, exceptions[exc], error, context->eip);
     klog(KLOG_DEBUG, "eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x",
          context->eax, context->ebx, context->ecx, context->edx);
     klog(KLOG_DEBUG, "esi=0x%x, edi=0x%x, esp=0x%x, ebp=0x%x",
