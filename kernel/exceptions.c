@@ -41,9 +41,8 @@ static const char* const exceptions[] =
     "reserved",                "reserved",                      "reserved",                  "reserved"
 };
 
-void exc_handler(uint32_t context_ptr)
+void exc_handler(struct exc_context_struct *context)
 {
-    struct exc_context_struct *context = (struct exc_context_struct *)context_ptr;
     uint32_t error = context->error_code;
     uint32_t exc = context->exc;
 
