@@ -11,6 +11,7 @@
 #include "drivers/devices.h"
 #include "kdebug.h"
 #include "filesystem/vfscore.h"
+#include "filesystem/fs_syscalls.h"
 
 // .bss (ld)
 extern char _bss_start;
@@ -30,9 +31,15 @@ static void kmainthread(void)
     scan_devices();
     vfs_init();
 
+    // test open file
+    int ret;
+    klog(KLOG_INFO, "opening /test.txt");
+    if ((ret = sc_open("/test.txt", O_RDONLY)) < 0)
+    {
+        klog(KLOG_INFO, "error: errno(%d)", -ret);
+    }
 
     heap_dump();
-
     for (;;) hlt();
 }
 
