@@ -41,9 +41,17 @@ static const char* const exceptions[] =
     "reserved",                "reserved",                      "reserved",                  "reserved"
 };
 
-void exc_handler(uint32_t error, uint32_t exc)
+void exc_handler(uint32_t context_ptr)
 {
-    klog(KLOG_EXCEPTION, "exception: %s, error=0x%x", exceptions[exc], error);
+    struct exc_context_struct *context = (struct exc_context_struct *)context_ptr;
+    uint32_t error = context->error_code;
+    uint32_t exc = context->exc;
+
+    klog(KLOG_EXCEPTION, "EXCEPTION: #%d -> %s, error=0x%x", exc, exceptions[exc], error);
+    klog(KLOG_DEBUG, "eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x",
+         context->eax, context->ebx, context->ecx, context->edx);
+    klog(KLOG_DEBUG, "esi=0x%x, edi=0x%x, esp=0x%x, ebp=0x%x",
+         context->esi, context->edi, context->esp, context->ebp);
 
     if (exc == 13)
     {

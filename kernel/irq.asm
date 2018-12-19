@@ -74,12 +74,13 @@ exc%1:
     %if (%1!=8) && (%1!=17) && (%1!=30) && (%1<10 || %1>14)
     push dword 0
     %endif
-    pushad
 
     push ds
     push es
     push fs
     push gs
+
+    pushad
 
     mov ax, 0x10
     mov ds, ax
@@ -89,15 +90,17 @@ exc%1:
 
     push dword %1
     push dword [esp+52]
+    push esp
     call exc_handler
-    add esp, 8
+    add esp, 12
+
+    popad
 
     pop gs
     pop fs
     pop es
     pop ds
 
-    popad
     add esp, 4
     iret
 %endmacro
