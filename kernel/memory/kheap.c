@@ -61,16 +61,9 @@ int pheap_valid_addr(unsigned long fault_addr)
     if (!pheap_enabled)
         return 1;
 
-    kheap_entry_t *entry;
-    for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
-    {
-        if (entry->available
-                && fault_addr >= (unsigned long)entry->start
-                && fault_addr < ((unsigned long)entry->start + entry->size))
-            return 1;
-    }
+    // TODO: implement proper fault_addr validity check
 
-    return 0;
+    return 1;
 }
 
 /*
