@@ -248,17 +248,23 @@ static void setup_pheap()
 void heap_dump(void)
 {
     int i = 0;
+    unsigned long used = 0, free = 0;
     kheap_entry_t *entry;
-    klog(KLOG_DEBUG, "kheap: heap_dump(): %s HEAP CONTENTS", pheap_enabled ? "DYNAMIC PAGED" : "PRE-PAGING");
+    klog(KLOG_DEBUG, "heap_dump(): %s HEAP CONTENTS", pheap_enabled ? "DYNAMIC PAGED" : "PRE-PAGING");
     for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
     {
-        klog(KLOG_DEBUG, "kheap: heap_dump(): #%d: avail=%d, start=0x%x, size=%S (%s)",
+        unsigned long size = sizeof(kheap_entry_t) + entry->size;
+        if (entry->available)   free += size;
+        else                    used += size;
+
+        klog(KLOG_DEBUG, "kheap dump: #%d: avail=%d, start=0x%x, size=%S (%s)",
              i++,
              entry->available,
              (uint32_t)entry->start,
              entry->size,
              entry->description);
     }
+    klog(KLOG_DEBUG, "kheap dump: %S used, %S free", used, free);
 }
 
 
