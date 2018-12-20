@@ -2,6 +2,8 @@
 #include "util/util.h"
 #include "filesystem/fs_syscalls.h"
 #include "exec.h"
+#include <errno.h>
+#include <log.h>
 
 #define nop 0
 
@@ -64,3 +66,14 @@ void *syscalls[] =
 
     nop,                // 78	gettimeofday()      *required
 };
+
+int syscall_handler(struct syscall_context_struct *context)
+{
+    klog(KLOG_INFO, "system call eax=%d", context->eax);
+
+    if (syscalls[context->eax] == NULL)
+        return -ENOSYS; // not implemented
+
+
+    return 5;
+}

@@ -24,6 +24,8 @@ extern char _kernel_end;
 extern pagedir_t *pagedir_kernel;
 static process_t *kprocess;
 
+static void exec_init(void);
+
 static void kmainthread(void)
 {
     // Test function for scheduler
@@ -33,7 +35,20 @@ static void kmainthread(void)
     scan_devices();
     vfs_init();
 
+    // Syscall Test
+    int ret;
+    __asm__("mov $0x02, %%eax;"
+            "int $0x80;"
+            "mov %%eax, %0" : "=r"(ret));
+    klog(KLOG_DEBUG, "syscall test returned %d (5=success)", ret);
 
+    exec_init();
+    heap_dump();
+    for (;;) hlt();
+}
+
+static void exec_init(void)
+{
     // run init
     klog(KLOG_INFO, "executing /bin/init");
     pagedir_t *init_pd;
@@ -51,9 +66,6 @@ static void kmainthread(void)
     }
 
     //mk_process(init_pd, TYPE_USER, init_entry, PAGESIZE, init_esp, "init");
-
-    heap_dump();
-    for (;;) hlt();
 }
 
 typedef struct

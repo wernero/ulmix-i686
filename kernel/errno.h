@@ -18,6 +18,7 @@
 #define EMFILE  24
 
 #define ENOSYS  38
+#define ENOTSUP 95
 
 #define ENOBUFS 105
 

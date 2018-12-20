@@ -16,6 +16,7 @@ void irq_timer(void);
 extern void idt_write(idt_descriptor_t *desc);
 extern void irq_asm_handler(void);
 extern char irq_asm_handler_end;
+extern void irq_syscall(void);
 
 void irq_handler(uint32_t irq)
 {
@@ -107,7 +108,7 @@ void setup_idt(void)
     }
 
     // System call interrupt
-    //set_idt_entry(0x80, irq_asm_syscall, INT_TRAP | INT_PRESENT | INT_USER);
+    set_idt_entry(0x80, irq_syscall, INT_TRAP | INT_PRESENT | INT_USER);
 
     pic_init();
 

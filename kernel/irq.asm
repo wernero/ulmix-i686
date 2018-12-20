@@ -4,10 +4,12 @@ global idt_write
 global irq_asm_handler
 global irq_asm_handler_end
 global irq_asm_timer
+global irq_syscall
 
 extern irq_timer
 extern irq_handler
 extern exc_handler
+extern syscall_handler
 
 idt_write:
     mov eax, [esp+4]
@@ -34,6 +36,28 @@ irq_asm_timer:
     pop es
     pop ds
     popad
+    iret
+
+irq_syscall:
+    push ds
+    push es
+    push fs
+    push gs
+    pushad
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    push esp
+    call syscall_handler
+    add esp, 4
+    mov [esp+28], eax
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
     iret
 
 %macro IRQ_HANDLER 1
