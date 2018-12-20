@@ -1,15 +1,20 @@
 #include "kheap.h"
-#include "util/util.h"
-#include "util/string.h"
-#include "log.h"
+#include <util/util.h>
+#include <log.h>
 
 extern int paging_enabled;
 extern char _kernel_end;
 
-static int heap_enabled = 0;
-static int pheap_enabled = 0;
+enum _heap_status
+{
+    HEAP_DISABLED,
+    HEAP_STATIC,
+    HEAP_PAGED
+};
+
 static uint32_t kheap_size;
 static kheap_entry_t *heap;
+static int heap_status = HEAP_DISABLED;
 
 static void             setup_heap      (uint32_t heap_start);
 static void             setup_pheap     (void);
@@ -18,7 +23,95 @@ static kheap_entry_t *  find_free_block (size_t *alignment_offset, size_t size, 
 static kheap_entry_t *  mkblock         (kheap_entry_t *previous, kheap_entry_t *next,
                                             int available, size_t size, void *start, void *description);
 
-void heap_dump(void); // dump kheap linked list
+/*
+ * kmalloc(): allocate a block of memory on the kernel heap
+ * the block of memory can be aligned to start at an address divisable by 'alignment'.
+ * the 'description' string will show up on debug output.
+ * returns: a pointer to the allocated block of memory, or NULL on error
+ */
+void *kmalloc(size_t size, int alignment, char *description)
+{
+    if (alignment == 0)
+        alignment = 1;
+
+    if (heap_status != HEAP_PAGED)
+    {
+        if (paging_enabled)
+            setup_pheap();
+        else if (heap_status == HEAP_DISABLED)
+            setup_heap((uint32_t)KHEAP_STATIC_LOCATION);
+    }
+
+    klog(KLOG_DEBUG, "kmalloc(): size=%S, align=%S, purpose=%s", size, alignment, description);
+
+    size_t alignment_offset;
+    kheap_entry_t *block;
+    block = find_free_block(&alignment_offset, size, alignment);
+    if (block == NULL)
+    {
+        klog(KLOG_PANIC, "kmalloc(): no free block on the kernel heap");
+        return NULL;
+    }
+
+    kheap_entry_t *new_block;
+    size_t excess_size = block->size - alignment_offset - size;
+    if (alignment_offset == 0)
+    {
+        // if the alignment is already correct on that block, use it right away
+        strcpy(block->description, description);
+        block->description[DESC_LENGTH - 1] = 0;
+        block->available = 0;
+        block->size = size;
+        new_block = block;
+    }
+    else if (alignment_offset <= sizeof(kheap_entry_t))
+    {
+        // can't fit another block, so make the last one bigger
+        // and move the descriptor
+
+        strcpy(block->description, description);
+        block->description[DESC_LENGTH - 1] = 0;
+        block->available = 0;
+        block->size = size;
+        block->start = (char*)block->start + alignment_offset;
+
+        block->previous->size += alignment_offset;
+        new_block = memmove((char*)block + alignment_offset, block, sizeof(kheap_entry_t));
+    }
+    else
+    {
+        // another block will fit in the alignment gap, so create it
+
+        new_block = mkblock(block, block->next, 0, size,
+                            block->start + alignment_offset, description);
+
+        block->description[0] = 0;
+        block->available = 1;
+        block->size = alignment_offset - sizeof(kheap_entry_t);
+        block->next = new_block;
+    }
+
+    // since we're allocating, there has to come a free block after our's
+    // to describe the excess size. Exception: excess size <= sizeof(kheap_entry_t)
+    if (excess_size > sizeof(kheap_entry_t))
+    {
+        new_block->next = mkblock(new_block,
+                new_block->next,
+                1,
+                excess_size - sizeof(kheap_entry_t),
+                new_block->start + new_block->size + sizeof(kheap_entry_t),
+                NULL);
+    }
+    else
+    {
+        new_block->size += excess_size;
+    }
+
+    memset(new_block->start, 0, new_block->size);
+
+    klog(KLOG_DEBUG, "  alloc. memory is at 0x%x", new_block->start);
+    return new_block->start;
+}
 
 /*
  * find_free_block(): finds a free block in the heap linked list that meeets
@@ -30,7 +123,7 @@ void heap_dump(void); // dump kheap linked list
 static kheap_entry_t *find_free_block(size_t *alignment_offset, size_t size, int alignment)
 {
     kheap_entry_t *entry;
-    for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
+    for(entry = heap; entry != NULL; entry = entry->next)
     {
         if (entry->available && entry->size >= size)
         {
@@ -58,98 +151,12 @@ int pheap_valid_addr(unsigned long fault_addr)
     if (fault_addr < GB3)
         return 0;
 
-    if (!pheap_enabled)
+    if (heap_status != HEAP_PAGED)
         return 1;
 
     // TODO: implement proper fault_addr validity check
 
     return 1;
-}
-
-/*
- * kmalloc(): allocate a block of memory on the kernel heap
- * the block of memory can be aligned to start at an address divisable by 'alignment'.
- * the 'description' string will show up on debug output.
- * returns: a pointer to the allocated block of memory, or NULL on error
- */
-void *kmalloc(size_t size, int alignment, char *description)
-{
-    if (alignment == 0) alignment = 1;
-    if (!pheap_enabled)
-    {
-        if (!heap_enabled)  setup_heap((uint32_t)KHEAP_STATIC_LOCATION);
-        if (!pheap_enabled && paging_enabled) setup_pheap();
-    }
-
-    klog(KLOG_DEBUG, "kmalloc(): size=%S align=%S purpose=%s", size, alignment, description);
-
-    size_t alignment_offset;
-    kheap_entry_t *block;
-    block = find_free_block(&alignment_offset, size, alignment);
-    if (block == NULL)
-    {
-        klog(KLOG_PANIC, "kmalloc(): no more memory");
-        return NULL;
-    }
-
-    kheap_entry_t *new_block;
-    size_t excess_size = block->size - alignment_offset - size;
-    if (alignment_offset == 0)
-    {
-        // if the alignment is already correct on that block, use it right away
-        strcpy(block->description, description);
-        block->description[DESC_LENGTH - 1] = 0;
-        block->available = 0;
-        block->size = size;
-        new_block = block;
-    }
-    else if (alignment_offset <= sizeof(kheap_entry_t))
-    {
-        // can't fit another block, so make the last one bigger
-        // and move the descriptor
-
-        strcpy(block->description, description);
-        block->description[DESC_LENGTH - 1] = 0;
-        block->available = 0;
-        block->size = size;
-        block->start = (char*)block->start + alignment_offset;
-
-        ((kheap_entry_t*)block->previous)->size += alignment_offset;
-        new_block = memmove((char*)block + alignment_offset, block, sizeof(kheap_entry_t));
-    }
-    else
-    {
-        // another block will fit in the alignment gap, so create it
-
-        new_block = mkblock(block, (kheap_entry_t*)block->next,
-                            0, size, block->start + alignment_offset, description);
-
-        block->description[0] = 0;
-        block->available = 1;
-        block->size = alignment_offset - sizeof(kheap_entry_t);
-        block->next = new_block;
-    }
-
-    // since we're allocating, there has to come a free block after our's
-    // to describe the excess size. Exception: excess size <= sizeof(kheap_entry_t)
-    if (excess_size > sizeof(kheap_entry_t))
-    {
-        new_block->next = mkblock(new_block,
-                (kheap_entry_t*)new_block->next,
-                1,
-                excess_size - sizeof(kheap_entry_t),
-                new_block->start + new_block->size + sizeof(kheap_entry_t),
-                NULL);
-    }
-    else
-    {
-        new_block->size += excess_size;
-    }
-
-    memset(new_block->start, 0, new_block->size);
-
-    klog(KLOG_DEBUG, "kmalloc(): returned %x", new_block->start);
-    return new_block->start;
 }
 
 /*
@@ -169,11 +176,11 @@ void kfree(void *mem)
     int merged = 0;
     entry->available = 1;
     kheap_entry_t *merged_entry;
-    if (((kheap_entry_t*)entry->previous)->available)
+    if (entry->previous->available)
     {
         entry = merged_entry = merge_blocks(entry,
                     (kheap_entry_t*)entry->previous,
-                    ((kheap_entry_t*)entry->previous)->description);
+                    entry->previous->description);
 
         if (merged_entry != NULL)
         {
@@ -181,11 +188,11 @@ void kfree(void *mem)
         }
     }
 
-    if (((kheap_entry_t*)entry->next)->available)
+    if (entry->next->available)
     {
         entry = merged_entry = merge_blocks(entry,
                     (kheap_entry_t*)entry->next,
-                    ((kheap_entry_t*)entry->next)->description);
+                    entry->next->description);
 
         if (merged_entry != NULL)
         {
@@ -217,7 +224,7 @@ static void setup_heap(uint32_t heap_start)
     heap->size = kheap_size - sizeof(kheap_entry_t);
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
-    heap_enabled = 1;
+    heap_status = HEAP_STATIC;
     klog(KLOG_INFO, "setup_heap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
@@ -227,7 +234,6 @@ static void setup_heap(uint32_t heap_start)
 static void setup_pheap()
 {
     // TODO: free up the space blocked by the static heap
-    // so the stack can grow higher
 
     kheap_size = GB1;
     heap = (kheap_entry_t*)GB3;
@@ -239,7 +245,7 @@ static void setup_pheap()
     heap->size = kheap_size - sizeof(kheap_entry_t);
     heap->start = (void*)((char*)heap + sizeof(kheap_entry_t));
 
-    pheap_enabled = 1;
+    heap_status = HEAP_PAGED;
     klog(KLOG_INFO, "setup_pheap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
 }
 
@@ -252,7 +258,7 @@ void heap_dump(void)
     int i = 0;
     unsigned long used = 0, free = 0;
     kheap_entry_t *entry;
-    klog(KLOG_DEBUG, "heap_dump(): %s HEAP CONTENTS", pheap_enabled ? "DYNAMIC PAGED" : "PRE-PAGING");
+    klog(KLOG_DEBUG, "heap_dump(): --- %s HEAP CONTENTS ---", heap_status == HEAP_PAGED ? "PAGED" : "PRE-PAGING");
     for(entry = heap; entry != NULL; entry = (kheap_entry_t*)entry->next)
     {
         unsigned long size = sizeof(kheap_entry_t) + entry->size;
@@ -302,7 +308,7 @@ static kheap_entry_t *mkblock(kheap_entry_t *previous, kheap_entry_t *next,
 
 /*
  * merge_blocks(): merges two blocks of memory that are next to each other.
- * the two blocks of memory have to be unallocated.
+ * the two blocks of memory have to be unallocated. this is used by kfree().
  * returns: pointer to the kheap_entry_t descriptor of the new block.
  */
 static void *merge_blocks(kheap_entry_t *entry1, kheap_entry_t *entry2, char *description)
@@ -330,6 +336,6 @@ static void *merge_blocks(kheap_entry_t *entry1, kheap_entry_t *entry2, char *de
     entry1->description[DESC_LENGTH - 1] = 0;
     entry1->next = entry2->next;
     entry1->size += entry2->size + sizeof(kheap_entry_t);
-    ((kheap_entry_t *)entry2->next)->previous = entry1;
+    entry2->next->previous = entry1;
     return entry1;
 }
