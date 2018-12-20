@@ -1,8 +1,7 @@
 #include "pagemgr.h"
 #include "kheap.h"
-#include "util/util.h"
-#include "log.h"
-
+#include <util/util.h>
+#include <log.h>
 
 typedef struct
 {

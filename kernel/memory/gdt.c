@@ -1,6 +1,8 @@
 #include "gdt.h"
-#include "log.h"
+#include <log.h>
 
+void gdt_write(gdt_descriptor_t *gdt_ptr);
+void tss_write(void);
 
 #define GDT_ENTRIES 6 // null, kcode, kdata, ucode, udata, tss
 

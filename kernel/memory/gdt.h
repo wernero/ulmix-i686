@@ -1,22 +1,17 @@
 #ifndef GDT_H
 #define GDT_H
 
-#include "util/types.h"
+#include <util/types.h>
 
 #define VALID   0x80
-
 #define OFF_32  0x40
 #define OFF_16  0x00
-
 #define SYS_NON 0x10
 #define SEG_SYS 0x00
-
 #define ACC_SUP 0x00
 #define ACC_USR 0x60
-
 #define GRAN_4K 0x80
 #define GRAN_BT 0x00
-
 #define CXR     0x0A
 #define DRW     0x02
 
@@ -69,8 +64,5 @@ typedef struct
 
 void setup_gdt(void);
 void update_tss(uint32_t esp0);
-
-void gdt_write(gdt_descriptor_t *gdt_ptr);
-void tss_write(void);
 
 #endif // GDT_H

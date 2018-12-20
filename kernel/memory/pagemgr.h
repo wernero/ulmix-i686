@@ -19,8 +19,8 @@
  * released by the function release_page().
  */
 
-#include "memory/paging.h"
-#include "util/types.h"
+#include "paging.h"
+#include <util/types.h>
 
 #define DYNAMIC_START   MB16    // start dynamic allocation of pages at phys addr 16MB
 
