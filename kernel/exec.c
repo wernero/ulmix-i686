@@ -2,6 +2,7 @@
 #include "memory/userheap.h"
 #include "sched/scheduler.h"
 #include "sched/task.h"
+#include <filesystem/fs_syscalls.h>
 #include <errno.h>
 
 extern thread_t *current_thread;
@@ -77,5 +78,9 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
 
 int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
 {
+    int fd;
+    if ((fd = sc_open(img_path, O_RDONLY)) < 0)
+        return fd;
+
     return -ENOSYS;
 }
