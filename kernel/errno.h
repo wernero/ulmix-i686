@@ -17,6 +17,8 @@
 #define ENFILE  23
 #define EMFILE  24
 
+#define ENOSYS  38
+
 #define ENOBUFS 105
 
 int _errno(void);

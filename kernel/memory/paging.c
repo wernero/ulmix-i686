@@ -167,6 +167,20 @@ static pagetable_entry_t *mk_pagetables(int n, int offset, pagedir_t *pagedir, i
     return pagetables;
 }
 
+pagedir_t *mk_user_pagedir(void)
+{
+    pagedir_t *udir = kmalloc(sizeof(pagedir_t), PAGESIZE, "user pagedir");
+
+    // map kernel regions into user pagedir (0-16M, 3-4G)
+    memcpy(udir, pagedir_kernel, sizeof(pagedir_entry_t) * 4);
+    memcpy((pagedir_t *)((char*)udir + sizeof(pagedir_entry_t) * 768),
+           pagedir_kernel,
+           sizeof(pagedir_entry_t) * 256);
+
+    // leaving the actual userspace unmapped, the fault handler will map that.
+    return udir;
+}
+
 uint32_t setup_memory(void *mmap, uint32_t mmap_len)
 {
     uint32_t physical_size = 0;

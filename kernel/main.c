@@ -12,6 +12,8 @@
 #include "kdebug.h"
 #include "filesystem/vfscore.h"
 #include "filesystem/fs_syscalls.h"
+#include <errno.h>
+#include <exec.h>
 
 // .bss (ld)
 extern char _bss_start;
@@ -31,13 +33,24 @@ static void kmainthread(void)
     scan_devices();
     vfs_init();
 
-    // test open file
-    int ret;
-    klog(KLOG_INFO, "opening /test.txt");
-    if ((ret = sc_open("/test.txt", O_RDONLY)) < 0)
+
+    // run init
+    klog(KLOG_INFO, "executing /bin/init");
+    pagedir_t *init_pd;
+    if ((init_pd = mk_user_pagedir()) == NULL)
     {
-        klog(KLOG_INFO, "error: errno(%d)", -ret);
+        klog(KLOG_WARN, "failed to run /bin/init: could not create pagedir");
     }
+
+    void *init_entry;
+    //unsigned long init_esp = GB3;
+    int err;
+    if ((err = exec_load_img(init_pd, "/bin/init", &init_entry)) < 0)
+    {
+        klog(KLOG_WARN, "failed to load /bin/init: errno %d", -err);
+    }
+
+    //mk_process(init_pd, TYPE_USER, init_entry, PAGESIZE, init_esp, "init");
 
     heap_dump();
     for (;;) hlt();
