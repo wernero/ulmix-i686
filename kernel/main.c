@@ -62,6 +62,7 @@ static void exec_init(void)
     int err;
     if ((err = exec_load_img(init_pd, "/bin/init", &init_entry)) < 0)
     {
+        kfree(init_pd);
         klog(KLOG_WARN, "failed to load /bin/init: errno %d", -err);
     }
 

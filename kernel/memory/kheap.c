@@ -146,6 +146,8 @@ void *kmalloc(size_t size, int alignment, char *description)
         new_block->size += excess_size;
     }
 
+    memset(new_block->start, 0, new_block->size);
+
     klog(KLOG_DEBUG, "kmalloc(): returned %x", new_block->start);
     return new_block->start;
 }
@@ -169,7 +171,7 @@ void kfree(void *mem)
     kheap_entry_t *merged_entry;
     if (((kheap_entry_t*)entry->previous)->available)
     {
-        merged_entry = merge_blocks(entry,
+        entry = merged_entry = merge_blocks(entry,
                     (kheap_entry_t*)entry->previous,
                     ((kheap_entry_t*)entry->previous)->description);
 
@@ -181,7 +183,7 @@ void kfree(void *mem)
 
     if (((kheap_entry_t*)entry->next)->available)
     {
-        merged_entry = merge_blocks(entry,
+        entry = merged_entry = merge_blocks(entry,
                     (kheap_entry_t*)entry->next,
                     ((kheap_entry_t*)entry->next)->description);
 
@@ -328,6 +330,6 @@ static void *merge_blocks(kheap_entry_t *entry1, kheap_entry_t *entry2, char *de
     entry1->description[DESC_LENGTH - 1] = 0;
     entry1->next = entry2->next;
     entry1->size += entry2->size + sizeof(kheap_entry_t);
-
+    ((kheap_entry_t *)entry2->next)->previous = entry1;
     return entry1;
 }
