@@ -11,7 +11,7 @@
  * apply_pagedir()      switches virtual address space
  */
 
-#include "util/types.h"
+#include <util/types.h>
 
 #define PAG_RDWR    0x02
 #define PAG_RDONLY  0x00
@@ -45,10 +45,12 @@ typedef struct
 } __attribute__((packed)) pagetable_t;
 
 
-uint32_t setup_memory(void *mmap, uint32_t mmap_len);
-void     setup_paging(uint32_t phys_memory);
-void     apply_pagedir(void *pagedir);
-pagedir_t *mk_user_pagedir(void);
-pagedir_t *get_kernel_pagedir(void);
+uint32_t    setup_memory(void *mmap, uint32_t mmap_len);
+void        setup_paging(uint32_t phys_memory);
+
+pagedir_t * mk_user_pagedir(void);
+pagedir_t * get_kernel_pagedir(void);
+
+void        apply_pagedir(void *pagedir);
 
 #endif // PAGING_H
