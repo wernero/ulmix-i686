@@ -93,7 +93,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
 
-    mountpoint->sb->fs = fs;
+    mountpoint->sb->fs = fs; // to fix function calls to ext2 FS functions which are installed via install_fs .. (filesystem.c)
 
     mountpoint->sb->s_blocks_total = superblock->total_blocks;
     mountpoint->sb->s_inodes_total = superblock->total_inodes;
