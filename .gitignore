@@ -2,8 +2,8 @@
 *.BIN
 *.o
 *.img
-serial.txt
-serial.out
+serial.txt*
+serial.out*
 *.config
 *.creator
 *.user
