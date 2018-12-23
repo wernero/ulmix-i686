@@ -490,7 +490,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
     }
     
     
-    DumpHex(buf, 0x40);
+    hexdump(buf, 0x40);
 
     
     // entry->blocks is start structure for inode_block_table

@@ -86,7 +86,7 @@ void klog(loglevel_t lvl, const char *format, ...)
 
 
 
-void DumpHex(const void* data, size_t size) {
+void hexdump(const void* data, size_t size) {
   
     int output_flags = OUT_SERIAL;
     output_flags |= OUT_TTY;

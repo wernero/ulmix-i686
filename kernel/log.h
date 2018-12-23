@@ -19,6 +19,6 @@ typedef enum
 
 void klog(loglevel_t lvl, const char *format, ...);
 
-void DumpHex(const void* data, size_t size);
+void hexdump(const void* data, size_t size);
 
 #endif // LOG_H
