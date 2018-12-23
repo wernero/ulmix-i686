@@ -52,56 +52,43 @@ static int ext2_probe(struct gendisk_struct *bd, int partition)
 
 static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part)
 {
-    // get inode 2
-    // parse & fill out
-    // superblock layout to be read from disk
-    superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
-
-  //  struct hd_struct *partition = &(bd->part_list[part]);
-    char *group_descriptor_buf;
-    blockgroup_descriptor_t group_descriptor;
-    int group_descriptor_offset = 0x800;
-    int group_descriptor_size = 0x0;
-    struct gd_struct * current_gds;
-    {
-
-    };
-
-    int i;
-
-
     mountpoint->bd = bd;
     mountpoint->partition = &(bd->part_list[part]);
 
     // get superblock from partition
+    superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
     get_superblock(bd, mountpoint->partition, superblock);
-
-
 
     klog(KLOG_INFO, "ext2_mount(): signature=%x, total_inodes=%d, total_blocks=%d, unalloc_inodes=%d, unalloc_blocks=%d",
         superblock->signature,
         superblock->total_inodes,
         superblock->total_blocks,
         superblock->unalloc_inodes,
-        superblock->unalloc_blocks
-        );
-
-
-
+        superblock->unalloc_blocks);
 
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
 
-    mountpoint->sb->fs = fs; // to fix function calls to ext2 FS functions which are installed via install_fs .. (filesystem.c)
-
+    mountpoint->sb->fs = fs; // to fix function calls to ext2 FS functions which
+                             // are installed via install_fs .. (filesystem.c)
     mountpoint->sb->s_blocks_total = superblock->total_blocks;
     mountpoint->sb->s_inodes_total = superblock->total_inodes;
-
     mountpoint->sb->s_blocks_per_group = superblock->blocks_per_group;
     mountpoint->sb->s_inodes_per_group = superblock->inodes_per_group;
 
     // how many blocks do we have
     mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct rouund up
+
+    kfree(superblock);
+
+
+
+    //  struct hd_struct *partition = &(bd->part_list[part]);
+    char *group_descriptor_buf;
+    blockgroup_descriptor_t group_descriptor;
+    int group_descriptor_offset = 0x800;
+    int group_descriptor_size = 0x0;
+    struct gd_struct * current_gds;
 
     group_descriptor_size = (((mountpoint->sb->s_gdb_count * sizeof(blockgroup_descriptor_t)) / 0x200) + 1) * 0x200;
 //    group_descriptor_size = 0x400;
@@ -123,7 +110,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     current_gds = mountpoint->sb->s_group_desc;
 
 
-    for(i=0; i < mountpoint->sb->s_gdb_count; i++) {
+    for(int i = 0; i < mountpoint->sb->s_gdb_count; i++) {
 
         memcpy(&group_descriptor,(group_descriptor_buf + i * 0x20), 0x20);
 
