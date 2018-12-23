@@ -36,7 +36,7 @@ int sc_open(char *pathname, int flags)
         return -EISDIR;
 
     // create file descriptor
-    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct");
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sc_open file_struct");
     fd->direntry = node;
     fd->open_mode = flags;
 
