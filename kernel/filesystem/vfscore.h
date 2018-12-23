@@ -1,8 +1,17 @@
 #ifndef VFSCORE_H
 #define VFSCORE_H
 
+#include "util/types.h"
 
 #define VFS_NAME_LEN 255
+#define VFS_INODE_BLOCK_TABLE_LEN 128
+
+
+
+
+struct inode_block_table;
+
+
 
 typedef enum
 {
@@ -32,25 +41,22 @@ struct gd_struct
 
 
 
-struct inode_struct
-{
-    unsigned int read_opens;    // how many times is the file open for read?
-    unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
-
-
-};
-
 
 struct direntry_struct
 {
     ftype_t type;
     unsigned int  mode;
 
+    unsigned int read_opens;    // how many times is the file open for read?
+    unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
+
+
     // uid, gid should go here ... 
     
     char name[VFS_NAME_LEN];
     unsigned long inode_no;
     void *payload;
+    struct inode_block_table *blocks;
 
 
     struct dir_struct *parent;
@@ -71,6 +77,39 @@ struct dir_struct
     struct dir_struct *parent;
     struct direntry_struct *entries;
 };
+
+
+
+struct inode_block_table
+{
+
+    // add flags for caching of this information
+
+    struct direntry_struct  *file;                  // to which file does the table belong
+
+    uint32_t block_count_total;                     // blocks total of file
+    uint32_t block_count;                           // blocks in current struct
+    uint32_t blocks[VFS_INODE_BLOCK_TABLE_LEN];     // inode blocks
+
+    struct inode_block_table *next;                 // next block
+
+};
+
+struct inode_struct
+{
+    unsigned int read_opens;    // how many times is the file open for read?
+    unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
+
+
+};
+
+
+
+
+
+
+
+
 
 struct filesystem_struct
 {

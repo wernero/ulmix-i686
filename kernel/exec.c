@@ -79,7 +79,7 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
 int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
 {
     int fd;
-    if ((fd = sc_open(img_path, O_RDONLY)) < 0)
+    if ((fd = sc_open(img_path, O_RDONLY)) < 0)             // < ?? correct return FD is positive when correct or?
         return fd;
 
     return -ENOSYS;

@@ -92,7 +92,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
 
-    mountpoint->sb->fs = fs;
+    mountpoint->sb->fs = fs; // to fix function calls to ext2 FS functions which are installed via install_fs .. (filesystem.c)
 
     mountpoint->sb->s_blocks_total = superblock->total_blocks;
     mountpoint->sb->s_inodes_total = superblock->total_inodes;
@@ -291,6 +291,10 @@ static int ext2_get_direntry(struct dir_struct *miss)
             current_des->type = DIRECTORY;
             current_des->directory->parent = miss;
 
+            current_des->read_opens = 0;
+            current_des->write_opens = 0;
+
+
             if(current_des->inode_no == miss->inode_no) {
                 current_des->directory = miss;
             } else {
@@ -322,10 +326,14 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
         } else if(current_des->mode & 0x8000) {   // inode is a file entry
             current_des->type = REGULAR;
+            current_des->read_opens = 0;
+            current_des->write_opens = 0;
 
             current_des->directory = NULL;
         } else {
             current_des->type = UNKOWN;
+            current_des->read_opens = 1;
+            current_des->write_opens = 1;
         }
 
         current_des = current_des->next;
@@ -342,10 +350,13 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
     int block_group = 0;
     int inode_group_offset = 0;
     //int inode_offset = 0;
-    int i;
+    int i,n;
+    int block_counter = 0;
 
     char *inode_buf = kmalloc(0x200, 1, "inode_buf");
     ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
+
+    struct inode_block_table *current_ibt;
 
     // which inode do we want to read
     // which block group is required - inode / inode per block
@@ -359,7 +370,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     // there are 4 inodes structs (0x80) (inode_groups) per disk block (0x200) - calculate the offset of the inode address table beginning
 
-    inode_group_offset = ((entry->inode_no % entry->parent->sb->s_inodes_per_group) / 4);
+    inode_group_offset = (((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / 4);
 
     klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
         block_group,
@@ -387,6 +398,37 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         );
 
     entry->mode = inode->i_mode;
+
+
+    if(inode->i_block[0] != NULL) {
+
+        entry->blocks = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+
+        current_ibt = entry->blocks;                // used as rolling pointer to current struct
+        current_ibt->file = entry;                  // this is the file we are workig on
+
+        for(n=0; n < EXT2_N_BLOCKS; n++) {
+
+            if (inode->i_block[n] == 0) break;  // not an block (or pointer to block)
+
+
+            if (n < EXT2_NDIR_BLOCKS) {         // handling of direct blocks
+
+                klog(KLOG_INFO, "ext2_get_inode(): inode=%d, blocks=%x",
+                    entry->inode_no,
+                    inode->i_block[n]
+                    );
+
+                current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode->i_block[n];
+
+            }
+            // handling of indirect / double / triple block refrences // TODO
+
+            block_counter += 1;
+
+        }
+    }
+
     entry->payload = (void *) inode;
 
     // TODO
