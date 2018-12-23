@@ -21,6 +21,7 @@ enum _whence
 };
 
 struct file_struct;
+
 struct fd_fops_struct
 {
     ssize_t (*read) (struct file_struct *fd, char *buf, size_t len);

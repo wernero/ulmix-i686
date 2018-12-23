@@ -36,7 +36,7 @@ int sc_open(char *pathname, int flags)
         return -EISDIR;
 
     // create file descriptor
-    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct");
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sc_open file_struct");
     fd->direntry = node;
     fd->open_mode = flags;
 
@@ -75,7 +75,7 @@ ssize_t sc_write(int fd, void *buf, size_t count)
     if (fds == NULL)
         return -EBADF;
 
-    return fds->fops.write(fds, buf, count);
+    return fds->fops.write(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
 }
 
 ssize_t sc_read(int fd, void *buf, size_t count)
@@ -84,7 +84,7 @@ ssize_t sc_read(int fd, void *buf, size_t count)
     if (fds == NULL)
         return -EBADF;
 
-    return fds->fops.write(fds, buf, count);
+    return fds->fops.read(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
 }
 
 int sc_close(int fd)

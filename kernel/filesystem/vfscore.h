@@ -117,6 +117,8 @@ struct filesystem_struct
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
     int (*fs_get_direntry)(struct dir_struct *miss);
     int (*fs_get_inode)(struct direntry_struct *entry, unsigned long inode_no);
+    int (*fs_read)(struct direntry_struct *entry, char *buf, size_t len);
+    int (*fs_write)(struct direntry_struct *entry, char *buf, size_t len);
     char *name;
 };
 

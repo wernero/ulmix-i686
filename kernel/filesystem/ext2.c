@@ -13,6 +13,9 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 static int ext2_get_direntry(struct dir_struct *miss);
 static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no);
 
+static int ext2_read(struct direntry_struct *entry, char *buf, size_t len);
+static int ext2_write(struct direntry_struct *entry, char *buf, size_t len);
+
 
 void install_ext2()
 {
@@ -22,6 +25,8 @@ void install_ext2()
     ext2fs->fs_mount = ext2_mount;
     ext2fs->fs_get_direntry = ext2_get_direntry;
     ext2fs->fs_get_inode = ext2_get_inode;
+    ext2fs->fs_read = ext2_read;
+    ext2fs->fs_write = ext2_write;
     ext2fs->name = "ext2";
 
     install_fs(ext2fs);
@@ -180,17 +185,17 @@ static int ext2_get_direntry(struct dir_struct *miss)
         klog(KLOG_INFO, "ext2_get_direntry(): new dirstruct current_des=%x",
             current_des
             );
-
-
+	
+	//TODO
 
     } else {
         // there are entries present_find the last one and update list
         while(miss->entries != NULL) {
             // no entries for direntry_struct in dir_struct
+	  
+	    //TODO
 
         }
-
-
     }
 
 
@@ -418,6 +423,20 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     entry->payload = (void *) inode;
 
-    // TODO
     return 0;
 }
+
+
+
+static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
+
+    return 0;
+}
+
+
+
+static int ext2_write(struct direntry_struct *entry, char *buf, size_t len){
+
+    return 0;
+}
+

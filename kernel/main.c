@@ -49,6 +49,9 @@ static void kmainthread(void)
 
 static void exec_init(void)
 {
+
+    char bin_to_exec[] = "/bin/init";
+
     // run init
     klog(KLOG_INFO, "executing /bin/init");
     pagedir_t *init_pd;
@@ -60,7 +63,7 @@ static void exec_init(void)
     void *init_entry;
     //unsigned long init_esp = GB3;
     int err;
-    if ((err = exec_load_img(init_pd, "/bin/init", &init_entry)) < 0)
+    if ((err = exec_load_img(init_pd, bin_to_exec, &init_entry)) < 0)               // "/bin/init" as const has not ending 0 as string end
     {
         kfree(init_pd);
         klog(KLOG_WARN, "failed to load /bin/init: errno %d", -err);
