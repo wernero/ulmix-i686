@@ -399,6 +399,9 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         current_ibt = entry->blocks;                // used as rolling pointer to current struct
         current_ibt->file = entry;                  // this is the file we are workig on
         current_ibt->next = NULL;
+	
+	for(n=0; n < VFS_INODE_BLOCK_TABLE_LEN; n++)	// init all blocks to zero
+	    current_ibt->blocks[n] = 0;
 
         for(n=0; n < EXT2_N_BLOCKS; n++) {
 
@@ -431,8 +434,13 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
 static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
   
-  
- //   char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
+    struct inode_block_table *current_ibt;
+    int seek_offset = 0;
+    unsigned long bytes_to_copy = 0;
+
+    int i;
+    
+    char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
   
     klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d",
         entry->inode_no,
@@ -442,6 +450,48 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
         );
 
     // blocks in ext2 are written in 0x400 - data to be read in 0x400 blocks
+    
+    if(entry->blocks == NULL)
+      return -EIO;
+
+    bytes_to_copy = entry->size;
+
+    for(current_ibt = entry->blocks; bytes_to_copy > 0; current_ibt = current_ibt->next)
+    {    
+      for(i =  0; i < VFS_INODE_BLOCK_TABLE_LEN; i++)
+      {
+
+	if(current_ibt->blocks[i] == 0) // nothing to do
+	  break;
+
+	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
+	    entry->inode_no,
+	    bytes_to_copy,
+	    seek_offset,
+	    current_ibt->blocks[i] ,
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
+	    );
+	
+	entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+	entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
+	
+	memcpy(buf+seek_offset, disk_read_buffer, bytes_to_copy);
+	
+	if(bytes_to_copy < 0x400) {
+	  bytes_to_copy -= bytes_to_copy;
+	  break; // nothing else to copy
+	} else {
+	  bytes_to_copy -= 0x400;
+	}
+
+	seek_offset += 0x400;
+      } 
+    }
+    
+    
+    DumpHex(buf, 0x40);
+
     
     // entry->blocks is start structure for inode_block_table
     

@@ -84,3 +84,44 @@ void klog(loglevel_t lvl, const char *format, ...)
     }
 }
 
+
+
+void DumpHex(const void* data, size_t size) {
+  
+    int output_flags = OUT_SERIAL;
+    output_flags |= OUT_TTY;
+
+    char ascii[17];
+    char strbuf[64];
+    size_t i, j;
+    ascii[16] = '\0';
+    for (i = 0; i < size; ++i) {
+	
+	itoxa8(((unsigned char*)data)[i], strbuf);
+	log_puts(output_flags, strbuf);
+	
+	if (((unsigned char*)data)[i] >= ' ' && ((unsigned char*)data)[i] <= '~') {
+	    ascii[i % 16] = ((unsigned char*)data)[i];
+	} else {
+	    ascii[i % 16] = '.';
+	}
+	if ((i+1) % 8 == 0 || i+1 == size) {
+	    log_puts(output_flags, " ");
+	    if ((i+1) % 16 == 0) {
+		log_puts(output_flags,"|  ");
+		log_puts(output_flags, ascii);
+		log_puts(output_flags, " \n"); 
+	    } else if (i+1 == size) {
+		ascii[(i+1) % 16] = '\0';
+		if ((i+1) % 16 <= 8) {
+		    log_puts(output_flags, " ");
+		}
+		for (j = (i+1) % 16; j < 16; ++j) {
+		    log_puts(output_flags, "   ");
+		}
+		log_puts(output_flags,"|  ");
+		log_puts(output_flags, ascii);
+		log_puts(output_flags, " \n"); 	    }
+	}
+    }
+}
