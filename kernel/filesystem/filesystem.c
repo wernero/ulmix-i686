@@ -32,8 +32,14 @@ int install_fs(struct filesystem_struct *fs)
 
 int direntry_get_inode(struct direntry_struct *file)
 {
-    return file->directory->sb->fs->fs_get_inode(file->directory, file->inode_no);
+    return file->parent->sb->fs->fs_get_inode(file, file->inode_no);  /// get_inode function changed !!!!
 }
+
+int direntry_get_dir(struct dir_struct *dir)
+{
+    return dir->sb->fs->fs_get_direntry(dir);
+}
+
 
 int kmount(struct dir_struct *mountpoint, int major, int partition)
 {
@@ -54,7 +60,8 @@ int kmount(struct dir_struct *mountpoint, int major, int partition)
                  disk->part_list[partition].sector_offset * 512,
                  disk->part_list[partition].sector_count * 512,
                  pfs->name);
-            return pfs->fs_mount(mountpoint, disk, partition);
+
+            return pfs->fs_mount(pfs, mountpoint, disk, partition);
         }
     }
 

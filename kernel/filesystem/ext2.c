@@ -9,7 +9,7 @@
 #define EXT2_BLOCK_SIZE         0x400
 
 static int ext2_probe(struct gendisk_struct *bd, int partition);
-static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
+static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
 static int ext2_get_direntry(struct dir_struct *miss);
 static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no);
 
@@ -51,7 +51,7 @@ static int ext2_probe(struct gendisk_struct *bd, int partition)
     return -1;
 }
 
-static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, int part)
+static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part)
 {
     // get inode 2
     // parse & fill out
@@ -92,6 +92,8 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
 
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
+
+    mountpoint->sb->fs = fs;
 
     mountpoint->sb->s_blocks_total = superblock->total_blocks;
     mountpoint->sb->s_inodes_total = superblock->total_inodes;
@@ -164,6 +166,11 @@ static int ext2_mount(struct dir_struct *mountpoint, struct gendisk_struct *bd, 
 static int ext2_get_direntry(struct dir_struct *miss)
 {
     // TODO
+
+    klog(KLOG_INFO, "ext2_get_direntry(): miss=%x",
+        miss
+        );
+
 
     int block_group = 0;
     struct gd_struct * gds;
@@ -281,7 +288,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         ext2_get_inode(current_des, current_des->inode_no);
 
 
-        if(current_des->mode & 0x4000) {   // inode is a file entry
+        if(current_des->mode & 0x4000) {   // inode is a directory entry
             current_des->type = DIRECTORY;
             current_des->directory->parent = miss;
 
@@ -291,13 +298,16 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
                 current_des->directory = kmalloc(sizeof(struct dir_struct),1,"dir_struct");
 
+                current_des->directory->mountpoint = 0; // not a mountpoint so far
+
                 current_des->directory->sb = miss->sb;
                 current_des->directory->bd = miss->bd;
                 current_des->directory->partition = miss->partition;
 
-                memcpy(current_des->directory->name, miss->name, strlen(miss->name));        
-                memcpy(current_des->directory->name + strlen(miss->name), current_des->name, strlen(current_des->name));
-//                memcpy(current_des->directory->name, current_des->name, strlen(current_des->name));
+                // adding parent name is probably not a good idea .. 
+//                memcpy(current_des->directory->name, miss->name, strlen(miss->name));        
+//                memcpy(current_des->directory->name + strlen(miss->name), current_des->name, strlen(current_des->name));
+                memcpy(current_des->directory->name, current_des->name, strlen(current_des->name));
 
                  // needs to be changed sprintf("%s%s/",miss->name, current_des->name);
                 current_des->directory->inode_no = current_des->inode_no;

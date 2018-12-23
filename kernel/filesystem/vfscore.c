@@ -7,7 +7,7 @@ struct dir_struct root;
 void vfs_init()
 {
 	char mount_name[1] = "/";
-    root.mountpoint = 0;
+    root.mountpoint = 1;
     
     memcpy(root.name, mount_name, 1);
 

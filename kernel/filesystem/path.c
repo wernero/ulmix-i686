@@ -2,6 +2,7 @@
 #include <sched/task.h>
 #include <filesystem/filesystem.h>
 #include <errno.h>
+#include "log.h"
 
 extern struct dir_struct root;
 extern thread_t *current_thread;
@@ -11,13 +12,23 @@ static char *strccpy(char *dest, char *src, char terminator);
 static int namei_recursive(char *path, struct dir_struct *working_dir, struct direntry_struct **node)
 {
     char cname[256];
-    char *rem = strccpy(cname, path, '/');
+    char *rem = strccpy(cname, path, '/');  // buffer overflow??
     if (strlen(cname) == 0)
         return -ENOENT;
 
     struct direntry_struct *entry;
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
+
+        klog(KLOG_INFO, "namei_recursive(): name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
+            entry->name,
+            entry->type,
+            entry->inode_no,
+            entry->directory,
+            entry->parent->sb,
+            entry->parent->sb->fs
+        );
+
         if (strcmp(entry->name, cname) == 0)
         {
             if (*rem == 0)
@@ -25,7 +36,9 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
                     return -ENOTDIR;
 
-                if (entry->payload == NULL)
+// payload is currently not "content of file" -- it is the raw inode data
+
+                if (entry->payload == NULL)  
                     direntry_get_inode(entry);
 
                 *node = entry;
@@ -34,7 +47,14 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
             if (entry->type != DIRECTORY)
                 return -ENOENT;
-            return namei_recursive(rem, (struct dir_struct *)entry->payload, node);
+
+            if (entry->directory->entries == NULL && entry->type == DIRECTORY)
+            {
+                // get directory data not cached directory
+                direntry_get_dir(entry->directory);
+            }
+
+            return namei_recursive(rem, entry->directory, node);
         }
     }
 
