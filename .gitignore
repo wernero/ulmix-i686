@@ -16,6 +16,6 @@ hdd.img.bak
 hdd.img.lock
 diskimage/*.txt
 diskimage/dump
-snapshot.txt
+snapshot.txt*
 .kdev4
 *kdev4
