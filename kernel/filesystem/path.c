@@ -16,6 +16,9 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
     if (strlen(cname) == 0)
         return -ENOENT;
 
+    if (working_dir->entries == NULL)
+        return -ENOENT;
+
 
     klog(KLOG_INFO, "namei_recursive(): ********** cname=%s rem=%s",
         cname,
@@ -37,6 +40,16 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
         if (strcmp(entry->name, cname) == 0)
         {
+
+
+            klog(KLOG_INFO, "namei_recursive(): cname=%s name=%s rem_cur=%x rem=%s",
+                cname,
+                entry->name,
+                *rem,
+                rem
+                );
+
+
             if (*rem == 0)
             {
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
@@ -45,7 +58,14 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 //                if (entry->payload == NULL)  // payload is the raw inode data
 //                    direntry_get_inode(entry);
 
+
                 *node = entry;
+
+                klog(KLOG_INFO, "namei_recursive(): node=%x",
+                    node
+                    );
+
+
                 return 0;
             }
 
@@ -89,3 +109,4 @@ static char* strccpy(char *dest, char *src, char terminator)
     *dest = 0;
     return src;
 }
+
