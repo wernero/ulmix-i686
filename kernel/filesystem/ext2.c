@@ -1,4 +1,5 @@
 #include "ext2.h"
+#include "errno.h"
 #include "memory/kheap.h"
 #include "log.h"
 #include "drivers/devices.h"
@@ -82,7 +83,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     mountpoint->sb->s_inodes_per_group = superblock->inodes_per_group;
 
     // how many blocks do we have
-    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct rouund up
+    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct round up
 
     kfree(superblock);
 
@@ -266,18 +267,14 @@ static int ext2_get_direntry(struct dir_struct *miss)
             de->name
             );
 
-
-
         memcpy(current_des->name, de->name, de->name_len);
         current_des->inode_no = de->inode;
-        //current_des->payload;
 
         current_des->parent = miss;
         current_des->directory = NULL;
         current_des->next = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
 
         ext2_get_inode(current_des, current_des->inode_no);
-
 
         if(current_des->mode & 0x4000) {   // inode is a directory entry
             current_des->type = DIRECTORY;
@@ -364,9 +361,10 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     inode_group_offset = (((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / 4);
 
-    klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
+    klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, sb=%x, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
         block_group,
         entry->inode_no,
+	entry->parent->sb,
         inode_group_offset,
         entry->name,
         gds->bg_inode_table,
@@ -390,6 +388,8 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         );
 
     entry->mode = inode->i_mode;
+    entry->size = inode->i_size;
+    entry->size_blocks = inode->i_blocks;
 
 
     if(inode->i_block[0] != NULL) {
@@ -398,6 +398,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
         current_ibt = entry->blocks;                // used as rolling pointer to current struct
         current_ibt->file = entry;                  // this is the file we are workig on
+        current_ibt->next = NULL;
 
         for(n=0; n < EXT2_N_BLOCKS; n++) {
 
@@ -429,14 +430,28 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
 
 static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
+  
+  
+ //   char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
+  
+    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d",
+        entry->inode_no,
+        entry->mode,
+        entry->size,
+	entry->size_blocks
+        );
 
-    return 0;
+    // blocks in ext2 are written in 0x400 - data to be read in 0x400 blocks
+    
+    // entry->blocks is start structure for inode_block_table
+    
+    return -EIO;
 }
 
 
 
 static int ext2_write(struct direntry_struct *entry, char *buf, size_t len){
 
-    return 0;
+    return -EIO;
 }
 

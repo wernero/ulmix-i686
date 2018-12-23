@@ -46,7 +46,9 @@ struct direntry_struct
 {
     ftype_t type;
     unsigned int  mode;
-
+    unsigned long size;
+    unsigned long size_blocks;
+    
     unsigned int read_opens;    // how many times is the file open for read?
     unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
 

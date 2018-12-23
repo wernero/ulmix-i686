@@ -84,7 +84,8 @@ ssize_t sc_read(int fd, void *buf, size_t count)
     if (fds == NULL)
         return -EBADF;
 
-    return fds->fops.read(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
+//    return fds->fops.read(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
+    return fds->direntry->parent->sb->fs->fs_read(fds->direntry, buf, count);
 }
 
 int sc_close(int fd)

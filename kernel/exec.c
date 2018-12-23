@@ -92,6 +92,9 @@ int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
         current_thread->process->files[fd]->direntry->name
         );
 
+    char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
+    
+    sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
 
     return -ENOSYS; // temporary: not implemented
 }

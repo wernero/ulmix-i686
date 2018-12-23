@@ -20,9 +20,11 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
         return -ENOENT;
 
 
-    klog(KLOG_INFO, "namei_recursive(): ********** cname=%s rem=%s",
+    klog(KLOG_INFO, "namei_recursive(): ********** cname=%s rem=%s wd=%x wde=%x",
         cname,
-        rem
+        rem,
+	working_dir,
+	working_dir->entries
         );
 
     struct direntry_struct *entry;
@@ -87,7 +89,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
 int namei(char *path, struct direntry_struct **node)
 {
-    struct dir_struct *working_dir = current_thread->process->working_dir;
+    struct dir_struct *working_dir = current_thread->process->working_dir; 
     if (path[0] == '/')
     {
         path++;
