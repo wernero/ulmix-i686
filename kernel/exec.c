@@ -85,9 +85,11 @@ int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
 
     // implementation of exec_load_img()
 
-    klog(KLOG_INFO, "exec_load_img(): fd=%x *fd=%x",
+    klog(KLOG_INFO, "exec_load_img(): fd=%x *fd=%x, *node=%x, name=%s",
         fd,
-        current_thread->process->files[fd]
+        current_thread->process->files[fd],
+        current_thread->process->files[fd]->direntry,
+        current_thread->process->files[fd]->direntry->name
         );
 
 
