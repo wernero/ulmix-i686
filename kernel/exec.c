@@ -2,6 +2,7 @@
 #include "memory/userheap.h"
 #include "sched/scheduler.h"
 #include "sched/task.h"
+#include "log.h"
 #include <filesystem/fs_syscalls.h>
 #include <errno.h>
 
@@ -83,6 +84,12 @@ int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
         return fd;
 
     // implementation of exec_load_img()
+
+    klog(KLOG_INFO, "exec_load_img(): fd=%x *fd=%x",
+        fd,
+        current_thread->process->files[fd]
+        );
+
 
     return -ENOSYS; // temporary: not implemented
 }
