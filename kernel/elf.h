@@ -1,6 +1,8 @@
 #ifndef ELF_H
 #define ELF_H
 
+#include <util/types.h>
+
 struct elf_header_struct
 {
     char		magic[4];
