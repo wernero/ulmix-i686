@@ -16,6 +16,12 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
     if (strlen(cname) == 0)
         return -ENOENT;
 
+
+    klog(KLOG_INFO, "namei_recursive(): ********** cname=%s rem=%s",
+        cname,
+        rem
+        );
+
     struct direntry_struct *entry;
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
@@ -36,8 +42,8 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
                     return -ENOTDIR;
 
-                if (entry->payload == NULL)  // payload is the raw inode data
-                    direntry_get_inode(entry);
+//                if (entry->payload == NULL)  // payload is the raw inode data
+//                    direntry_get_inode(entry);
 
                 *node = entry;
                 return 0;

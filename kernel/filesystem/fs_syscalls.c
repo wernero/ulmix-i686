@@ -28,7 +28,8 @@ int sc_open(char *pathname, int flags)
         return -ENOENT;
     }
 
-    struct inode_struct *inode = (struct inode_struct*)node->payload;
+// all stored in direntry_struct
+//    struct inode_struct *inode = (struct inode_struct*)node->payload;
 
     // for now, don't allow to open directories
     if (node->type == DIRECTORY)
@@ -42,22 +43,22 @@ int sc_open(char *pathname, int flags)
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
     {
         // MUTEX!!!
-        if (inode->read_opens > 0 || inode->write_opens > 0)
+        if (node->read_opens > 0 || node->write_opens > 0)
         {
             return -EMFILE;
         }
 
-        inode->write_opens++;
+        node->write_opens++;
     }
     else
     {
         // MUTEX!!!
-        if (inode->write_opens > 0)
+        if (node->write_opens > 0)
         {
             return -EMFILE;
         }
 
-        inode->read_opens++;
+        node->read_opens++;
     }
 
     return insert_fd(fd);
