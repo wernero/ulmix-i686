@@ -36,9 +36,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
                     return -ENOTDIR;
 
-// payload is currently not "content of file" -- it is the raw inode data
-
-                if (entry->payload == NULL)  
+                if (entry->payload == NULL)  // payload is the raw inode data
                     direntry_get_inode(entry);
 
                 *node = entry;
