@@ -44,7 +44,7 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
         argv[i] = esp;
     }
 
-    // create argv pointer array
+    // create argv pointersc_execve( array
     esp -= i;
     *_argc = i;
     *_argv = esp;

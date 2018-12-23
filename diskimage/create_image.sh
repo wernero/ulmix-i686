@@ -14,7 +14,7 @@ sudo mkfs.ext2 /dev/loop1
 sudo mkdir /mnt/hd1p1 ; mount /dev/loop1 /mnt/hd1p1
 sudo touch /mnt/hd1p1/this-is-a-disk-image
 sudo mkdir /mnt/hd1p1/bin
-sudo echo "test-binary-content" > /mnt/hd1p1/bin/init
+sudo cp ../userspace/init/init.elf /mnt/hd1p1/bin/init
 sudo echo "this is a disk image" > /mnt/hd1p1/readme.txt
 
 sudo umount /mnt/hd1p1/

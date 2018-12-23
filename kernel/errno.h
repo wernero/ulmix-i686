@@ -8,6 +8,7 @@
 #define EIO     5			// I/O error
 #define ENXIO   6
 #define E2BIG   7
+#define ENOEXEC 8
 
 #define EBADF   9
 
