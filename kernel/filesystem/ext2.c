@@ -39,14 +39,13 @@ static void get_superblock(struct gendisk_struct *bd, struct hd_struct *partitio
 static int ext2_probe(struct gendisk_struct *bd, int partition)
 {
     superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
-
     get_superblock(bd, &(bd->part_list[partition]), superblock);
+    uint16_t signature = superblock->signature;
+    kfree(superblock);
 
-    klog(KLOG_INFO, "ext2_probe(): signature=%x",
-        superblock->signature
-        );
+    klog(KLOG_INFO, "ext2_probe(): signature=%x", signature);
 
-    if (superblock->signature == 0xef53)
+    if (signature == 0xef53)
         return 0;
     return -1;
 }
@@ -304,8 +303,8 @@ static int ext2_get_direntry(struct dir_struct *miss)
                 current_des->directory->bd = miss->bd;
                 current_des->directory->partition = miss->partition;
 
-                // adding parent name is probably not a good idea .. 
-//                memcpy(current_des->directory->name, miss->name, strlen(miss->name));        
+                // adding parent name is probably not a good idea ..
+//                memcpy(current_des->directory->name, miss->name, strlen(miss->name));
 //                memcpy(current_des->directory->name + strlen(miss->name), current_des->name, strlen(current_des->name));
                 memcpy(current_des->directory->name, current_des->name, strlen(current_des->name));
 
