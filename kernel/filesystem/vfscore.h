@@ -1,6 +1,9 @@
 #ifndef VFSCORE_H
 #define VFSCORE_H
 
+
+#define VFS_NAME_LEN 255
+
 typedef enum
 {
     FIFO,
@@ -9,19 +12,10 @@ typedef enum
     BLOCKDEVICE,
     REGULAR,
     SYMLINK,
-    SOCKET
+    SOCKET,
+    UNKOWN
 } ftype_t;
 
-struct direntry_struct
-{
-    ftype_t type;
-    char name[256];
-    unsigned long inode_no;
-    void *payload;
-
-    struct dir_struct *directory;
-    struct direntry_struct *next;
-};
 
 struct gd_struct
 {
@@ -97,15 +91,35 @@ struct inode_struct
 
 };
 
+
+struct direntry_struct
+{
+    ftype_t type;
+    unsigned int  mode;
+
+    // uid, gid should go here ... 
+    
+    char name[VFS_NAME_LEN];
+    unsigned long inode_no;
+    void *payload;
+
+
+    struct dir_struct *parent;
+    struct dir_struct *directory;
+    struct direntry_struct *next;
+};
+
+
 struct dir_struct
 {
     int mountpoint;
     struct sb_struct *sb;
     struct gendisk_struct *bd;
     struct hd_struct *partition;
-    char name[256];
+    char name[VFS_NAME_LEN];
     unsigned long inode_no;
-
+ 
+    struct dir_struct *parent;
     struct direntry_struct *entries;
 };
 
@@ -114,7 +128,7 @@ struct filesystem_struct
     int (*fs_probe)(struct gendisk_struct *bd, int part);
     int (*fs_mount)(struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
     int (*fs_get_direntry)(struct dir_struct *miss);
-    int (*fs_get_inode)(struct dir_struct *parent, unsigned long inode_no);
+    int (*fs_get_inode)(struct direntry_struct *entry, unsigned long inode_no);
     char *name;
 };
 
