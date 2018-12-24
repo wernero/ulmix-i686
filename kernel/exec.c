@@ -84,7 +84,8 @@ static int exec_load_img(pagedir_t *pagedir, char *filename, void **entry)
     current_thread->process->nofault = 1;
 
     // go through segments (not sections!)
-    struct elf_pht_entry_struct *pht_entry = kmalloc(sizeof(struct elf_pht_entry_struct), 1, "elf_pht_entry");
+    struct elf_pht_entry_struct phtt;
+    struct elf_pht_entry_struct *pht_entry = &phtt;
     for (int i = 0; i < elf_header->pht_entries; i++)
     {
         if ((error = elf_get_pht_entry(fd, i, elf_header, pht_entry)) < 0)

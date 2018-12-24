@@ -37,6 +37,8 @@ int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struc
         return -EIO;
     }
 
+    hexdump(KLOG_INFO, entry, sizeof(struct elf_pht_entry_struct));
+
     klog(KLOG_DEBUG, "pht entry: type=%d", entry->type);
     return 0;
 }
