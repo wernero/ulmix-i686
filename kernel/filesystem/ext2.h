@@ -13,7 +13,9 @@
 #define EXT2_TIND_BLOCK         (EXT2_DIND_BLOCK + 1)
 #define EXT2_N_BLOCKS           (EXT2_TIND_BLOCK + 1)
 
-#define EXT2_NAME_LEN 255
+#define EXT2_NAME_LEN 		255
+
+#define EXT2_IND_BLOCK_LEN 	256
 
 typedef struct
 {
@@ -149,6 +151,11 @@ typedef struct {
     } osd2;             /* OS dependent 2 */
 } ext2_inode_t;
 
+
+typedef struct
+{
+    uint32_t i_indirect_ptr[EXT2_IND_BLOCK_LEN];
+} ext2_inode_blk_table_t;
 
 typedef struct
 {
