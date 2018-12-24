@@ -577,14 +577,16 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	if(current_ibt->blocks[i] == 0) // nothing to do
 	  break;
 
-	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
+	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, stb=%d blk=%d : %x %x",
 	    entry->inode_no,
 	    bytes_to_copy,
-	    bytes_read,
+	    start_block,
 	    current_ibt->blocks[i] ,
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
 	    );
+
+
 	
 	if(!start_block) { // start_block depends on read_seek_offset
 	  
@@ -604,8 +606,14 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	  
 	  start_block_offset = 0; // only to be done on the very first block read;
 	}
+
+	klog(KLOG_INFO, "ext2_read(): inode=%d, btr=%d",
+	    entry->inode_no,
+	    bytes_read
+	    );
+
 	
-	if(start_block < 2)
+	if(start_block == 0)
 	  start_block = 0;
 	else
 	  start_block--;
