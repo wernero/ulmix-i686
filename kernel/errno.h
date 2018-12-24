@@ -1,6 +1,8 @@
 #ifndef ERRNO_H
 #define ERRNO_H
 
+#define SUCCESS 0
+
 #define EPERM   1
 #define ENOENT  2
 #define ESRCH   3
@@ -11,6 +13,7 @@
 #define ENOEXEC 8
 
 #define EBADF   9
+#define EAGAIN  11
 
 #define ENOTDIR 20
 #define EISDIR  21
