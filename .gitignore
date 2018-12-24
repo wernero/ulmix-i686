@@ -2,8 +2,8 @@
 *.BIN
 *.o
 *.img
-serial.txt
-serial.out
+serial.txt*
+serial.out*
 *.config
 *.creator
 *.user
@@ -16,6 +16,7 @@ hdd.img.bak
 hdd.img.lock
 diskimage/*.txt
 diskimage/dump
-snapshot.txt
+snapshot.txt*
 .kdev4
 *kdev4
+*.kate-swp

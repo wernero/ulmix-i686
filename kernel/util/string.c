@@ -128,3 +128,16 @@ void itoxa(uint32_t n, char *str)
 
     reverse(str);
 }
+
+
+void itoxa8(uint32_t n, char *str)
+{
+    char *buf = str;
+    for (int i = 0; i < 2; i++)
+    {
+        *(buf++) = get_letter((n >> i*4) & 0xf);
+    }
+    *buf = 0;
+
+    reverse(str);
+}

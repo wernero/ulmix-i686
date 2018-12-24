@@ -51,6 +51,7 @@ static void exec_init(void)
 {
 
     char bin_to_exec[] = "/bin/init";
+//    char bin_to_exec[] = "/test/20k.file";
 
     // run init
     klog(KLOG_INFO, "executing /bin/init");

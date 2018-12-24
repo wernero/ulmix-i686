@@ -1,4 +1,5 @@
 #include "ext2.h"
+#include "errno.h"
 #include "memory/kheap.h"
 #include "log.h"
 #include "drivers/devices.h"
@@ -82,7 +83,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     mountpoint->sb->s_inodes_per_group = superblock->inodes_per_group;
 
     // how many blocks do we have
-    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct rouund up
+    mountpoint->sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct round up
 
     kfree(superblock);
 
@@ -266,18 +267,14 @@ static int ext2_get_direntry(struct dir_struct *miss)
             de->name
             );
 
-
-
         memcpy(current_des->name, de->name, de->name_len);
         current_des->inode_no = de->inode;
-        //current_des->payload;
 
         current_des->parent = miss;
         current_des->directory = NULL;
         current_des->next = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
 
         ext2_get_inode(current_des, current_des->inode_no);
-
 
         if(current_des->mode & 0x4000) {   // inode is a directory entry
             current_des->type = DIRECTORY;
@@ -347,7 +344,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     char *inode_buf = kmalloc(0x200, 1, "inode_buf");
     ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
-
+    
     struct inode_block_table *current_ibt;
 
     // which inode do we want to read
@@ -364,9 +361,10 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     inode_group_offset = (((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / 4);
 
-    klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
+    klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, sb=%x, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
         block_group,
         entry->inode_no,
+	entry->parent->sb,
         inode_group_offset,
         entry->name,
         gds->bg_inode_table,
@@ -379,9 +377,9 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
     entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / 512) + inode_group_offset, SEEK_SET);
     entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_buf, 0x200 / 512);
 
-
     memcpy(inode,(inode_buf + (((entry->inode_no - 1) % 4) * 0x80)), 0x80);
 
+    kfree(inode_buf); // be nice and free up space
 
     klog(KLOG_INFO, "ext2_get_inode(): inode=%d, mode=%x, size=%d",
         entry->inode_no,
@@ -390,21 +388,29 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         );
 
     entry->mode = inode->i_mode;
+    entry->size = inode->i_size;
+    entry->size_blocks = inode->i_blocks;
 
 
     if(inode->i_block[0] != NULL) {
 
         entry->blocks = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
 
-        current_ibt = entry->blocks;                // used as rolling pointer to current struct
-        current_ibt->file = entry;                  // this is the file we are workig on
+        current_ibt = entry->blocks;                	// used as rolling pointer to current struct
+        current_ibt->file = entry;                  	// this is the file we are workig on
+        current_ibt->next = NULL;
+	
+	for(n=0; n < VFS_INODE_BLOCK_TABLE_LEN; n++)	// init all blocks to zero
+	    current_ibt->blocks[n] = 0;
 
+	ext2_inode_blk_table_t *inode_indirect_buf;
+	
         for(n=0; n < EXT2_N_BLOCKS; n++) {
 
-            if (inode->i_block[n] == 0) break;  // not an block (or pointer to block)
+            if (inode->i_block[n] == 0)
+	      break;  					// not an block (or pointer to block)
 
-
-            if (n < EXT2_NDIR_BLOCKS) {         // handling of direct blocks
+            if (n < EXT2_NDIR_BLOCKS) {         	// handling of direct blocks
 
                 klog(KLOG_INFO, "ext2_get_inode(): inode=%d, blocks=%x",
                     entry->inode_no,
@@ -412,24 +418,170 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
                     );
 
                 current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode->i_block[n];
+		block_counter += 1;
 
             }
-            // handling of indirect / double / triple block refrences // TODO
+            switch(n){
+	     
+	      case EXT2_IND_BLOCK:
+                klog(KLOG_INFO, "ext2_get_inode(): indirect inode=%d, blocks=%x",
+                    entry->inode_no,
+                    inode->i_block[n]
+                    );
+		
+		inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
+		
+		// block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks .. 256k filessize
+		entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode->i_block[n] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+		entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_indirect_buf, 0x400 / 512);
+		
+		for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
+		    if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
+		      break;
 
-            block_counter += 1;
+		    // check if new ibt needs to be created
+		    if(block_counter == VFS_INODE_BLOCK_TABLE_LEN) {
+			// create new block
+			current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+			current_ibt->next->file = current_ibt->file;
+			current_ibt = current_ibt->next;
+		    }
+		    
+		    // store block pointer
+		    current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_indirect_buf->i_indirect_ptr[ibc];
+		    block_counter += 1;
+		} // for ibc
+		
+		kfree(inode_indirect_buf); // be nice and free up space
+		break;
+	      case EXT2_DIND_BLOCK:
+                klog(KLOG_INFO, "ext2_get_inode(): double inode=%d, blocks=%x",
+                    entry->inode_no,
+                    inode->i_block[n]
+                    );
 
+		inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "single inode_indirect_buf");
+		
+		// block is pointing to 1k data block which holds max 256x256 block pointers  of 1k data blocks .. 65MB filesize
+		entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode->i_block[n] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+		entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_indirect_buf, 0x400 / 512);
+		
+		for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
+		    if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
+		      break;
+
+		    ext2_inode_blk_table_t *inode_dindirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "double inode_indirect_buf");
+
+		    // check if new ibt needs to be created
+		    if(block_counter == VFS_INODE_BLOCK_TABLE_LEN) {
+			// create new block
+			current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+			current_ibt->next->file = current_ibt->file;
+			current_ibt = current_ibt->next;
+		    }
+
+		    entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+		    entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_dindirect_buf, 0x400 / 512);
+
+		    for(int dibc = 0; dibc < EXT2_IND_BLOCK_LEN; dibc++) {
+		      
+			if(inode_dindirect_buf->i_indirect_ptr[dibc] == 0)
+			  break;
+		  
+			// store block pointer
+			current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_dindirect_buf->i_indirect_ptr[dibc];
+			block_counter += 1;
+
+		    } // for dibc
+		    kfree(inode_dindirect_buf); // be nice and free up space
+		} // for ibc
+		
+		kfree(inode_indirect_buf); // be nice and free up space		
+		break;
+	      case EXT2_TIND_BLOCK:
+                klog(KLOG_INFO, "ext2_get_inode(): triple inode=%d, blocks=%x",
+                    entry->inode_no,
+                    inode->i_block[n]
+                    );
+		
+		  //TODO -- handling of triple indirect files ..  15GB filesize ...
+		
+		break;
+	      default:
+		break;
+	    } // case
         }
     }
 
+    klog(KLOG_INFO, "ext2_get_inode(): **total** inode=%d, block_counter=%d",
+      entry->inode_no,
+      block_counter
+      );
+    
     entry->payload = (void *) inode;
-
+    
     return 0;
 }
 
 
 
-static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
+static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
+  
+    struct inode_block_table *current_ibt;
+    int seek_offset = 0;
+    unsigned long bytes_to_copy = 0;
+    
+    char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
+  
+    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d",
+        entry->inode_no,
+        entry->mode,
+        entry->size,
+	entry->size_blocks
+        );
+    
+    if(entry->blocks == NULL) // inode has no blocks to read from
+      return -EIO;
 
+    bytes_to_copy = entry->size;
+
+    for(current_ibt = entry->blocks; bytes_to_copy > 0; current_ibt = current_ibt->next)
+    { 
+      if(current_ibt == NULL) // something really bad happend (e.g. size wrong)
+	return -EIO;
+      
+      for(int i = 0; i < VFS_INODE_BLOCK_TABLE_LEN; i++)
+      {
+
+	if(current_ibt->blocks[i] == 0) // nothing to do
+	  break;
+
+	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
+	    entry->inode_no,
+	    bytes_to_copy,
+	    seek_offset,
+	    current_ibt->blocks[i] ,
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
+	    );
+	
+	entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+	entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
+	
+	memcpy(buf+seek_offset, disk_read_buffer, bytes_to_copy);
+	
+	if(bytes_to_copy < 0x400) {
+	  bytes_to_copy -= bytes_to_copy;
+	  break; // nothing else to copy
+	} else {
+	  bytes_to_copy -= 0x400;
+	}
+
+	seek_offset += 0x400;
+      } 
+    }
+    
+    kfree(disk_read_buffer); // be nice and free up memory 
     return 0;
 }
 
@@ -437,6 +589,6 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
 
 static int ext2_write(struct direntry_struct *entry, char *buf, size_t len){
 
-    return 0;
+    return -EIO;
 }
 

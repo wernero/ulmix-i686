@@ -5,6 +5,8 @@
 
 #define DESC_LEN 32
 
+extern struct dir_struct root; // root VFS filesystem
+
 thread_t *current_thread = NULL;
 static pid_t pid_counter = 0;
 
@@ -23,6 +25,7 @@ process_t *mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void
     process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags), description);
     process->pagedir = pagedir;
     process->files[0] = NULL;
+    process->working_dir = &root;
 
     return process;
 }

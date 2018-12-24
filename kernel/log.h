@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "util/types.h"
+
 #define OUT_SERIAL  0x01
 #define OUT_TTY     0x02
 
@@ -16,5 +18,7 @@ typedef enum
 
 
 void klog(loglevel_t lvl, const char *format, ...);
+
+void hexdump(loglevel_t lvl, const void* data, size_t size);
 
 #endif // LOG_H

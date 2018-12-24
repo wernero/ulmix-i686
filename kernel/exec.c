@@ -89,6 +89,10 @@ int exec_load_img(char *img_path, void **entry)
     if ((fd = sc_open(img_path, O_RDONLY)) < 0)             // on error, fd = error code
         return fd;
 
+    char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
+    sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
+    hexdump(KLOG_INFO, file_load_buffer, 0x80);
+
     int error;
     struct elf_header_struct *elf_header;
     if ((error = elf_read_header(fd, &elf_header)) < 0)
