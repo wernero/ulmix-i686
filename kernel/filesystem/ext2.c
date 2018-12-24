@@ -552,11 +552,11 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
       bytes_to_copy = 0;
     else
       bytes_to_copy = len - read_seek_offset;
-    
+
     start_block = read_seek_offset / 0x400;
     start_block_offset = read_seek_offset % 0x400;
     
-    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%d, tc=%d, stb=%d",
+    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%x, btc=%d, stb=%d",
         entry->inode_no,
         entry->mode,
         entry->size,
@@ -586,7 +586,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
 	    );
 	
-	if(!start_block) { // start_block depends on read_seek_offset
+	if(start_block == 1) { // start_block depends on read_seek_offset
 	  
 	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
 	  entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
@@ -604,6 +604,11 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	  
 	  start_block_offset = 0; // only to be done on the very first block read;
 	}
+	
+	if(start_block == 1)
+	  start_block = 1;
+	else
+	  start_block--;
       } 
     }
     
