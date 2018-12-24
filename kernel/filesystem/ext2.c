@@ -548,8 +548,8 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 
     char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
 
-    if(len > (entry->size - read_seek_offset)) // if more bytes should be read as file long is .. 
-      bytes_to_copy = 0;
+    if(len > ( entry->size - read_seek_offset))
+      bytes_to_copy = 0;			// TODO - check if it makes sense to return the rest instead of zero
     else
       bytes_to_copy = len;
 
@@ -619,7 +619,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
     }
 
     kfree(disk_read_buffer); // be nice and free up memory
-    return 0;
+    return 0; // TODO -- would it make sense to return bytes_read ?
 }
 
 
