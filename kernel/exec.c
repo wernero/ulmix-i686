@@ -11,6 +11,8 @@ extern thread_t *current_thread;
 
 static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
 
+int exec_load_img(char *filename, void **entry);
+
 int sc_execve(char *filename, char *argv[], char *envp[])
 {
     // 1. free all memory occupied by the previous process
@@ -81,7 +83,13 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
     return esp;
 }
 
-int exec_load_img(char *img_path, void **entry)
+
+int exec_load_img(char *filename, void **entry)
+{
+    return -ENOSYS;
+}
+
+int kfexec(char *img_path)
 {
     klog(KLOG_INFO, "exec_load_img(): loading elf binary");
 
@@ -97,6 +105,8 @@ int exec_load_img(char *img_path, void **entry)
     struct elf_header_struct *elf_header;
     if ((error = elf_read_header(fd, &elf_header)) < 0)
         return error;
+
+    return 0;
 
     current_thread->process->nofault = 1;
 
@@ -115,17 +125,18 @@ int exec_load_img(char *img_path, void **entry)
         {
             // TODO: apply read/write/execute flags on pages
 
-            memset((void*)pht_entry.p_vaddr, 0, pht_entry.p_memsz);
-            sc_lseek(fd, pht_entry.p_file, SEEK_SET);
-            sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
+            //memset((void*)pht_entry.p_vaddr, 0, pht_entry.p_memsz);
+            //sc_lseek(fd, pht_entry.p_file, SEEK_SET);
+            //sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
         }
     }
 
     current_thread->process->nofault = 0;
-    *entry = (void*)elf_header->entry_point;
+    void *entry = (void*)elf_header->entry_point;
     kfree(elf_header);
 
-    klog(KLOG_INFO, "exec_load_img(): fd=%x *fd=%x, *node=%x, name=%s",
+    klog(KLOG_INFO, "exec_load_img(): entry=%x, fd=%d *fd=%x, *node=%x, name=%s",
+        (unsigned long)entry,
         fd,
         current_thread->process->files[fd],
         current_thread->process->files[fd]->direntry,

@@ -89,7 +89,7 @@ void setup_paging(uint32_t phys_memory)
     klog(KLOG_INFO, "Paging enabled");
 }
 
-pagedir_t *mk_user_pagedir(void)
+pagedir_t *pagedir_copy(pagedir_t *source)
 {
     pagedir_t *udir = kmalloc(sizeof(pagedir_t), PAGESIZE, "user pagedir");
 
@@ -99,7 +99,24 @@ pagedir_t *mk_user_pagedir(void)
            pagedir_kernel,
            sizeof(pagedir_entry_t) * 256);
 
-    // leaving the actual userspace unmapped, the fault handler will map that.
+    // go through every page table entry, and if it's present, copy it
+    /*for (int j, i = 4; i < 768; i++)
+    {
+        for (int j = 0; j < 1024; j++)
+        {
+            pagedir_entry_t pde = source->pagetables[i];
+            if (pde & 1) // pagetable is present?
+            {
+                pagetable_t *ptp = (pagetable_t *)(pde & 0xfffff000);
+                pagetable_entry_t pte = ptp->pages[j];
+                if (pte & 1) // pagetable entry is present?
+                {
+                    pagetable_entry_t pte_new = get_free_page(PAG_USER | PAG_RDWR);
+                    pte_new
+                }
+            }
+        }
+    }*/
     return udir;
 }
 

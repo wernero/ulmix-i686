@@ -1,19 +1,18 @@
-#include "util/util.h"
-#include "memory/gdt.h"
-#include "memory/kheap.h"
-#include "memory/paging.h"
-#include "interrupts.h"
-#include "timer.h"
-#include "cpu.h"
-#include "log.h"
-#include "sched/task.h"
-#include "sched/scheduler.h"
+#include <util/util.h>
+#include <memory/gdt.h>
+#include <memory/kheap.h>
+#include <memory/paging.h>
+#include <interrupts.h>
+#include <timer.h>
+#include <sched/task.h>
+#include <sched/scheduler.h>
+#include <sched/syscalls.h>
 #include "drivers/devices.h"
-#include "kdebug.h"
-#include "filesystem/vfscore.h"
-#include "filesystem/fs_syscalls.h"
+#include <filesystem/vfscore.h>
 #include <errno.h>
 #include <exec.h>
+#include <kdebug.h>
+#include <log.h>
 
 // .bss (ld)
 extern char _bss_start;
@@ -44,33 +43,22 @@ static void kmainthread(void)
 
     exec_init();
     heap_dump();
+    klog(KLOG_DEBUG, "goodbye from the kernel thread");
     for (;;) hlt();
 }
 
 static void exec_init(void)
 {
-
     char bin_to_exec[] = "/bin/init";
-//    char bin_to_exec[] = "/test/20k.file";
 
     // run init
     klog(KLOG_INFO, "executing /bin/init");
-    pagedir_t *init_pd;
-    if ((init_pd = mk_user_pagedir()) == NULL)
-    {
-        klog(KLOG_WARN, "failed to run /bin/init: could not create pagedir");
-    }
 
-    void *init_entry;
-    //unsigned long init_esp = GB3;
-    int err;
-    if ((err = exec_load_img(init_pd, bin_to_exec, &init_entry)) < 0)               // "/bin/init" as const has not ending 0 as string end
+    int error;
+    if ((error = kfexec(bin_to_exec)) < 0)
     {
-        kfree(init_pd);
-        klog(KLOG_WARN, "failed to load /bin/init: errno %d", -err);
+        klog(KLOG_INFO, "could not run %s, errno %d", bin_to_exec, -error);
     }
-
-    //mk_process(init_pd, TYPE_USER, init_entry, PAGESIZE, init_esp, "init");
 }
 
 typedef struct
@@ -111,7 +99,7 @@ void main(multiboot_t* mb_struct)
                           2048,             // kernel stack size
                           -1,               // esp = kernel stack esp
                           "[KERNEL]");
-    mk_thread(kprocess, mk_kstack(TYPE_KERNEL, idle_task, 1024, -1, get_eflags()), "idle task");
+    mk_thread(kprocess, mk_kstack(TYPE_KERNEL, idle_task, 1024, -1, get_eflags(), 0), "idle task");
 
     // activate preemtive multitasking and force the
     // scheduler to preemt this function and never restore it

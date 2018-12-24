@@ -16,13 +16,21 @@ process_t *mk_process(pagedir_t *pagedir, thread_type_t type, void (*entry)(void
 {
     uint32_t user_eflags = get_eflags(); // *** temporary!
 
+    process_t *process = mk_process_struct(pagedir, type, description);
+    process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags, 0), description);
+
+    return process;
+}
+
+process_t *mk_process_struct(pagedir_t *pagedir, thread_type_t type, char *description)
+{
     process_t *process = kmalloc(sizeof(process_t), 1, "process_t");
     strcpy(process->description, description);
     process->description[DESC_LENGTH - 1] = 0;
     process->pid = new_pid();
     process->type = type;
     process->thread_count = 0;
-    process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags), description);
+    process->threads = NULL;
     process->pagedir = pagedir;
     process->files[0] = NULL;
     process->working_dir = &root;
@@ -71,13 +79,13 @@ thread_t *mk_thread(process_t *process, process_kstack_t kstack, char *descripti
  * to initialize the stack, mk_kstack() internally calls kstack_init() to do the initialization.
  * See that function's reference for an overview.
  */
-process_kstack_t mk_kstack(thread_type_t thread_type, void *entry, size_t stack_size, uint32_t user_esp, uint32_t eflags)
+process_kstack_t mk_kstack(thread_type_t thread_type, void *entry, size_t stack_size, uint32_t user_esp, uint32_t eflags, uint32_t eax)
 {
     process_kstack_t kstack;
     kstack.kstack = (uint32_t)kmalloc(stack_size, 1, "thread_t kstack");
     kstack.ebp    = (uint32_t)(kstack.kstack + stack_size);
     kstack.esp    = kstack.ebp;
-    return kstack_init(kstack, thread_type, entry, user_esp, eflags);
+    return kstack_init(kstack, thread_type, entry, user_esp, eflags, eax);
 }
 
 /*
@@ -92,7 +100,7 @@ process_kstack_t mk_kstack(thread_type_t thread_type, void *entry, size_t stack_
  * 'user_esp' initial stack pointer (only used when 'thread_type' is TYPE_USER).
  * 'eflags': initial EFLAGS state of the thread
  */
-process_kstack_t kstack_init(process_kstack_t kstack, int thread_type, void *start_addr, uint32_t user_esp, uint32_t eflags)
+process_kstack_t kstack_init(process_kstack_t kstack, int thread_type, void *start_addr, uint32_t user_esp, uint32_t eflags, uint32_t eax)
 {
     int kernel_thread;
     uint32_t cs, ds;
@@ -127,7 +135,8 @@ process_kstack_t kstack_init(process_kstack_t kstack, int thread_type, void *sta
 
     // the general purpose registers are left uninitialized
     // but should be already set to zero by the heap manager
-    ksp -= 8;
+    *(--ksp) = eax;
+    ksp -= 7;
 
     *(--ksp) = ds;    // ds = ds
     *(--ksp) = ds;    // es = ds
