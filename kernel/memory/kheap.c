@@ -173,6 +173,8 @@ void kfree(void *mem)
         return;
     }
 
+    klog(KLOG_DEBUG, "kfree(): size=%S, start=%x, purpose=%s", entry->size, entry->start, entry->description);
+    
     int merged = 0;
     entry->available = 1;
     kheap_entry_t *merged_entry;
