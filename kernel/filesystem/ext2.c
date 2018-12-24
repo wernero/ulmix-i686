@@ -346,6 +346,8 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
     
     ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
 
+    ext2_inode_blk_table_t *inode_indirect_buf;
+    
     struct inode_block_table *current_ibt;
 
     // which inode do we want to read
@@ -431,7 +433,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
                     inode->i_block[n]
                     );
 		
-		ext2_inode_blk_table_t *inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
+		inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
 		
 		// block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks
 
@@ -467,6 +469,51 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
                     entry->inode_no,
                     inode->i_block[n]
                     );
+
+		inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
+		
+		// block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks
+
+		entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode->i_block[n] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+		entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_indirect_buf, 0x400 / 512);
+		
+		for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
+		    if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
+		      break;
+
+		    
+		    ext2_inode_blk_table_t *inode_dindirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "double inode_indirect_buf");
+
+		    // check if new ibt needs to be created
+		    if(block_counter == VFS_INODE_BLOCK_TABLE_LEN) {
+			// create new block
+			current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+			current_ibt->next->file = current_ibt->file;
+			current_ibt = current_ibt->next;
+			
+		    }
+
+		    
+		    entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+		    entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_dindirect_buf, 0x400 / 512);
+
+		    for(int dibc = 0; dibc < EXT2_IND_BLOCK_LEN; dibc++) {
+		      
+			if(inode_dindirect_buf->i_indirect_ptr[dibc] == 0)
+			  break;
+		  
+		  
+			// store block pointer
+			current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_dindirect_buf->i_indirect_ptr[dibc];
+			block_counter += 1;
+
+		    }
+		    kfree(inode_dindirect_buf); // be nice and free up space
+		}
+
+//		hexdump(inode_indirect_buf, 0x400);
+		
+		kfree(inode_indirect_buf); // be nice and free up space
 		
 		break;
 	      case EXT2_TIND_BLOCK:
