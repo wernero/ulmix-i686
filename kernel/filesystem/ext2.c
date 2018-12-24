@@ -282,7 +282,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
             current_des->read_opens = 0;
             current_des->write_opens = 0;
-
+	    current_des->fd = NULL;
 
             if(current_des->inode_no == miss->inode_no) {
                 current_des->directory = miss;
@@ -528,16 +528,19 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
   
     struct inode_block_table *current_ibt;
-    int seek_offset = 0;
+    int offset = 0;
     unsigned long bytes_to_copy = 0;
+    
+   size_t read_seek_offset = entry->fd->seek_offset;			//TODO seek_offset einbauen
     
     char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
   
-    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d",
+    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%d",
         entry->inode_no,
         entry->mode,
         entry->size,
-	entry->size_blocks
+	entry->size_blocks,
+	read_seek_offset
         );
     
     if(entry->blocks == NULL) // inode has no blocks to read from
@@ -559,7 +562,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
 	    entry->inode_no,
 	    bytes_to_copy,
-	    seek_offset,
+	    offset,
 	    current_ibt->blocks[i] ,
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
@@ -568,7 +571,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
 	entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
 	
-	memcpy(buf+seek_offset, disk_read_buffer, bytes_to_copy);
+	memcpy(buf+offset, disk_read_buffer, bytes_to_copy);
 	
 	if(bytes_to_copy < 0x400) {
 	  bytes_to_copy -= bytes_to_copy;
@@ -577,7 +580,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	  bytes_to_copy -= 0x400;
 	}
 
-	seek_offset += 0x400;
+	offset += 0x400;
       } 
     }
     
