@@ -533,7 +533,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
     
     size_t start_block = 0;
     size_t start_block_offset = 0;
-    
+        
     if(entry == NULL) 			// something is really wrong
       return -EIO;
 
@@ -554,7 +554,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
       bytes_to_copy = len - read_seek_offset;
     
     start_block = read_seek_offset / 0x400;
-    start_block_offset = read_seek_offset % 400;
+    start_block_offset = read_seek_offset % 0x400;
     
     klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%d, tc=%d, stb=%d",
         entry->inode_no,
@@ -590,13 +590,13 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	  
 	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
 	  entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
-	  
-	  memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , (bytes_to_copy-start_block_offset));
-	  
+	  	  
 	  if(bytes_to_copy < 0x400) {
+	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , bytes_to_copy);
 	    bytes_to_copy -= bytes_to_copy;
 	    break; // nothing else to copy
 	  } else {
+	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , 0x400);
 	    bytes_to_copy -= 0x400;
 	  }
 
