@@ -26,7 +26,7 @@ struct elf_header_struct
     uint16_t	sht_size;
     uint16_t	sht_entries;
     uint16_t	sht_index;
-};
+} __attribute__((packed));
 
 struct elf_pht_entry_struct
 {
@@ -39,7 +39,7 @@ struct elf_pht_entry_struct
     uint32_t p_memsz;   // size in memory
     uint32_t flags;     // exec, read, write
     uint32_t alignment; // required alignment
-};
+} __attribute__((packed));
 
 int elf_read_header(int fd, struct elf_header_struct **header);
 int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struct elf_pht_entry_struct *entry);
