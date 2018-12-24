@@ -586,7 +586,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
         (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
         );
 
-    if(start_block == 1) { // start_block depends on read_seek_offset
+    if(!start_block) { // start_block depends on read_seek_offset
 
       entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
       entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
@@ -605,8 +605,8 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
       start_block_offset = 0; // only to be done on the very first block read;
     }
 
-    if(start_block == 1)
-      start_block = 1;
+    if(start_block < 2)
+      start_block = 0;
     else
       start_block--;
       }
