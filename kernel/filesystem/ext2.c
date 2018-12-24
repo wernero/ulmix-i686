@@ -586,8 +586,6 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
 	    );
 
-
-	
 	if(!start_block) { // start_block depends on read_seek_offset
 	  
 	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
