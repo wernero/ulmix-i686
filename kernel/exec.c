@@ -97,7 +97,9 @@ int kfexec(char *img_path)
     if ((fd = sc_open(img_path, O_RDONLY)) < 0)             // on error, fd = error code
         return fd;
 
+
     char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
+    sc_lseek(fd, 480, SEEK_SET);
     sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
     hexdump(KLOG_INFO, file_load_buffer, 0x80);
 
