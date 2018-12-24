@@ -75,7 +75,7 @@ static int exec_load_img(pagedir_t *pagedir, char *filename, void **entry)
     char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
 
     sc_lseek(fd, 0x20, SEEK_SET);
-    sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
+    sc_read(fd,file_load_buffer, 0x100);
 
     hexdump(KLOG_INFO, file_load_buffer, 0x100);
 
