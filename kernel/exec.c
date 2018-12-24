@@ -96,7 +96,8 @@ int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
     
     sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
     
-    hexdump(file_load_buffer, 0x40);
+    hexdump(file_load_buffer, 0x80);
+//    hexdump(file_load_buffer, current_thread->process->files[fd]->direntry->size);
 
     return -ENOSYS; // temporary: not implemented
 }
