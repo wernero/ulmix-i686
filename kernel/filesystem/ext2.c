@@ -492,9 +492,6 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
     
     entry->payload = (void *) inode;
 
-    
-
-    
     return 0;
 }
 
@@ -525,7 +522,10 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
     bytes_to_copy = entry->size;
 
     for(current_ibt = entry->blocks; bytes_to_copy > 0; current_ibt = current_ibt->next)
-    {    
+    { 
+      if(current_ibt == NULL) // something really bad happend (e.g. size wrong)
+	return -EIO;
+      
       for(i =  0; i < VFS_INODE_BLOCK_TABLE_LEN; i++)
       {
 
@@ -559,9 +559,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len){
     
     kfree(disk_read_buffer);
     
-    // entry->blocks is start structure for inode_block_table
-    
-    return -EIO;
+    return 0;
 }
 
 
