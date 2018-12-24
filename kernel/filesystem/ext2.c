@@ -574,42 +574,50 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
       for(int i = 0; i < VFS_INODE_BLOCK_TABLE_LEN; i++)
       {
 
-    if(current_ibt->blocks[i] == 0) // nothing to do
-      break;
+	if(current_ibt->blocks[i] == 0) // nothing to do
+	  break;
 
-    klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
-        entry->inode_no,
-        bytes_to_copy,
-        bytes_read,
-        current_ibt->blocks[i] ,
-        (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
-        (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
-        );
+	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, stb=%d blk=%d : %x %x",
+	    entry->inode_no,
+	    bytes_to_copy,
+	    start_block,
+	    current_ibt->blocks[i] ,
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
+	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
+	    );
 
-    if(!start_block) { // start_block depends on read_seek_offset
 
-      entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-      entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
+	
+	if(!start_block) { // start_block depends on read_seek_offset
+	  
+	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+	  entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
+	  	  
+	  if(bytes_to_copy < 0x400) {
+	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , bytes_to_copy);
+	    bytes_to_copy -= bytes_to_copy;
+	    break; // nothing else to copy
+	  } else {
+	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , 0x400);
+	    bytes_to_copy -= 0x400;
+	  }
 
-      if(bytes_to_copy < 0x400) {
-        memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , bytes_to_copy);
-        bytes_to_copy -= bytes_to_copy;
-        break; // nothing else to copy
-      } else {
-        memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , 0x400);
-        bytes_to_copy -= 0x400;
-      }
+	  bytes_read += 0x400 - start_block_offset;
+	  
+	  start_block_offset = 0; // only to be done on the very first block read;
+	}
 
-      bytes_read += 0x400 - start_block_offset;
+	klog(KLOG_INFO, "ext2_read(): inode=%d, btr=%d",
+	    entry->inode_no,
+	    bytes_read
+	    );
 
-      start_block_offset = 0; // only to be done on the very first block read;
-    }
-
-    if(start_block < 2)
-      start_block = 0;
-    else
-      start_block--;
-      }
+	
+	if(start_block == 0)
+	  start_block = 0;
+	else
+	  start_block--;
+      } 
     }
 
     kfree(disk_read_buffer); // be nice and free up memory
