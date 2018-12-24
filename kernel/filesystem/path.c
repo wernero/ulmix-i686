@@ -11,7 +11,7 @@ static char *strccpy(char *dest, char *src, char terminator);
 
 static int namei_recursive(char *path, struct dir_struct *working_dir, struct direntry_struct **node)
 {
-    char cname[256];
+    char cname[20];
     char *rem = strccpy(cname, path, '/');  // buffer overflow??
     if (strlen(cname) == 0)
         return -ENOENT;
@@ -20,18 +20,18 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
         return -ENOENT;
 
 
-    klog(KLOG_INFO, "namei_recursive(): ********** cname=%s rem=%s wd=%x wde=%x",
+    klog(KLOG_INFO, "namei_recursive(): <new recursion> cname=%s rem=%s wd=%x wde=%x",
         cname,
         rem,
-	working_dir,
-	working_dir->entries
+    working_dir,
+    working_dir->entries
         );
 
     struct direntry_struct *entry;
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
 
-        klog(KLOG_INFO, "namei_recursive(): name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
+        klog(KLOG_INFO, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
             entry->name,
             entry->type,
             entry->inode_no,
@@ -44,7 +44,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
         {
 
 
-            klog(KLOG_INFO, "namei_recursive(): cname=%s name=%s rem_cur=%x rem=%s",
+            klog(KLOG_INFO, "namei_recursive(): ****** found: cname=%s name=%s rem_cur=%x rem=%s",
                 cname,
                 entry->name,
                 *rem,
@@ -89,7 +89,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
 int namei(char *path, struct direntry_struct **node)
 {
-    struct dir_struct *working_dir = current_thread->process->working_dir; 
+    struct dir_struct *working_dir = current_thread->process->working_dir;
     if (path[0] == '/')
     {
         path++;
@@ -101,6 +101,8 @@ int namei(char *path, struct direntry_struct **node)
 
 static char* strccpy(char *dest, char *src, char terminator)
 {
+    char *dest_original = dest;
+    klog(KLOG_DEBUG, "strccpy(): src='%s'",  src);
     char c;
     while ((c = *(src++)))
     {
@@ -108,7 +110,10 @@ static char* strccpy(char *dest, char *src, char terminator)
             break;
         *(dest++) = c;
     }
+    if (c == 0)
+        src--;
     *dest = 0;
+    klog(KLOG_DEBUG, " returning %d(%s), cname='%s'", *src, src, dest_original);
     return src;
 }
 
