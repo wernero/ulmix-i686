@@ -28,5 +28,20 @@ struct elf_header_struct
     uint16_t	sht_index;
 };
 
+struct elf_pht_entry_struct
+{
+    uint32_t type;      // 0 = ignore, 1 = set to zero and then load,
+                        // 2 = dynamic linking, 3 = interpreter
+    uint32_t p_file;    // file offset of data
+    uint32_t p_vaddr;   // location in virtual memory
+    char     pad0[4];
+    uint32_t p_filesz;  // size in file
+    uint32_t p_memsz;   // size in memory
+    uint32_t flags;     // exec, read, write
+    uint32_t alignment; // required alignment
+};
+
+int elf_read_header(int fd, struct elf_header_struct **header);
+int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struct elf_pht_entry_struct *entry);
 
 #endif // ELF_H

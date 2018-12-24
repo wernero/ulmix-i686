@@ -3,12 +3,12 @@
 #include <errno.h>
 #include <filesystem/fs_syscalls.h>
 
-int read_header(int fd, struct elf_header_struct **header)
+int elf_read_header(int fd, struct elf_header_struct **header)
 {
     *header = kmalloc(sizeof(struct elf_header_struct), 1, "elf header");
     if (sc_read(fd, *header, sizeof(struct elf_header_struct)) < 0)
     {
-        return -1;
+        return -EIO;
     }
 
     char *magic = (*header)->magic;
@@ -22,5 +22,15 @@ int read_header(int fd, struct elf_header_struct **header)
          || (*header)->ins_set != 3)       // not x86
         return -ENOEXEC;
 
+    return 0;
+}
+
+int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struct elf_pht_entry_struct *entry)
+{
+    sc_lseek(fd, header->phtable_pos + index * sizeof(struct elf_pht_entry_struct), SEEK_SET);
+    if (sc_read(fd, entry, sizeof(struct elf_pht_entry_struct)) < 0)
+    {
+        return -EIO;
+    }
     return 0;
 }

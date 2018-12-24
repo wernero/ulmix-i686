@@ -3,6 +3,7 @@
 #include "sched/scheduler.h"
 #include "sched/task.h"
 #include "log.h"
+#include <elf.h>
 #include <filesystem/fs_syscalls.h>
 #include <errno.h>
 
@@ -12,11 +13,14 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
 
 int sc_execve(char *filename, char *argv[], char *envp[])
 {
+    // 1. free all memory occupied by the previous process
     paging_free_all();
-    current_thread->process->nofault = 1;   // -> page fault handler won't kill us
 
-    void *user_entry;
-    exec_load_img(current_thread->process->pagedir, filename, &user_entry);
+    // 2. kill all threads
+
+    // 3. load executable
+    void *entry_point;
+    exec_load_img(filename, &entry_point);
 
     int argc;
     void *argvp;
@@ -77,13 +81,45 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
     return esp;
 }
 
-int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
+int exec_load_img(char *img_path, void **entry)
 {
+    klog(KLOG_INFO, "exec_load_img(): loading elf binary");
+
     int fd;
     if ((fd = sc_open(img_path, O_RDONLY)) < 0)             // on error, fd = error code
         return fd;
 
-    // implementation of exec_load_img()
+    int error;
+    struct elf_header_struct *elf_header;
+    if ((error = elf_read_header(fd, &elf_header)) < 0)
+        return error;
+
+    current_thread->process->nofault = 1;
+
+    // go through segments (not sections!)
+    struct elf_pht_entry_struct pht_entry;
+    for (int i = 0; i < elf_header->pht_entries; i++)
+    {
+        if ((error = elf_get_pht_entry(fd, i, elf_header, &pht_entry)) < 0)
+            return error;
+
+
+        klog(KLOG_INFO, "segment: type=%d, flags=%x", pht_entry.type, pht_entry.flags);
+
+        // only load segment into memory when type == 1
+        if (pht_entry.type == 1)
+        {
+            // TODO: apply read/write/execute flags on pages
+
+            memset((void*)pht_entry.p_vaddr, 0, pht_entry.p_memsz);
+            sc_lseek(fd, pht_entry.p_file, SEEK_SET);
+            sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
+        }
+    }
+
+    current_thread->process->nofault = 0;
+    *entry = (void*)elf_header->entry_point;
+    kfree(elf_header);
 
     klog(KLOG_INFO, "exec_load_img(): fd=%x *fd=%x, *node=%x, name=%s",
         fd,
@@ -91,7 +127,6 @@ int exec_load_img(pagedir_t *pd, char *img_path, void **entry)
         current_thread->process->files[fd]->direntry,
         current_thread->process->files[fd]->direntry->name
         );
-
 
     return -ENOSYS; // temporary: not implemented
 }

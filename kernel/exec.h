@@ -34,6 +34,6 @@
  * |_______________|    4GiB
  */
 int sc_execve(char *filename, char *argv[], char *envp[]);
-int exec_load_img(pagedir_t *pd, char *img_path, void **entry);
+int exec_load_img(char *img_path, void **entry);
 
 #endif // EXEC_H
