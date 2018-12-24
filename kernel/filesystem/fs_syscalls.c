@@ -120,5 +120,18 @@ ssize_t sc_lseek(int fd, size_t offset, int whence)
     if (fds == NULL)
         return -EBADF;
 
-    return fds->fops.seek(fds, offset, whence);
+    
+    switch(whence)
+    {
+    case SEEK_SET:
+        fds->seek_offset = offset;
+        break;
+    case SEEK_CUR:
+        fds->seek_offset += offset;
+        break;
+    default:
+        return -1;
+    }
+
+    return fds->seek_offset;
 }

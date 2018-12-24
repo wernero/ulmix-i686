@@ -528,26 +528,44 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
   
     struct inode_block_table *current_ibt;
-    int offset = 0;
-    unsigned long bytes_to_copy = 0;
+    size_t bytes_read = 0;
+    size_t bytes_to_copy = 0;
     
-   size_t read_seek_offset = entry->fd->seek_offset;			//TODO seek_offset einbauen
+    size_t start_block = 0;
+    size_t start_block_offset = 0;
+    
+    if(entry == NULL) 			// something is really wrong
+      return -EIO;
+
+    if(entry->fd == NULL) 		// no file open which wants to read
+      return -EIO;
+
+    if(entry->blocks == NULL) 		// inode has no blocks to read from
+      return -EIO;
+
+    
+    size_t read_seek_offset = entry->fd->seek_offset;
     
     char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
-  
-    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%d",
+
+    if(read_seek_offset > len)
+      bytes_to_copy = 0;
+    else
+      bytes_to_copy = len - read_seek_offset;
+    
+    start_block = read_seek_offset / 0x400;
+    start_block_offset = read_seek_offset % 400;
+    
+    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%d, tc=%d, stb=%d",
         entry->inode_no,
         entry->mode,
         entry->size,
 	entry->size_blocks,
-	read_seek_offset
+	read_seek_offset,
+	bytes_to_copy,
+	start_block
         );
     
-    if(entry->blocks == NULL) // inode has no blocks to read from
-      return -EIO;
-
-    bytes_to_copy = entry->size;
-
     for(current_ibt = entry->blocks; bytes_to_copy > 0; current_ibt = current_ibt->next)
     { 
       if(current_ibt == NULL) // something really bad happend (e.g. size wrong)
@@ -562,25 +580,30 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, of=%d blk=%d : %x %x",
 	    entry->inode_no,
 	    bytes_to_copy,
-	    offset,
+	    bytes_read,
 	    current_ibt->blocks[i] ,
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
 	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
 	    );
 	
-	entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-	entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
-	
-	memcpy(buf+offset, disk_read_buffer, bytes_to_copy);
-	
-	if(bytes_to_copy < 0x400) {
-	  bytes_to_copy -= bytes_to_copy;
-	  break; // nothing else to copy
-	} else {
-	  bytes_to_copy -= 0x400;
-	}
+	if(!start_block) { // start_block depends on read_seek_offset
+	  
+	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+	  entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
+	  
+	  memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , (bytes_to_copy-start_block_offset));
+	  
+	  if(bytes_to_copy < 0x400) {
+	    bytes_to_copy -= bytes_to_copy;
+	    break; // nothing else to copy
+	  } else {
+	    bytes_to_copy -= 0x400;
+	  }
 
-	offset += 0x400;
+	  bytes_read += 0x400 - start_block_offset;
+	  
+	  start_block_offset = 0; // only to be done on the very first block read;
+	}
       } 
     }
     
