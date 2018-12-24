@@ -39,6 +39,9 @@ int sc_open(char *pathname, int flags)
     struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sc_open file_struct");
     fd->direntry = node;
     fd->open_mode = flags;
+    fd->seek_offset = 0;
+    
+    node->fd = fd;
 
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
     {

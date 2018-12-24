@@ -33,6 +33,7 @@ struct file_struct // file descriptor
 {
     struct direntry_struct *direntry;
     openflags_t open_mode;
+    size_t seek_offset;
 
     struct fd_fops_struct fops;
 };
