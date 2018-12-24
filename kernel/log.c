@@ -86,17 +86,33 @@ void klog(loglevel_t lvl, const char *format, ...)
 
 
 
-void hexdump(const void* data, size_t size) {
+void hexdump(loglevel_t lvl, const void* data, size_t size) {
   
     int output_flags = OUT_SERIAL;
-    output_flags |= OUT_TTY;
+    if (lvl == KLOG_PANIC ||
+	lvl == KLOG_INFO ||
+	lvl == KLOG_WARN ||
+	lvl == KLOG_FAILURE)
+      output_flags |= OUT_TTY;
 
+    
+    klog(KLOG_INFO, "***hexdump*** address=%x, length=%x 0123456789ABCDEF",
+	data,
+	size
+	);
+    
     char ascii[17];
     char strbuf[64];
     size_t i, j;
     ascii[16] = '\0';
     for (i = 0; i < size; ++i) {
-	
+
+	if(!(i % 0x10)) {
+	  itoxa(i, strbuf);
+	  log_puts(output_flags, strbuf);
+	  log_puts(output_flags, " | ");
+	}
+      
 	itoxa8(((unsigned char*)data)[i], strbuf);
 	log_puts(output_flags, strbuf);
 	
