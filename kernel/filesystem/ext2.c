@@ -548,10 +548,10 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 
     char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
 
-    if(read_seek_offset > len)
+    if(len > ( entry->size - read_seek_offset))
       bytes_to_copy = 0;
     else
-      bytes_to_copy = len - read_seek_offset;
+      bytes_to_copy = len;
 
     start_block = read_seek_offset / 0x400;
     start_block_offset = read_seek_offset % 0x400;
