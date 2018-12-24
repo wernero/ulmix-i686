@@ -2,6 +2,7 @@
 #include <memory/kheap.h>
 #include <errno.h>
 #include <filesystem/fs_syscalls.h>
+#include <log.h>
 
 int elf_read_header(int fd, struct elf_header_struct **header)
 {
@@ -27,10 +28,15 @@ int elf_read_header(int fd, struct elf_header_struct **header)
 
 int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struct elf_pht_entry_struct *entry)
 {
-    sc_lseek(fd, header->phtable_pos + index * sizeof(struct elf_pht_entry_struct), SEEK_SET);
+    unsigned long seek = header->phtable_pos + (index * sizeof(struct elf_pht_entry_struct));
+    klog(KLOG_DEBUG, "pht: phtable pos=%x, index=%d, seek=%x", header->phtable_pos, index, seek);
+
+    sc_lseek(fd, seek, SEEK_SET);
     if (sc_read(fd, entry, sizeof(struct elf_pht_entry_struct)) < 0)
     {
         return -EIO;
     }
+
+    klog(KLOG_DEBUG, "pht entry: type=%d", entry->type);
     return 0;
 }

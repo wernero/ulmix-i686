@@ -55,7 +55,7 @@ static void exec_init(void)
     klog(KLOG_INFO, "executing /bin/init");
 
     int error;
-    if ((error = kfexec(bin_to_exec)) < 0)
+    if ((error = kfexec(bin_to_exec, bin_to_exec)) < 0)
     {
         klog(KLOG_INFO, "could not run %s, errno %d", bin_to_exec, -error);
     }

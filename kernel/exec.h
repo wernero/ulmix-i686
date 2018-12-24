@@ -34,6 +34,6 @@
  * |_______________|    4GiB
  */
 int sc_execve(char *filename, char *argv[], char *envp[]);
-int kfexec(char *img_path);
+int kfexec(char *img_path, char *description);
 
 #endif // EXEC_H
