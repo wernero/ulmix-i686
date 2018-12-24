@@ -102,6 +102,15 @@ int kfexec(char *img_path)
     if ((error = elf_read_header(fd, &elf_header)) < 0)
         return error;
 
+    char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
+
+    sc_lseek(fd, 480, SEEK_SET);
+    sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
+
+    hexdump(KLOG_INFO, file_load_buffer, 0x80);
+//    hexdump(file_load_buffer, current_thread->process->files[fd]->direntry->size);
+
+    // TEMPORARY
     return 0;
 
     current_thread->process->nofault = 1;
@@ -138,14 +147,6 @@ int kfexec(char *img_path)
         current_thread->process->files[fd]->direntry,
         current_thread->process->files[fd]->direntry->name
         );
-
-    char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
-
-    sc_lseek(fd, 480, SEEK_SET);
-    sc_read(fd,file_load_buffer, current_thread->process->files[fd]->direntry->size);
-
-    hexdump(KLOG_INFO, file_load_buffer, 0x80);
-//    hexdump(file_load_buffer, current_thread->process->files[fd]->direntry->size);
 
     return -ENOSYS; // temporary: not implemented
 }
