@@ -19,3 +19,4 @@ diskimage/dump
 snapshot.txt*
 .kdev4
 *kdev4
+*.kate-swp
