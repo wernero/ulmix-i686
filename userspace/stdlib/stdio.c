@@ -6,6 +6,12 @@
 #define FD_STDOUT 0
 #define FD_STDERR 1
 
+
+FILE *fopen(char *filename, char *mode)
+{
+    return NULL;
+}
+
 void puts(char *s)
 {
     write(FD_STDOUT, s, strlen(s) + 1);

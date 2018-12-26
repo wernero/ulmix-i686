@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include <errno.h>
 
-void exit(void)
+void _exit(int err)
 {
     // id = 1
     //sysc(1, 0, 0, 0, 0);

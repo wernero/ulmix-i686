@@ -3,7 +3,6 @@
 
 #include <sys/types.h>
 
-void exit(void);
 int open(char *path, int flags);
 int close(int fd);
 ssize_t read(int fd, char *buf, size_t len);
