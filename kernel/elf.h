@@ -41,7 +41,7 @@ struct elf_pht_entry_struct
     uint32_t alignment; // required alignment
 } __attribute__((packed));
 
-int elf_read_header(int fd, struct elf_header_struct **header);
+int elf_read_header(int fd, struct elf_header_struct *header);
 int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struct elf_pht_entry_struct *entry);
 
 #endif // ELF_H

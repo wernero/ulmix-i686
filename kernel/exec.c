@@ -10,24 +10,29 @@
 extern thread_t *current_thread;
 
 static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
-static int  exec_load_img(pagedir_t *pagedir, char *filename, void **entry);
-static int  copy_to_user(pagedir_t *userp, void *dest, void *src, unsigned long count);
+static int  loadelf(char *filename, void **entry);
 
 int kfexec(char *img_path, char *description)
 {
-    klog(KLOG_INFO, "exec_load_img(): loading elf binary");
+    klog(KLOG_INFO, "kfexec(): loading elf binary");
 
+    klog(KLOG_DEBUG, "kfexec(): creating address space");
     // 1. create virtual address space
     pagedir_t *userpd = mk_user_pagedir();
 
+    klog(KLOG_DEBUG, "kfexec(): loading binary");
     // 2. load binary image
     int error;
     void *entry;
-    if ((error = exec_load_img(userpd, img_path, &entry)) < 0)
+    current_thread->process->pagedir = userpd;
+    apply_pagedir(userpd);
+    if ((error = loadelf(img_path, &entry)) < 0)
         return error;
 
     // 3. setup stack
-    unsigned long esp = GB3;
+    unsigned long ebp, esp = GB3;
+    ebp = GB3 - 4096;
+    memset((void*)ebp, 0, 4096);
 
     // 3. setup process structure and run
     process_t *pnew = mk_process(userpd, TYPE_USER, entry, PAGESIZE, esp, description);
@@ -38,6 +43,9 @@ int kfexec(char *img_path, char *description)
 
 int sc_execve(char *filename, char *argv[], char *envp[])
 {
+    // *** not implemented yet
+    return -ENOSYS;
+
     // 1. free all memory occupied by the previous process
     paging_free_all();
 
@@ -46,7 +54,7 @@ int sc_execve(char *filename, char *argv[], char *envp[])
     // 3. load binary image
     int error;
     void *entry;
-    if ((error = exec_load_img(current_thread->process->pagedir, filename, &entry)) < 0)
+    if ((error = loadelf(filename, &entry)) < 0)
         return error;
 
     // 4. prepare stack
@@ -58,65 +66,52 @@ int sc_execve(char *filename, char *argv[], char *envp[])
 
     // 5. modify kernel stack
 
-    return 0;
+    return -ENOSYS;
 }
 
-static int exec_load_img(pagedir_t *pagedir, char *filename, void **entry)
+static int loadelf(char *filename, void **entry)
 {
     int fd;
     if ((fd = sc_open(filename, O_RDONLY)) < 0) // on error, fd = error code
         return fd;
 
+    // get ELF header
     int error;
-    struct elf_header_struct *elf_header;
+    struct elf_header_struct elf_header;
     if ((error = elf_read_header(fd, &elf_header)) < 0)
         return error;
 
-    char *file_load_buffer = kmalloc(current_thread->process->files[fd]->direntry->size, 1, "file exec buffer");
-
-    sc_lseek(fd, 0x20, SEEK_SET);
-    sc_read(fd,file_load_buffer, 0x100);
-
-    hexdump(KLOG_INFO, file_load_buffer, 0x100);
-
-
-    klog(KLOG_DEBUG, "pht_entries=%d", elf_header->pht_entries);
-    current_thread->process->nofault = 1;
-
-    // go through segments (not sections!)
-    struct elf_pht_entry_struct phtt;
-    struct elf_pht_entry_struct *pht_entry = &phtt;
-    for (int i = 0; i < elf_header->pht_entries; i++)
+    // go through program header table and load all segments with type == 1
+    struct elf_pht_entry_struct pht_entry;
+    for (int i = 0; i < elf_header.pht_entries; i++)
     {
-        if ((error = elf_get_pht_entry(fd, i, elf_header, pht_entry)) < 0)
+        if ((error = elf_get_pht_entry(fd, i, &elf_header, &pht_entry)) < 0)
             return error;
 
-        klog(KLOG_INFO, "segment: type=%d, flags=%x", pht_entry->type, pht_entry->flags);
-
         // only load segment into memory when type == 1
-        if (pht_entry->type == 1)
+        if (pht_entry.type == 1)
         {
-            // TODO: apply read/write/execute flags on pages
+            klog(KLOG_DEBUG, "loadelf(): PHT #%d: loading %S at location 0x%x",
+                 i,
+                 pht_entry.p_filesz,
+                 pht_entry.p_vaddr);
 
-            char *buf;
-            copy_to_user(pagedir, (void*)pht_entry->p_vaddr, buf, pht_entry->p_filesz);
-            //memset((void*)pht_entry.p_vaddr, 0, pht_entry.p_memsz);
-            //sc_lseek(fd, pht_entry.p_file, SEEK_SET);
-            //sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
+            // check for invalid values
+            if (pht_entry.p_filesz > pht_entry.p_memsz ||
+                    pht_entry.p_vaddr < MB16 ||
+                    (pht_entry.p_vaddr + pht_entry.p_memsz) >= GB3)
+                return -ENOEXEC; // exec format error
+
+            // clear region to zero and load
+            memset((void*)(pht_entry.p_vaddr + pht_entry.p_filesz), 0, pht_entry.p_memsz - pht_entry.p_filesz);
+            sc_lseek(fd, pht_entry.p_file, SEEK_SET);
+            sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
         }
     }
-    kfree(pht_entry);
 
-    current_thread->process->nofault = 0;
-
-    *entry = (void*)elf_header->entry_point;
-    kfree(elf_header);
-    return -ENOSYS;
-}
-
-static int copy_to_user(pagedir_t *userp, void *dest, void *src, unsigned long count)
-{
-    return -ENOSYS;
+    // get entry address
+    *entry = (void*)elf_header.entry_point;
+    return SUCCESS;
 }
 
 static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)

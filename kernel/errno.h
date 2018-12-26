@@ -14,10 +14,11 @@
 
 #define EBADF   9
 #define EAGAIN  11
+#define ENOMEM  12
 
 #define ENOTDIR 20
 #define EISDIR  21
-
+#define EINVAL  22
 #define ENFILE  23			// Too many files open in system
 #define EMFILE  24			// Too many open files
 

@@ -49,6 +49,7 @@ void *kmalloc(size_t size, int alignment, char *description)
     block = find_free_block(&alignment_offset, size, alignment);
     if (block == NULL)
     {
+        heap_dump();
         klog(KLOG_PANIC, "kmalloc(): no free block on the kernel heap");
         return NULL;
     }
@@ -174,7 +175,9 @@ void kfree(void *mem)
     }
 
     klog(KLOG_DEBUG, "kfree(): size=%S, start=%x, purpose=%s", entry->size, entry->start, entry->description);
-    
+    entry->description[0] = '*';
+    return;
+
     int merged = 0;
     entry->available = 1;
     kheap_entry_t *merged_entry;

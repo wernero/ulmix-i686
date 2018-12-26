@@ -24,6 +24,5 @@ void print(char *str)
 int main()
 {
 	print("Hello, world! from USERSPACE\n");
-	__asm__("cli");
 	return 0;
 }

@@ -2,7 +2,7 @@
 #include "kheap.h"
 #include <util/util.h>
 #include <log.h>
-
+#include <errno.h>
 typedef struct
 {
     uint8_t  references;
@@ -41,7 +41,7 @@ void setup_pagemgr(unsigned long available_memory)
     }
 }
 
-pagetable_entry_t get_free_page(int flags)
+int get_free_page(pagetable_entry_t *entry, int flags)
 {
     for (unsigned long i = 0; i < pages; i++)
     {
@@ -49,12 +49,13 @@ pagetable_entry_t get_free_page(int flags)
         {
             dyn_pages[i].references++;
             unsigned long page_addr = DYNAMIC_START + (i * PAGESIZE);
-            return page_addr | PAG_PRESENT | flags;
+            *entry = page_addr | PAG_PRESENT | flags;
+            return SUCCESS;
         }
     }
 
     klog(KLOG_FAILURE, "get_free_page(): no more pages available");
-    return NULL;
+    return -ENOMEM;
 }
 
 void release_page(void *page)

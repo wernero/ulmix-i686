@@ -23,6 +23,9 @@
 #define PGTABLE_SIZE    4096
 #define PGDIR_SIZE      4096
 
+#define PAG_ENOTAB  50  // no page table allocated
+#define PAG_ENOTPR  51  // page not present
+
 #define MB1         (1024*1024)
 #define MB4         (1024*4096)
 #define MB6         (1024*1024*6)
@@ -33,17 +36,31 @@
 
 typedef uint32_t pagedir_entry_t;
 typedef uint32_t pagetable_entry_t;
+typedef struct _pagetable_struct pagetable_t;
 
 typedef struct
 {
     pagedir_entry_t pagetables[1024];
+    pagetable_t *pagetable_ptrs[1024];
 } __attribute__((packed)) pagedir_t;
 
-typedef struct
+struct _pagetable_struct
 {
     pagetable_entry_t pages[1024];
-} __attribute__((packed)) pagetable_t;
+} __attribute__((packed));
 
+
+struct paginfo_struct
+{
+    pagedir_t *     pagedir;
+    pagetable_t *   pagetable;
+    unsigned int    pagedir_offset;
+    unsigned int    pagetable_offset;
+};
+
+int                 vaddr_info(pagedir_t *pagedir, unsigned long fault_addr, struct paginfo_struct *info);
+unsigned long       get_physical(void *addr);
+pagetable_entry_t * mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description);
 
 uint32_t    setup_memory(void *mmap, uint32_t mmap_len);
 void        setup_paging(uint32_t phys_memory);

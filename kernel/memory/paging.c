@@ -2,7 +2,9 @@
 #include <util/util.h>
 #include <memory/kheap.h>
 #include <memory/pagemgr.h>
+#include <sched/task.h>
 #include <log.h>
+#include <errno.h>
 
 typedef struct
 {
@@ -14,67 +16,57 @@ typedef struct
 
 int paging_enabled = 0;
 pagedir_t *pagedir_kernel;
+extern thread_t *current_thread;
 static unsigned long available_memory;
 
 extern void paging_enable(void);
 
 static pagedir_t *mk_kernel_pagedir(void);
 static void pagetables_map(int count, int pagedir_offset, pagedir_t *pagedir, int flags, unsigned long phys_addr);
-static pagetable_entry_t *mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description);
 static pagetable_t *get_pagetable(int pagedir_offset, pagedir_t *pagedir);
-static pagetable_entry_t *get_pagetable_entry(uint32_t addr, pagedir_t *pagedir);
 
-void page_fault_handler(uint32_t error, unsigned long fault_addr)
+
+
+
+int vaddr_info(pagedir_t *pagedir, unsigned long addr, struct paginfo_struct *info)
 {
-    if (error & 4) // occured in user mode?
-    {
-        if (error & 1)
-        {
-            // user tried to access kernel space
-            // send error and kill task
-        }
-        else
-        {
-            // page not present
+    info->pagedir = pagedir;
+    info->pagedir_offset     = addr >> 22;
+    info->pagetable_offset   = (addr >> 12) & 0x000003ff;
+    int status = SUCCESS;
 
-            if (1)
-            {
-                // check whether the user has a right to
-                // access and fix it
-            }
-            else
-            {
-                // issue SIGSEGV and kill
-            }
-        }
+    if (pagedir->pagetables[info->pagedir_offset] & 1)
+    {
+        info->pagetable = get_pagetable(info->pagedir_offset, pagedir);
+        if (info->pagetable->pages[info->pagetable_offset] & 1)
+            return SUCCESS;
+        return -PAG_ENOTPR;
     }
     else
     {
-        if (fault_addr >= GB3)
-        {
-            // kernel tried to access heap that's not yet allococated.
-            if (pheap_valid_addr(fault_addr))
-            {
-                pagetable_entry_t *entry = get_pagetable_entry(fault_addr, pagedir_kernel);
-                *entry = get_free_page(PAG_SUPV | PAG_RDWR);
-                klog(KLOG_DEBUG, "allocated new page for kernel heap: virt(0x%x) -> phys(0x%x)",
-                     fault_addr & 0xfffff000,
-                     *entry & 0xfffff000);
-            }
-            else
-            {
-                klog(KLOG_PANIC, "kernel accessed non allocated heap location 0x%x (corrupt pointer?)",
-                     fault_addr);
-            }
-        }
-        else
-        {
-            // kernel tried to access an unallocated memory region
-            // yet the behaviour is undefined
-            klog(KLOG_PANIC, "kernel tried to access unmapped memory region (%x)", fault_addr);
-        }
+        // no page table present
+        status = -PAG_ENOTAB;
     }
+
+    return status;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void setup_paging(uint32_t phys_memory)
 {
@@ -93,11 +85,8 @@ pagedir_t *mk_user_pagedir(void)
 {
     pagedir_t *udir = kmalloc(sizeof(pagedir_t), PAGESIZE, "user pagedir");
 
-    // map kernel regions into user pagedir (0-16M, 3-4G)
-    memcpy(udir, pagedir_kernel, sizeof(pagedir_entry_t) * 4);
-    memcpy((pagedir_t *)((char*)udir + sizeof(pagedir_entry_t) * 768),
-           pagedir_kernel,
-           sizeof(pagedir_entry_t) * 256);
+    // map kernel regions into user pagedir
+    memcpy(udir, pagedir_kernel, sizeof(pagedir_t));
 
     return udir;
 }
@@ -141,14 +130,16 @@ uint32_t setup_memory(void *mmap, uint32_t mmap_len)
  * uses 'flags' and the heap 'description' accordingly.
  * returns: pointer to the first allocated page table
  */
-static pagetable_entry_t *mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description)
+pagetable_entry_t *mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description)
 {
     void *pagetables = kmalloc(sizeof(pagetable_t) * count, PAGESIZE, description);
     memset(pagetables, 0, sizeof(pagetable_t) * count);
     for (int i = 0; i < count; i++)
     {
         pagetable_t *pgtable = (pagetable_t*)(pagetables + (sizeof(pagetable_t) * i));
-        pagedir->pagetables[pagedir_offset + i] = (uint32_t)pgtable | PAG_PRESENT | flags;
+        unsigned long phys_addr = get_physical(pgtable);
+        pagedir->pagetables[pagedir_offset + i] = phys_addr | PAG_PRESENT | flags;
+        pagedir->pagetable_ptrs[pagedir_offset + i] = pgtable;
     }
     return pagetables;
 }
@@ -178,14 +169,9 @@ static void pagetables_map(int n, int pagedir_offset, pagedir_t *pagedir, int fl
 
 static pagetable_t *get_pagetable(int pagedir_offset, pagedir_t *pagedir)
 {
-    return (pagetable_t*)(pagedir->pagetables[pagedir_offset] & 0xfffff000);
-}
-
-static pagetable_entry_t *get_pagetable_entry(uint32_t addr, pagedir_t *pagedir)
-{
-    uint32_t pagedir_offset = addr >> 22;
-    uint32_t pagetable_offset = (addr >> 12) & 0x000003ff;
-    return &(get_pagetable(pagedir_offset, pagedir)->pages[pagetable_offset]);
+    if (pagedir->pagetables[pagedir_offset] & 1)
+        return pagedir->pagetable_ptrs[pagedir_offset];
+    return NULL;
 }
 
 static pagedir_t *mk_kernel_pagedir()
@@ -200,7 +186,40 @@ static pagedir_t *mk_kernel_pagedir()
     return kdir;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+unsigned long get_physical(void * addr)
+{
+    if (current_thread == NULL)
+        return (unsigned long)addr;
+
+    struct paginfo_struct info;
+    if (vaddr_info(current_thread->process->pagedir, (unsigned long)addr, &info) < 0)
+        return NULL;
+
+    uint32_t pt_entry = info.pagetable->pages[info.pagetable_offset];
+    return (unsigned long)pt_entry & 0xfffff000;
+}
+
 void apply_pagedir(void *pagedir)
 {
+    if ((unsigned long)pagedir >= MB16)
+    {
+        pagedir = (void*)get_physical(pagedir);
+    }
+
     __asm__ volatile ("mov %0, %%cr3" : : "r"(pagedir));
 }
+
+
