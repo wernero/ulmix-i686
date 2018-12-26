@@ -2,17 +2,10 @@
 #include <sys/types.h>
 #include <errno.h>
 
-static unsigned long __syscall(
-        unsigned int    id,
-        unsigned int    arg1,
-        unsigned int    arg2,
-        unsigned int    arg3,
-        unsigned int    arg4);
-
 void exit(void)
 {
     // id = 1
-    __syscall(1, 0, 0, 0, 0);
+    //sysc(1, 0, 0, 0, 0);
 }
 
 int open(char *path, int flags)
@@ -35,8 +28,13 @@ ssize_t write(int fd, char *buf, size_t len)
     return -ENOSYS;
 }
 
+int execve(const char *filename, char *const argv[], char *const envp[])
+{
+    return -ENOSYS;
+}
+
 // actual syscall implementation
-static unsigned long __syscall(
+unsigned long sysc(
         unsigned int    id,
         unsigned int    arg1,
         unsigned int    arg2,

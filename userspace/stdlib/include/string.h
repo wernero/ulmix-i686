@@ -5,4 +5,7 @@
 
 size_t strlen(char *str);
 
+int strcmp(char *s1, char *s2);
+int strncmp(char *s1, char *s2, size_t n);
+
 #endif // STRING_H
