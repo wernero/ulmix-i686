@@ -4,8 +4,6 @@
 typedef signed long int pid_t;
 
 pid_t fork(void);
-void _exit(int err);
-
-#define exit _exit
+void _uexit_(int err);
 
 #endif // STDLIB_H

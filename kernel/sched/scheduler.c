@@ -38,6 +38,8 @@ void scheduler_remove(thread_t *thread)
 {
     // TODO: actually remove from list; free() resources
     thread->state = KILLED;
+    if (current_thread == thread)
+        scheduler_force();
 }
 
 void scheduler_force(void)

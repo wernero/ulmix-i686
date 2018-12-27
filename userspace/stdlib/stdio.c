@@ -1,16 +1,12 @@
 #include <stdio.h>
 #include <string.h>
-#include <syscalls.h>
+#include <unistd.h>
 
 #define FD_STDIN  0
 #define FD_STDOUT 0
 #define FD_STDERR 1
 
 
-FILE *fopen(char *filename, char *mode)
-{
-    return NULL;
-}
 
 void puts(char *s)
 {

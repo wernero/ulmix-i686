@@ -1,5 +1,6 @@
 #include "syscalls.h"
 #include <memory/paging.h>
+#include <kdebug.h>
 
 extern thread_t *current_thread;
 
@@ -25,6 +26,9 @@ pid_t sc_fork_c(unsigned long esp)
 
 void sc_exit(int status)
 {
+    klog(KLOG_INFO, "exit() with code %d", status);
+    cli();
+    hlt();
 }
 
 pid_t sc_wait(int *wstatus)

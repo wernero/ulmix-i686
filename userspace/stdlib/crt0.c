@@ -1,23 +1,18 @@
 #include <stdio.h>
-#include <syscalls.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-FILE *stdin;
-FILE *stdout;
-FILE *stderr;
-
-int main(int argc, char *argv[]);
+extern int main(void);
 
 void _start(void)
 {
+    int ret = main();
     // setup standard I/O  -- temporary, the
-    stdout = fopen("/dev/tty", "rw");
-    stdin = stderr = stdout;
+    //stdout = fopen("/dev/tty", "rw");
+    //stdin = stderr = stdout;
 
-    // call main function
-    int return_code;
-    return_code = main(0, NULL);
-
-    // don't just return
-    exit(return_code);
+    __asm__("mov $0x1, %%eax;"
+            "mov %0, %%ebx;"
+            "int $0x80"
+            : : "g"(ret));
 }
