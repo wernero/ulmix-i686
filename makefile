@@ -15,7 +15,7 @@ KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/
 
 # Compiler-/Linker flags
 NASMFLAGS= -Ox -f elf
-CCFLAGS= -c -g -std=c11 -march=i486 -mtune=generic -Wshadow -Wstrict-prototypes -m32 -Werror -Wall -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -I$(KERNELDIR) -fno-pic -fno-delete-null-pointer-checks
+CCFLAGS= -c -g -std=c11 -march=i486 -mtune=generic -Wshadow -Wstrict-prototypes -m32 -Wno-error=unused-function -Werror -Wall -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -I$(KERNELDIR) -fno-pic -fno-delete-null-pointer-checks
 LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s -Map=out.map
 
 # Targets to build one asm or C file to an object file
