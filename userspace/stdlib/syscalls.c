@@ -19,12 +19,12 @@ pid_t fork(void) // 2
     return __syscall(2, 0, 0, 0, 0);
 }
 
-ssize_t read(int fd, char *buf, size_t len) // 3
+ssize_t read(int fd, void *buf, size_t len) // 3
 {
     return __syscall(3, fd, (unsigned long)buf, len, 0);
 }
 
-ssize_t write(int fd, char *buf, size_t len) // 4
+ssize_t write(int fd, void *buf, size_t len) // 4
 {
     return __syscall(4, fd, (unsigned long)buf, len, 0);
 }

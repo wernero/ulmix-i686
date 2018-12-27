@@ -11,18 +11,45 @@
 
 void puts(char *s)
 {
-    write(FD_KLOG, s, strlen(s) + 1);
+    write(stdout->fileno, s, strlen(s) + 1);
 }
 
 void putchar(char c)
 {
-    write(FD_KLOG, &c, 1);
+    write(stdout->fileno, &c, 1);
 }
 
 char getchar(void)
 {
     char c;
-    if (read(FD_STDIN, &c, 1) < 1)
+    if (read(stdin->fileno, &c, 1) < 1)
         return EOF;
     return c;
+}
+
+
+void printf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsprintf(format, args);
+    va_end(args);
+}
+
+void vsprintf(const char *format, va_list ap)
+{
+    for (int i = 0; i < strlen(format); i++)
+    {
+        if (format[i] == '%')
+        {
+            if (format[++i] == '%')
+                putchar('%');
+
+
+            continue;
+        }
+
+        putchar(format[i]);
+    }
+    va_end(ap);
 }
