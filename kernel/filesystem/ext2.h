@@ -17,6 +17,10 @@
 
 #define EXT2_IND_BLOCK_LEN 	256
 
+
+#define EXT2_BLOCK_SIZE         0x400
+
+
 typedef struct
 {
     uint32_t total_inodes;
