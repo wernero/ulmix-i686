@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static unsigned long __syscall(
+static unsigned long __attribute__((optimize("O0"))) __syscall(
         unsigned long    id,
         unsigned long    arg1,
         unsigned long    arg2,
