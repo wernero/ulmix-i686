@@ -11,7 +11,7 @@ FILE *stderr;
 void _start(void)
 {
     FILE std;
-    std.fileno = 0;
+    std.fileno = 912;
     stdin = stdout = stderr = &std;
 
     int ret = main();
@@ -19,8 +19,5 @@ void _start(void)
     //stdout = fopen("/dev/tty", "rw");
     //stdin = stderr = stdout;
 
-    __asm__("mov $0x1, %%eax;"
-            "mov %0, %%ebx;"
-            "int $0x80"
-            : : "g"(ret));
+    _exit(ret);
 }

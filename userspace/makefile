@@ -1,4 +1,4 @@
-SUBDIRS := stdlib init
+SUBDIRS := stdlib init hexdump
 
 all: $(SUBDIRS)
 

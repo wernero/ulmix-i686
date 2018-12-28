@@ -9,9 +9,9 @@ static unsigned long __syscall(
         unsigned long    arg3,
         unsigned long    arg4);
 
-void _uexit_(int err) // 1
+int _exit(int err) // 1
 {
-    __syscall(1, 0, 0, 0, 0);
+    return __syscall(1, err, 0, 0, 0);
 }
 
 pid_t fork(void) // 2
