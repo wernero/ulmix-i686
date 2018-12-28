@@ -19,5 +19,5 @@ void _start(void)
     //stdout = fopen("/dev/tty", "rw");
     //stdin = stderr = stdout;
 
-    _exit(ret);
+    exit(ret);
 }
