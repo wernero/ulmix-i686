@@ -9,9 +9,9 @@ static unsigned long __syscall(
         unsigned long    arg3,
         unsigned long    arg4);
 
-int _exit(int err) // 1
+void _exit(int err) // 1
 {
-    return __syscall(1, err, 0, 0, 0);
+    __syscall(1, err, 0, 0, 0);
 }
 
 pid_t fork(void) // 2
@@ -64,21 +64,15 @@ static unsigned long __syscall(
 {
     unsigned long ret;
     __asm__(
-        "mov %1, %%eax;"
-        "mov %2, %%ebx;"
-        "mov %3, %%ecx;"
-        "mov %4, %%edx;"
-        "mov %5, %%esi;"
         "int $0x80;"
-        "mov %%eax, %0"
         :
-        "=g"(ret)
+        "=a"(ret)
         :
-        "g"(id),
-        "g"(arg1),
-        "g"(arg2),
-        "g"(arg3),
-        "g"(arg4)
+        "a"(id),
+        "b"(arg1),
+        "c"(arg2),
+        "d"(arg3),
+        "S"(arg4)
     );
 
     if (ret < 0)

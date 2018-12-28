@@ -82,15 +82,14 @@ int syscall_handler(struct syscall_context_struct *context)
         "push %3;"
         "push %4;"
         "call *%5;"
-        "mov %%eax, %0;"
         "add $20, %%esp;"
         :
-        "=g"(ret)
+        "=a"(ret)
         :
-        "S"(context->esi),
-        "d"(context->edx),
-        "c"(context->ecx),
-        "b"(context->ebx),
+        "g"(context->esi),
+        "g"(context->edx),
+        "g"(context->ecx),
+        "g"(context->ebx),
         "g"(syscalls[context->eax])
         : "memory");
 
