@@ -1,6 +1,6 @@
 #include <string.h>
 
-static char errnos[] = {
+static char *errnos[] = {
     "Success",
     "Operation not permitted",
     "No such file or directory",

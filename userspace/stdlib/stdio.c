@@ -32,11 +32,11 @@ void printf(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    vprintf(stdout, format, args);
     va_end(args);
 }
 
-void vprintf(const char *format, va_list ap)
+void vprintf(FILE *stream, const char *format, va_list ap)
 {
     for (int i = 0; format[i] != '\0'; i++)
     {
