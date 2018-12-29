@@ -2,6 +2,7 @@
 #include "log.h"
 #include "util/util.h"
 #include "sched/task.h"
+#include <sched/scheduler.h>
 
 extern thread_t *current_thread;
 
@@ -56,12 +57,13 @@ void exc_handler(struct exc_context_struct *context)
     {
         if (current_thread != NULL)
         {
-            klog(KLOG_DEBUG, "exception: caused by thread '%s'. Killing thread.", current_thread->description);
-            kill_thread(current_thread);
+            klog(KLOG_INFO, "killed PID %d: tried to execute illegal code", current_thread->process->pid);
+            scheduler_remove(current_thread);
             return;
         }
     }
 
+    // Page Fault
     if (exc == 14)
     {
         uint32_t cr2;

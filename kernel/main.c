@@ -34,13 +34,6 @@ static void kmainthread(void)
     scan_devices();
     vfs_init();
 
-    // Syscall Test
-    int ret;
-    __asm__("mov $0x02, %%eax;"
-            "int $0x80;"
-            "mov %%eax, %0" : "=r"(ret));
-    klog(KLOG_DEBUG, "syscall test returned %d (5=success)", ret);
-
     exec_init();
     heap_dump();
     klog(KLOG_DEBUG, "goodbye from the kernel thread");

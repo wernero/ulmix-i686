@@ -20,7 +20,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
         return -ENOENT;
 
 
-    klog(KLOG_INFO, "namei_recursive(): <new recursion> cname=%s rem=%s wd=%x wde=%x",
+    klog(KLOG_DEBUG, "namei_recursive(): <new recursion> cname=%s rem=%s wd=%x wde=%x",
         cname,
         rem,
     working_dir,
@@ -31,7 +31,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
 
-        klog(KLOG_INFO, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
+        klog(KLOG_DEBUG, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
             entry->name,
             entry->type,
             entry->inode_no,
@@ -44,7 +44,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
         {
 
 
-            klog(KLOG_INFO, "namei_recursive(): ****** found: cname=%s name=%s rem_cur=%x rem=%s",
+            klog(KLOG_DEBUG, "namei_recursive(): ****** found: cname=%s name=%s rem_cur=%x rem=%s",
                 cname,
                 entry->name,
                 *rem,
@@ -63,7 +63,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
                 *node = entry;
 
-                klog(KLOG_INFO, "namei_recursive(): node=%x",
+                klog(KLOG_DEBUG, "namei_recursive(): node=%x",
                     node
                     );
 

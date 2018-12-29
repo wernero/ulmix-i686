@@ -28,7 +28,10 @@ vpath %.o $(OBJDIR)
 
 .PHONY: all
 
-all: ulmix.img
+all: ulmix.img userspace
+
+userspace:
+	make -C userspace
 
 # PrettyOS Bootloader
 $(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc

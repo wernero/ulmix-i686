@@ -69,11 +69,29 @@ void *syscalls[] =
 
 int syscall_handler(struct syscall_context_struct *context)
 {
-    klog(KLOG_INFO, "system call eax=%d", context->eax);
+    klog(KLOG_INFO, "system call #%d arg1=0x%x", context->eax, context->ebx);
 
     if (syscalls[context->eax] == NULL)
         return -ENOSYS; // not implemented
 
+    // call actual syscall handler
+    int ret;
+    __asm__ (
+        "push %1;"
+        "push %2;"
+        "push %3;"
+        "push %4;"
+        "call *%5;"
+        "add $20, %%esp;"
+        :
+        "=a"(ret)
+        :
+        "g"(context->esi),
+        "g"(context->edx),
+        "g"(context->ecx),
+        "g"(context->ebx),
+        "g"(syscalls[context->eax])
+        : "memory");
 
-    return 5;
+    return ret;
 }

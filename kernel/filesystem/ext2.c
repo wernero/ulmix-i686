@@ -49,7 +49,7 @@ static int ext2_probe(struct gendisk_struct *bd, int partition)
     uint16_t signature = superblock->signature;
     kfree(superblock);
 
-    klog(KLOG_INFO, "ext2_probe(): signature=%x", signature);
+    klog(KLOG_DEBUG, "ext2_probe(): signature=%x", signature);
 
     if (signature == 0xef53)
         return 0;
@@ -65,7 +65,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
     get_superblock(bd, mountpoint->partition, superblock);
 
-    klog(KLOG_INFO, "ext2_mount(): signature=%x, total_inodes=%d, total_blocks=%d, unalloc_inodes=%d, unalloc_blocks=%d",
+    klog(KLOG_DEBUG, "ext2_mount(): signature=%x, total_inodes=%d, total_blocks=%d, unalloc_inodes=%d, unalloc_blocks=%d",
         superblock->signature,
         superblock->total_inodes,
         superblock->total_blocks,
@@ -105,7 +105,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     bd->fops.read(bd->drv_struct, (char*)group_descriptor_buf, group_descriptor_size / 512);
 
 
-    klog(KLOG_INFO, "ext2_mount(): gdb=%x, gdc=%x, gds=%x, gdo=%x",
+    klog(KLOG_DEBUG, "ext2_mount(): gdb=%x, gdc=%x, gds=%x, gdo=%x",
         group_descriptor_buf,
         mountpoint->sb->s_gdb_count,
         group_descriptor_size,
@@ -120,7 +120,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 
         memcpy(&group_descriptor,(group_descriptor_buf + i * 0x20), 0x20);
 
-        klog(KLOG_INFO, "ext2_mount(): bba=%x, iba=%x, ita=%x, ub=%d, ui=%d, dc=%d",
+        klog(KLOG_DEBUG, "ext2_mount(): bba=%x, iba=%x, ita=%x, ub=%d, ui=%d, dc=%d",
             group_descriptor.block_bitmap_addr,
             group_descriptor.inode_bitmap_addr,
             group_descriptor.inode_table_addr,
@@ -159,7 +159,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
 {
     // TODO
 
-    klog(KLOG_INFO, "ext2_get_direntry(): miss=%x",
+    klog(KLOG_DEBUG, "ext2_get_direntry(): miss=%x",
         miss
         );
 
@@ -183,7 +183,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         miss->entries = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
         current_des = miss->entries;
 
-        klog(KLOG_INFO, "ext2_get_direntry(): new dirstruct current_des=%x",
+        klog(KLOG_DEBUG, "ext2_get_direntry(): new dirstruct current_des=%x",
             current_des
             );
 
@@ -210,7 +210,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         gds = gds->bg_next;
     }
 
-    klog(KLOG_INFO, "ext2_get_direntry(): gds0=%x, gds=%x, blkgrp=%x, ita=%x, ita_off=%x",
+    klog(KLOG_DEBUG, "ext2_get_direntry(): gds0=%x, gds=%x, blkgrp=%x, ita=%x, ita_off=%x",
         miss->sb->s_group_desc,
         gds,
         block_group,
@@ -231,7 +231,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
     memcpy(inode,(inode_buf + (((miss->inode_no - 1) % 4) * 0x80)), 0x80);
 
     // check if directory 0x4000
-    // klog(KLOG_INFO, "ext2_get_direntry(): mode=%x, size=%x, data0=%x, data1=%x",
+    // klog(KLOG_DEBUG, "ext2_get_direntry(): mode=%x, size=%x, data0=%x, data1=%x",
     //     inode->i_mode,
     //     inode->i_size,
     //     inode->i_block[0] * EXT2_BLOCK_SIZE,
@@ -258,7 +258,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         memcpy(de->name, direntry_buf+i, de->name_len);
         i += (de->rec_len - 8);
 
-        klog(KLOG_INFO, "ext2_get_direntry(): i=%d, inode=%d, rec_len=%x, name_len=%x, file_type=%x, name=%s",
+        klog(KLOG_DEBUG, "ext2_get_direntry(): i=%d, inode=%d, rec_len=%x, name_len=%x, file_type=%x, name=%s",
             i,
             de->inode,
             de->rec_len,
@@ -306,7 +306,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
                 current_des->directory->entries = NULL;
 
-                klog(KLOG_INFO, "ext2_get_direntry(): new dir_struct added %x, name=%s",
+                klog(KLOG_DEBUG, "ext2_get_direntry(): new dir_struct added %x, name=%s",
                     current_des->directory,
                     current_des->directory->name
                     );
@@ -361,7 +361,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     inode_group_offset = (((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / 4);
 
-    klog(KLOG_INFO, "ext2_get_inode(): bg=%d, inode=%d, sb=%x, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
+    klog(KLOG_DEBUG, "ext2_get_inode(): bg=%d, inode=%d, sb=%x, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
         block_group,
         entry->inode_no,
     entry->parent->sb,
@@ -381,7 +381,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
     kfree(inode_buf); // be nice and free up space
 
-    klog(KLOG_INFO, "ext2_get_inode(): inode=%d, mode=%x, size=%d",
+    klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, mode=%x, size=%d",
         entry->inode_no,
         inode->i_mode,
         inode->i_size
@@ -412,7 +412,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
             if (n < EXT2_NDIR_BLOCKS) {         	// handling of direct blocks
 
-                klog(KLOG_INFO, "ext2_get_inode(): inode=%d, blocks=%x",
+                klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
@@ -424,7 +424,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
             switch(n){
 
           case EXT2_IND_BLOCK:
-                klog(KLOG_INFO, "ext2_get_inode(): indirect inode=%d, blocks=%x",
+                klog(KLOG_DEBUG, "ext2_get_inode(): indirect inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
@@ -455,7 +455,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         kfree(inode_indirect_buf); // be nice and free up space
         break;
           case EXT2_DIND_BLOCK:
-                klog(KLOG_INFO, "ext2_get_inode(): double inode=%d, blocks=%x",
+                klog(KLOG_DEBUG, "ext2_get_inode(): double inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
@@ -499,7 +499,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         kfree(inode_indirect_buf); // be nice and free up space
         break;
           case EXT2_TIND_BLOCK:
-                klog(KLOG_INFO, "ext2_get_inode(): triple inode=%d, blocks=%x",
+                klog(KLOG_DEBUG, "ext2_get_inode(): triple inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
@@ -513,7 +513,7 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         }
     }
 
-    klog(KLOG_INFO, "ext2_get_inode(): **total** inode=%d, block_counter=%d",
+    klog(KLOG_DEBUG, "ext2_get_inode(): **total** inode=%d, block_counter=%d",
       entry->inode_no,
       block_counter
       );
@@ -556,7 +556,7 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
     start_block = read_seek_offset / 0x400;
     start_block_offset = read_seek_offset % 0x400;
 
-    klog(KLOG_INFO, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%x, btc=%d, stb=%d",
+    klog(KLOG_DEBUG, "ext2_read(): inode=%d, mode=%x, size=%d, size_blocks=%d, read_seek=%x, btc=%d, stb=%d",
         entry->inode_no,
         entry->mode,
         entry->size,
@@ -574,48 +574,48 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
       for(int i = 0; i < VFS_INODE_BLOCK_TABLE_LEN; i++)
       {
 
-	if(current_ibt->blocks[i] == 0) // nothing to do
-	  break;
+    if(current_ibt->blocks[i] == 0) // nothing to do
+      break;
 
-	klog(KLOG_INFO, "ext2_read(): inode=%d, tc=%d, stb=%d blk=%d : %x %x",
-	    entry->inode_no,
-	    bytes_to_copy,
-	    start_block,
-	    current_ibt->blocks[i] ,
-	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
-	    (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
-	    );
+    klog(KLOG_DEBUG, "ext2_read(): inode=%d, tc=%d, stb=%d blk=%d : %x %x",
+        entry->inode_no,
+        bytes_to_copy,
+        start_block,
+        current_ibt->blocks[i] ,
+        (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512),
+        (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512) * 0x200
+        );
 
-	if(!start_block) { // start_block depends on read_seek_offset
-	  
-	  entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-	  entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
-	  	  
-	  if(bytes_to_copy < 0x400) {
-	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , bytes_to_copy);
-	    bytes_to_copy -= bytes_to_copy;
-	    break; // nothing else to copy
-	  } else {
-	    memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , 0x400);
-	    bytes_to_copy -= 0x400;
-	  }
+    if(!start_block) { // start_block depends on read_seek_offset
 
-	  bytes_read += 0x400 - start_block_offset;
-	  
-	  start_block_offset = 0; // only to be done on the very first block read;
-	}
+      entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (current_ibt->blocks[i] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
+      entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, 0x400 / 0x200);
 
-	klog(KLOG_INFO, "ext2_read(): inode=%d, btr=%d",
-	    entry->inode_no,
-	    bytes_read
-	    );
+      if(bytes_to_copy < 0x400) {
+        memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , bytes_to_copy);
+        bytes_to_copy -= bytes_to_copy;
+        break; // nothing else to copy
+      } else {
+        memcpy(buf+bytes_read, disk_read_buffer+start_block_offset , 0x400);
+        bytes_to_copy -= 0x400;
+      }
 
-	
-	if(start_block == 0)
-	  start_block = 0;
-	else
-	  start_block--;
-      } 
+      bytes_read += 0x400 - start_block_offset;
+
+      start_block_offset = 0; // only to be done on the very first block read;
+    }
+
+    klog(KLOG_DEBUG, "ext2_read(): inode=%d, btr=%d",
+        entry->inode_no,
+        bytes_read
+        );
+
+
+    if(start_block == 0)
+      start_block = 0;
+    else
+      start_block--;
+      }
     }
 
     kfree(disk_read_buffer); // be nice and free up memory

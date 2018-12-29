@@ -2,6 +2,7 @@
 #include "filesystem/path.h"
 #include <errno.h>
 #include <sched/task.h>
+#include <kdebug.h>
 
 extern thread_t *current_thread;
 static int insert_fd(struct file_struct *fd)
@@ -40,7 +41,7 @@ int sc_open(char *pathname, int flags)
     fd->direntry = node;
     fd->open_mode = flags;
     fd->seek_offset = 0;
-    
+
     node->fd = fd;
 
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
@@ -74,6 +75,12 @@ int sc_creat(const char *pathname, int mode)
 
 ssize_t sc_write(int fd, void *buf, size_t count)
 {
+    if (fd == 912)
+    {
+        // debug !!!
+        klog(KLOG_INFO, buf);
+    }
+
     struct file_struct *fds = current_thread->process->files[fd];
     if (fds == NULL)
         return -EBADF;
@@ -120,7 +127,7 @@ ssize_t sc_lseek(int fd, size_t offset, int whence)
     if (fds == NULL)
         return -EBADF;
 
-    
+
     switch(whence)
     {
     case SEEK_SET:
