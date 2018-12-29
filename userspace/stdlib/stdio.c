@@ -32,24 +32,37 @@ void printf(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    vsprintf(format, args);
+    vsprintf(stdout, format, args);
     va_end(args);
 }
 
-void vsprintf(const char *format, va_list ap)
+#define VPRINTF_BUF 128
+void vsprintf(FILE *stream, const char *format, va_list ap)
 {
-    for (int i = 0; i < strlen(format); i++)
+    char buf[VPRINTF_BUF];
+    int buf_index = 0;
+
+    for (int i = 0; format[i] != '\0'; i++)
     {
+        if (buf_index == VPRINTF_BUF)
+        {
+            // flush the buffer
+            write(stream->fileno, buf, buf_index);
+            buf_index = 0;
+        }
+
         if (format[i] == '%')
         {
             if (format[++i] == '%')
-                putchar('%');
+                buf[buf_index++] = '%';
 
 
             continue;
         }
 
-        putchar(format[i]);
+        buf[buf_index++] = format[i];
     }
+
+    write(stream->fileno, buf, buf_index);
     va_end(ap);
 }

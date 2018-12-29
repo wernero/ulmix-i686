@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-extern int main(void);
+extern int main(int argc, char *argv[]);
 
 FILE *stdin;
 FILE *stdout;
@@ -14,7 +14,7 @@ void _start(void)
     std.fileno = 912;
     stdin = stdout = stderr = &std;
 
-    int ret = main();
+    int ret = main(0, NULL);
     // setup standard I/O  -- temporary, the
     //stdout = fopen("/dev/tty", "rw");
     //stdin = stderr = stdout;

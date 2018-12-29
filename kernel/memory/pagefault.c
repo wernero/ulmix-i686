@@ -19,8 +19,7 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
         {
             // user tried to access kernel space
             // send error and kill task
-            klog(KLOG_INFO, "killed PID %d: uncorrectable page fault.", current_thread->process->pid);
-            scheduler_remove(current_thread);
+
         }
         else
         {
@@ -36,6 +35,11 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
                 // issue SIGSEGV and kill
             }
         }
+
+        klog(KLOG_INFO, "killed PID %d: uncorrectable page fault. addr=0x%x",
+             current_thread->process->pid,
+             fault_addr);
+        scheduler_remove(current_thread);
     }
     else
     {

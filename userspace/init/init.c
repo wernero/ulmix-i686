@@ -3,7 +3,9 @@
 
 int main(void)
 {
-    puts("*** ulmix test shell ***\n\n");
+    printf("Hello, world\n");
+
+
 
     return 23;
 }
