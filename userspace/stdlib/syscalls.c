@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static unsigned long __attribute__((optimize("O0"))) __syscall(
-        unsigned long    id,
-        unsigned long    arg1,
-        unsigned long    arg2,
-        unsigned long    arg3,
-        unsigned long    arg4);
+static unsigned long
+__attribute__((optimize("O0")))
+__syscall(unsigned long id,
+          unsigned long arg1,
+          unsigned long arg2,
+          unsigned long arg3,
+          unsigned long arg4);
 
 void _exit(int err) // 1
 {
@@ -55,12 +56,13 @@ int execve(const char *filename,
 }
 
 // actual syscall implementation
-static unsigned long __syscall(
-        unsigned long    id,
-        unsigned long    arg1,
-        unsigned long    arg2,
-        unsigned long    arg3,
-        unsigned long    arg4)
+static unsigned long
+__attribute__((optimize("O0")))
+__syscall(unsigned long id,
+          unsigned long arg1,
+          unsigned long arg2,
+          unsigned long arg3,
+          unsigned long arg4)
 {
     unsigned long ret;
     __asm__(
@@ -76,6 +78,9 @@ static unsigned long __syscall(
     );
 
     if (ret < 0)
+    {
         _set_errno(-ret);
+        return -1;
+    }
     return ret;
 }
