@@ -16,7 +16,7 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
     process_t *pold = current_thread->process;
 
     // create new process image
-    pagedir_t *pd_new = pagedir_copy(pold->pagedir);
+    pagedir_t *pd_new = pagedir_copy_current();
     process_t *pnew = mk_process_struct(pd_new, TYPE_USER, "forked process");
 
     // apply file descriptors and working directory of the old process
