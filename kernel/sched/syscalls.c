@@ -2,12 +2,17 @@
 #include "process.h"
 #include "scheduler.h"
 #include <memory/paging.h>
+#include <syscall.h>
 #include <kdebug.h>
 
 extern thread_t *current_thread;
 
-pid_t sc_fork_c(unsigned long esp)
+pid_t sc_fork_c(struct syscall_context_struct *context)
 {
+    klog(KLOG_DEBUG, "fork() [%d]: user_esp=%x, eip=%x",
+         current_thread->process->pid,
+         context->user_esp,
+         context->eip);
     process_t *pold = current_thread->process;
 
     // create new process image
@@ -22,7 +27,7 @@ pid_t sc_fork_c(unsigned long esp)
     // the return address on the stack.
     int ret = pnew->pid; // return value for the new process = pid
     pnew->threads = mk_thread(pnew,
-                              mk_kstack(TYPE_USER, (void*)esp, PAGESIZE, esp, get_eflags(), ret),
+                              mk_kstack(TYPE_USER, (void*)context->eip, PAGESIZE, context->user_esp, get_eflags(), ret),
                               pnew->description);
 
     return 0; // old process gets 0
