@@ -48,6 +48,18 @@ struct _thread_t
     char                description[DESC_LENGTH];
 };
 
+struct rcontext_struct
+{
+    unsigned long edi;
+    unsigned long esi;
+    unsigned long ebp;
+    unsigned long esp;
+    unsigned long ebx;
+    unsigned long edx;
+    unsigned long ecx;
+    unsigned long eax;
+};
+
 
 
 kstack_t kstack_init(kstack_t kstack,
@@ -55,14 +67,14 @@ kstack_t kstack_init(kstack_t kstack,
                             void *start_addr,
                             unsigned long user_esp,
                             unsigned long eflags,
-                            unsigned long eax);
+                            struct rcontext_struct *registers);
 
 kstack_t mk_kstack(thread_type_t thread_type,
                            void *entry,
                            size_t stack_size,
                            unsigned long user_esp,
                            unsigned long eflags,
-                           unsigned long eax);
+                           struct rcontext_struct *registers);
 
 thread_t *mk_thread(process_t *process,
                     kstack_t kstack,

@@ -25,9 +25,13 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
 
     // new process: 'esp' is the stack pointer and also points to
     // the return address on the stack.
-    int ret = pnew->pid; // return value for the new process = pid
+
+    klog(KLOG_DEBUG, "fork(): old context ebp=%x, esp=%x", context->ebp, context->user_esp);
+    struct rcontext_struct *rcontext = (struct rcontext_struct*)context;
+    rcontext->eax = pnew->pid; // return value for fork() in the child process
+
     pnew->threads = mk_thread(pnew,
-                              mk_kstack(TYPE_USER, (void*)context->eip, PAGESIZE, context->user_esp, get_eflags(), ret),
+                              mk_kstack(TYPE_USER, (void*)context->eip, PAGESIZE, context->user_esp, get_eflags(), rcontext),
                               pnew->description);
 
     return 0; // old process gets 0

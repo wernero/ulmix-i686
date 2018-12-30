@@ -39,13 +39,13 @@ kstack_t mk_kstack(thread_type_t thread_type,
                            size_t stack_size,
                            unsigned long user_esp,
                            unsigned long eflags,
-                           unsigned long eax)
+                           struct rcontext_struct *registers)
 {
     kstack_t kstack;
     kstack.kstack = (uint32_t)kmalloc(stack_size, 1, "thread_t kstack");
     kstack.ebp    = (uint32_t)(kstack.kstack + stack_size);
     kstack.esp    = kstack.ebp;
-    return kstack_init(kstack, thread_type, entry, user_esp, eflags, eax);
+    return kstack_init(kstack, thread_type, entry, user_esp, eflags, registers);
 }
 
 /*
@@ -61,7 +61,7 @@ kstack_t mk_kstack(thread_type_t thread_type,
  * 'eflags': initial EFLAGS state of the thread
  */
 kstack_t kstack_init(kstack_t kstack, int thread_type, void *start_addr, unsigned long user_esp,
-                     unsigned long eflags, unsigned long eax)
+                     unsigned long eflags, struct rcontext_struct *registers)
 {
     int kernel_thread;
     uint32_t cs, ds;
@@ -94,10 +94,17 @@ kstack_t kstack_init(kstack_t kstack, int thread_type, void *start_addr, unsigne
     *(--ksp) = cs;                      // cs
     *(--ksp) = (uint32_t)start_addr;    // eip
 
-    // the general purpose registers are left uninitialized
-    // but should be already set to zero by the heap manager
-    *(--ksp) = eax;
-    ksp -= 7;
+    // general purpose are only important for functions like
+    // fork(2) that need to establish a certain context and
+    // therefore also initiailize all registers
+    *(--ksp) = registers->eax;
+    *(--ksp) = registers->ecx;
+    *(--ksp) = registers->edx;
+    *(--ksp) = registers->ebx;
+    *(--ksp) = registers->esp;
+    *(--ksp) = registers->ebp;
+    *(--ksp) = registers->esi;
+    *(--ksp) = registers->edi;
 
     *(--ksp) = ds;    // ds = ds
     *(--ksp) = ds;    // es = ds

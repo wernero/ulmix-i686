@@ -10,7 +10,7 @@ static void start_program(char *filename);
 
 int main(void)
 {
-    printf("ULMIX initd\n");
+    puts("ULMIX initd\n");
 
     start_program(SHELL);
 
@@ -25,7 +25,8 @@ static void start_program(char *filename)
         // start shell
         if (execve(filename, NULL, NULL) < 0)
         {
-            printf("init: cannot start %s: %s", filename, strerror(errno));
+            puts("error: execve() returned an error");
+            //printf("init: cannot start %s: %s", filename, strerror(errno));
         }
     }
 }
