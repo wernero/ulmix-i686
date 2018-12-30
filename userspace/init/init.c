@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#define SHELL   "/bin/ush" // ulmix shell
+#define SHELL "/bin/ush" // ulmix shell
 
 static void start_program(char *filename);
 
