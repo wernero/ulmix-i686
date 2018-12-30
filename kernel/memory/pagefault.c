@@ -70,11 +70,9 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
 
 static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
 {
-    klog(KLOG_DEBUG, "alloc_page()");
     struct paginfo_struct info;
     if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)
     {
-        klog(KLOG_DEBUG, "pt not present");
         // create pagetable
         mk_pagetables(1, info.pagedir_offset, pagedir, flags, "pagetable_t");
         if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)

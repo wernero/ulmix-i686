@@ -9,10 +9,6 @@ extern thread_t *current_thread;
 
 pid_t sc_fork_c(struct syscall_context_struct *context)
 {
-    klog(KLOG_DEBUG, "fork() [%d]: user_esp=%x, eip=%x",
-         current_thread->process->pid,
-         context->user_esp,
-         context->eip);
     process_t *pold = current_thread->process;
 
     // create new process image
@@ -26,7 +22,6 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
     // new process: 'esp' is the stack pointer and also points to
     // the return address on the stack.
 
-    klog(KLOG_DEBUG, "fork(): old context ebp=%x, esp=%x", context->ebp, context->user_esp);
     struct rcontext_struct *rcontext = (struct rcontext_struct*)context;
     rcontext->eax = pnew->pid; // return value for fork() in the child process
 
