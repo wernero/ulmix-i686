@@ -2,7 +2,7 @@
 #include "log.h"
 #include "util/util.h"
 #include "sched/task.h"
-#include <sched/scheduler.h>
+#include <sched/process.h>
 
 extern thread_t *current_thread;
 
@@ -58,7 +58,7 @@ void exc_handler(struct exc_context_struct *context)
         if (current_thread != NULL)
         {
             klog(KLOG_INFO, "killed PID %d: tried to execute illegal code", current_thread->process->pid);
-            scheduler_remove(current_thread);
+            kill_process(current_thread->process);
             return;
         }
     }
@@ -95,7 +95,7 @@ void setup_exception_handlers(void)
     irq_install_raw_handler(11, exc11, INT_TRAP | INT_SUPV);
     irq_install_raw_handler(12, exc12, INT_TRAP | INT_SUPV);
     irq_install_raw_handler(13, exc13, INT_TRAP | INT_SUPV);
-    irq_install_raw_handler(14, exc14, INT_TRAP | INT_SUPV);
+    irq_install_raw_handler(14, exc14, INT_GATE | INT_SUPV); // critical, should not be interrupted
     irq_install_raw_handler(16, exc16, INT_TRAP | INT_SUPV);
     irq_install_raw_handler(17, exc17, INT_TRAP | INT_SUPV);
     irq_install_raw_handler(18, exc18, INT_TRAP | INT_SUPV);

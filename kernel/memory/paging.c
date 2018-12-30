@@ -3,6 +3,7 @@
 #include <memory/kheap.h>
 #include <memory/pagemgr.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <log.h>
 #include <errno.h>
 

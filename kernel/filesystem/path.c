@@ -1,8 +1,9 @@
 #include "path.h"
 #include <sched/task.h>
+#include <sched/process.h>
 #include <filesystem/filesystem.h>
 #include <errno.h>
-#include "log.h"
+#include <kdebug.h>
 
 extern struct dir_struct root;
 extern thread_t *current_thread;

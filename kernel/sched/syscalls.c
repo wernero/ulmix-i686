@@ -1,4 +1,5 @@
 #include "syscalls.h"
+#include "process.h"
 #include <memory/paging.h>
 #include <kdebug.h>
 
@@ -8,11 +9,13 @@ pid_t sc_fork_c(unsigned long esp)
 {
     process_t *pold = current_thread->process;
 
-    // !!! only works from kernel yet
+    // create new process image
     pagedir_t *pd_new = pagedir_copy(pold->pagedir);
-
     process_t *pnew = mk_process_struct(pd_new, TYPE_USER, "forked process");
+
+    // apply file descriptors and working directory of the old process
     pnew->working_dir = pold->working_dir;
+    // pnew->files = pold->files
 
     // new process: 'esp' is the stack pointer and also points to
     // the return address on the stack.
@@ -27,8 +30,7 @@ pid_t sc_fork_c(unsigned long esp)
 void sc_exit(int status)
 {
     klog(KLOG_INFO, "exit() with code %d", status);
-    cli();
-    hlt();
+    kill_process(current_thread->process);
 }
 
 pid_t sc_wait(int *wstatus)

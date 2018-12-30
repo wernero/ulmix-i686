@@ -2,6 +2,7 @@
 #include <util/util.h>
 #include <kdebug.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <sched/scheduler.h>
 #include <memory/pagemgr.h>
 #include <memory/paging.h>

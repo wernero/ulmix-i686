@@ -1,8 +1,8 @@
 #include "exec.h"
 #include "memory/userheap.h"
-#include "sched/scheduler.h"
-#include "sched/task.h"
-#include "log.h"
+#include <sched/task.h>
+#include <sched/process.h>
+#include <kdebug.h>
 #include <elf.h>
 #include <filesystem/fs_syscalls.h>
 #include <errno.h>

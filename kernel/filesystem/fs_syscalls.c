@@ -2,6 +2,7 @@
 #include "filesystem/path.h"
 #include <errno.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <kdebug.h>
 
 extern thread_t *current_thread;
