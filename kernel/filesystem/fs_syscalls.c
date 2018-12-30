@@ -80,6 +80,7 @@ ssize_t sc_write(int fd, void *buf, size_t count)
     {
         // debug !!!
         klog(KLOG_INFO, buf);
+        return 0;
     }
 
     struct file_struct *fds = current_thread->process->files[fd];

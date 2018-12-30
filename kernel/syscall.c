@@ -69,8 +69,7 @@ void *syscalls[] =
 
 int syscall_handler(struct syscall_context_struct *context)
 {
-    klog(KLOG_INFO, "system call #%d arg1=0x%x", context->eax, context->ebx);
-    klog(KLOG_DEBUG, "syscall: user esp=0x%x, eip=0x%x", context->user_esp, context->eip);
+    //klog(KLOG_INFO, "system call #%d", context->eax);
 
     if (syscalls[context->eax] == NULL)
         return -ENOSYS; // not implemented
@@ -84,7 +83,7 @@ int syscall_handler(struct syscall_context_struct *context)
         "push %4;"
         "push %5;"
         "call *%6;"
-        "add $24, %%esp;"
+        "add $20, %%esp;"
         :
         "=a"(ret)
         :
@@ -94,7 +93,7 @@ int syscall_handler(struct syscall_context_struct *context)
         "g"(context->ecx),
         "g"(context->ebx),
         "g"(syscalls[context->eax])
-        : "memory");
+        );
 
     return ret;
 }
