@@ -37,10 +37,11 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
             }
         }
 
-        klog(KLOG_INFO, "killed PID %d: uncorrectable page fault. addr=0x%x",
+        klog(KLOG_INFO, "kill [%d]: uncorrectable page fault. addr=0x%x",
              current_thread->process->pid,
              fault_addr);
-        scheduler_remove(current_thread);
+
+        kill_process(current_thread->process);
     }
     else
     {

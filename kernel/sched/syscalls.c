@@ -1,5 +1,6 @@
 #include "syscalls.h"
 #include "process.h"
+#include "scheduler.h"
 #include <memory/paging.h>
 #include <kdebug.h>
 
@@ -29,7 +30,7 @@ pid_t sc_fork_c(unsigned long esp)
 
 void sc_exit(int status)
 {
-    klog(KLOG_INFO, "exit() with code %d", status);
+    klog(KLOG_INFO, "exit() with code %d [%d]", status, current_thread->process->pid);
     kill_process(current_thread->process);
 }
 

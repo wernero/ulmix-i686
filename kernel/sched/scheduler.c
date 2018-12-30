@@ -39,8 +39,6 @@ static thread_t *get_next_task()
 void scheduler_remove(thread_t *thread)
 {
     thread->state = KILLED;
-    if (current_thread == thread)
-        scheduler_force();
 }
 
 void scheduler_force(void)

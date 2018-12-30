@@ -7,6 +7,7 @@ static pid_t pid_counter = 0;
 static pid_t new_pid(void);
 
 extern struct dir_struct root;
+extern thread_t *current_thread;
 
 process_t *mk_process(pagedir_t *pagedir,
                       thread_type_t type,
@@ -44,28 +45,29 @@ process_t *mk_process_struct(pagedir_t *pagedir,
 
 void kill_process(process_t *process)
 {
+    klog(KLOG_DEBUG, "killing pid %d", process->pid);
     scheduler_disable();
 
     thread_t *thr;
+    int is_running = 0;
     for (thr = process->threads; thr != NULL; thr = thr->next_thread)
     {
-        kill_thread(thr);
-    }
+        scheduler_remove(thr);
 
-    if (process->thread_count != 0)
-    {
-        klog(KLOG_WARN, "kill_process(): thread_count != 0");
-    }
-
-    for (int i = 0; process->files[i] != NULL; i++)
-    {
-        // close files
+        if (current_thread == thr)
+            is_running = 1;
     }
 
     // release page directory
+    // close all files
+    for (int i = 0; process->files[i] != NULL; i++)
+    {
+        // close file
+    }
 
-    kfree(process);
     scheduler_enable();
+    if (is_running)
+        scheduler_force();
 }
 
 static pid_t new_pid()

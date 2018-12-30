@@ -57,7 +57,7 @@ void exc_handler(struct exc_context_struct *context)
     {
         if (current_thread != NULL)
         {
-            klog(KLOG_INFO, "killed PID %d: tried to execute illegal code", current_thread->process->pid);
+            klog(KLOG_INFO, "kill [%d]: protection violation", current_thread->process->pid);
             kill_process(current_thread->process);
             return;
         }

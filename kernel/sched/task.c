@@ -111,11 +111,11 @@ kstack_t kstack_init(kstack_t kstack, int thread_type, void *start_addr, unsigne
 // does not kill process
 void kill_thread(thread_t *thread)
 {
-    scheduler_disable();
+    // scheduler_disable();
 
     thread->process->thread_count--;
     kfree(thread);
 
     scheduler_remove(thread);
-    //scheduler_enable();
+    // scheduler_enable();
 }

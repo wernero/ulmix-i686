@@ -19,7 +19,7 @@ int main(void)
 
 static void start_program(char *filename)
 {
-    pid_t pid = fork();
+    pid_t pid = 0;
     if (pid)
     {
         // start shell
