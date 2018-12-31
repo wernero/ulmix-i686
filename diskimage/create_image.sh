@@ -5,7 +5,7 @@ mv hdd.img hdd.img.bak
 rm -f hdd.img 
 sudo mkdir -p mnt
 
-bximage -mode=create -hd=30M -q hdd.img
+dd if=/dev/zero of=hdd.img count=40960 # 20MB
 sfdisk hdd.img < sfdisk.layout
 sfdisk -l hdd.img
 
@@ -20,4 +20,4 @@ sudo cp ../userspace/hexdump/hexdump.elf mnt/bin/hexdump
 
 sudo umount mnt
 sudo losetup -D
-rm -rf mnt
+#sudo rm -rf mnt
