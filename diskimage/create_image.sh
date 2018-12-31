@@ -20,4 +20,4 @@ sudo cp ../userspace/hexdump/hexdump.elf mnt/bin/hexdump
 
 sudo umount mnt
 sudo losetup -D
-rm -rf mnt
+#sudo rm -rf mnt
