@@ -25,6 +25,10 @@ struct syscall_context_struct
     uint32_t ds;
 
     uint32_t eip;
+
+    uint32_t cs;
+    uint32_t eflags;
+    uint32_t user_esp;
 };
 
 #endif // SYSCALL_H

@@ -3,6 +3,7 @@
 #include <util/util.h>
 #include <log.h>
 #include <errno.h>
+
 typedef struct
 {
     uint8_t  references;

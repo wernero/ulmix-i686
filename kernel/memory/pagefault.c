@@ -1,17 +1,22 @@
-#include "pagefault.h"
 #include <util/util.h>
 #include <kdebug.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <sched/scheduler.h>
 #include <memory/pagemgr.h>
 #include <memory/paging.h>
 
 extern pagedir_t *pagedir_kernel;
-extern thread_t *current_thread;
+extern thread_t  *current_thread;
 
 static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags);
 
-void page_fault_handler(uint32_t error, unsigned long fault_addr)
+/*
+ * page_fault_handler(): the page fault handler is called when the CPU issues
+ * a page fault. the interrupt handler is configured to run as a gate, meaning
+ * that no interrupts occur during the execution of a page fault handler.
+ */
+void page_fault_handler(unsigned long error, unsigned long fault_addr)
 {
     if (error & 4) // occured in user mode?
     {
@@ -36,10 +41,11 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
             }
         }
 
-        klog(KLOG_INFO, "killed PID %d: uncorrectable page fault. addr=0x%x",
+        klog(KLOG_INFO, "kill [%d]: uncorrectable page fault. addr=0x%x",
              current_thread->process->pid,
              fault_addr);
-        scheduler_remove(current_thread);
+
+        kill_process(current_thread->process);
     }
     else
     {
@@ -68,11 +74,9 @@ void page_fault_handler(uint32_t error, unsigned long fault_addr)
 
 static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
 {
-    klog(KLOG_DEBUG, "alloc_page()");
     struct paginfo_struct info;
     if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)
     {
-        klog(KLOG_DEBUG, "pt not present");
         // create pagetable
         mk_pagetables(1, info.pagedir_offset, pagedir, flags, "pagetable_t");
         if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)

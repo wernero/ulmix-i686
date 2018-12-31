@@ -1,7 +1,9 @@
 #include "scheduler.h"
-#include "util/util.h"
-#include "memory/gdt.h"
-#include "log.h"
+#include "process.h"
+
+#include <util/util.h>
+#include <memory/gdt.h>
+#include <kdebug.h>
 
 volatile scheduler_state_t scheduler_state = SCHED_DISABLED;
 
@@ -19,6 +21,11 @@ void scheduler_enable()
     scheduler_state = SCHED_ACTIVE;
 }
 
+void scheduler_disable(void)
+{
+    scheduler_state = SCHED_PAUSED;
+}
+
 static thread_t *get_next_task()
 {
     task_queue_t *next_task = running_tasks->next_task;
@@ -29,17 +36,9 @@ static thread_t *get_next_task()
     return (running_tasks = next_task)->task;
 }
 
-void scheduler_disable(void)
-{
-    scheduler_state = SCHED_PAUSED;
-}
-
 void scheduler_remove(thread_t *thread)
 {
-    // TODO: actually remove from list; free() resources
     thread->state = KILLED;
-    if (current_thread == thread)
-        scheduler_force();
 }
 
 void scheduler_force(void)
@@ -79,7 +78,7 @@ void scheduler_insert(thread_t *thread)
     _insert(thread, &running_tasks);
 }
 
-uint32_t schedule(uint32_t esp)
+unsigned long schedule(unsigned long esp)
 {
     if (current_thread != NULL)
         current_thread->kstack.esp = esp;

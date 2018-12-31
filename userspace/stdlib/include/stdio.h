@@ -30,6 +30,6 @@ typedef __builtin_va_list va_list;
 #define __va_copy(d,s)	__builtin_va_copy(d,s)
 
 void printf(const char *format, ...);
-void vsprintf(FILE *stream, const char *format, va_list ap);
+void vprintf(FILE *stream, const char *format, va_list ap);
 
 #endif // STDIO_H

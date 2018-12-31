@@ -60,13 +60,14 @@ struct paginfo_struct
 
 int                 vaddr_info(pagedir_t *pagedir, unsigned long fault_addr, struct paginfo_struct *info);
 unsigned long       get_physical(void *addr);
-pagetable_entry_t * mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description);
+pagetable_t *       mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description);
 
 uint32_t    setup_memory(void *mmap, uint32_t mmap_len);
 void        setup_paging(uint32_t phys_memory);
 
 pagedir_t * mk_user_pagedir(void);
-pagedir_t * pagedir_copy(pagedir_t *source);
+void        delete_pagedir(pagedir_t *pagedir);
+pagedir_t * pagedir_copy_current(void);
 pagedir_t * get_kernel_pagedir(void);
 
 void        apply_pagedir(void *pagedir);

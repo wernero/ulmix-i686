@@ -18,7 +18,7 @@ struct _task_queue
 };
 
 
-uint32_t schedule(uint32_t esp);
+unsigned long schedule(unsigned long esp);
 
 void scheduler_enable(void);
 void scheduler_disable(void);

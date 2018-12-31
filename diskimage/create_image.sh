@@ -17,6 +17,7 @@ sudo mount /dev/loop1 mnt
 sudo mkdir mnt/bin
 sudo cp ../userspace/init/init.elf mnt/bin/init
 sudo cp ../userspace/hexdump/hexdump.elf mnt/bin/hexdump
+sudo cp ../userspace/ushell/ushell.elf mnt/bin/ush
 
 sudo umount mnt
 sudo losetup -D

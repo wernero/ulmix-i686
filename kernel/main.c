@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <timer.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <sched/scheduler.h>
 #include <sched/syscalls.h>
 #include "drivers/devices.h"

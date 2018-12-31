@@ -3,6 +3,7 @@
 #include <memory/kheap.h>
 #include <memory/pagemgr.h>
 #include <sched/task.h>
+#include <sched/process.h>
 #include <log.h>
 #include <errno.h>
 
@@ -66,6 +67,10 @@ int vaddr_info(pagedir_t *pagedir, unsigned long addr, struct paginfo_struct *in
 
 
 
+void delete_pagedir(pagedir_t *pagedir)
+{
+    // TODO: delete page directory
+}
 
 
 void setup_paging(uint32_t phys_memory)
@@ -91,12 +96,72 @@ pagedir_t *mk_user_pagedir(void)
     return udir;
 }
 
-pagedir_t *pagedir_copy(pagedir_t *source)
+pagedir_t *pagedir_copy_current(void)
 {
+    klog(KLOG_DEBUG, "copying current page directory");
     pagedir_t *udir = mk_user_pagedir();
+    pagedir_t *source = current_thread->process->pagedir;
 
-    // copy
+    // search for unused page table
+    int cp_index = -1;
+    for (int i = 4; i < 768; i++)
+    {
+        if (source->pagetables[i] & 0x01)
+            continue;
 
+        cp_index = i;
+        break;
+    }
+
+    if (cp_index == -1)
+    {
+        klog(KLOG_FAILURE, "pagedir_copy_current(): no available pagetable for copying");
+        return NULL;
+    }
+
+    // iterate page tables
+    pagetable_t *cp_table;
+    pagetable_t *src_table;
+    for (int i = 4; i < 768; i++)
+    {
+        // if page table is present, map it into
+        // the current page directory
+        if (source->pagetables[i] & 0x01 && i != cp_index)
+        {
+            // create & map into current pagedir
+            cp_table = mk_pagetables(1, i, udir, PAG_USER | PAG_RDWR, "user pagetable_t");
+            source->pagetables[cp_index] = get_physical(cp_table) | PAG_PRESENT | PAG_SUPV | PAG_RDWR;
+            src_table = source->pagetable_ptrs[i];
+
+            // iterate pages
+            for (int j = 0; j < 1024; j++)
+            {
+                if (src_table->pages[j] & 0x01)
+                {
+                    klog(KLOG_DEBUG, "pagetable %d, page %d will be copied", i, j);
+
+                    // allocate page and copy content
+                    pagetable_entry_t e;
+                    get_free_page(&e, PAG_RDWR | PAG_USER);
+                    cp_table->pages[j] = e;
+
+                    memcpy((void*)(cp_index*MB4 + j*PAGESIZE),  // destination addr (other pagedir)
+                           (void*)(MB4*i + PAGESIZE*j),         // source addr (current pagedir)
+                           PAGESIZE);
+                }
+                else
+                {
+                    cp_table->pages[j] = 0;
+                }
+            }
+        }
+        else
+        {
+            udir->pagetables[i] = 0;
+        }
+    }
+
+    source->pagetables[cp_index] = 0;
     return udir;
 }
 
@@ -130,7 +195,7 @@ uint32_t setup_memory(void *mmap, uint32_t mmap_len)
  * uses 'flags' and the heap 'description' accordingly.
  * returns: pointer to the first allocated page table
  */
-pagetable_entry_t *mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description)
+pagetable_t *mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description)
 {
     void *pagetables = kmalloc(sizeof(pagetable_t) * count, PAGESIZE, description);
     memset(pagetables, 0, sizeof(pagetable_t) * count);

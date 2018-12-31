@@ -1,20 +1,24 @@
 #include "exec.h"
 #include "memory/userheap.h"
-#include "sched/scheduler.h"
-#include "sched/task.h"
-#include "log.h"
+#include <sched/task.h>
+#include <sched/process.h>
+#include <kdebug.h>
 #include <elf.h>
 #include <filesystem/fs_syscalls.h>
 #include <errno.h>
 
 extern thread_t *current_thread;
+extern void irq_syscall_return(void);
 
-static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
-static int  loadelf(char *filename, void **entry);
+//static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
+static int  loadelf(int fd, void **entry);
 
 int kfexec(char *img_path, char *description)
 {
     klog(KLOG_INFO, "kfexec(): loading elf binary");
+    int fd;
+    if ((fd = sc_open(img_path, O_RDONLY)) < 0) // on error, fd = error code
+        return fd;
 
     klog(KLOG_DEBUG, "kfexec(): creating address space");
     // 1. create virtual address space
@@ -26,7 +30,7 @@ int kfexec(char *img_path, char *description)
     void *entry;
     current_thread->process->pagedir = userpd;
     apply_pagedir(userpd);
-    if ((error = loadelf(img_path, &entry)) < 0)
+    if ((error = loadelf(fd, &entry)) < 0)
         return error;
 
     // 3. setup stack
@@ -43,38 +47,52 @@ int kfexec(char *img_path, char *description)
 
 int sc_execve(char *filename, char *argv[], char *envp[])
 {
-    // *** not implemented yet
-    return -ENOSYS;
+    klog(KLOG_INFO, "[%d] execve(): file=%s", current_thread->process->pid, filename);
 
-    // 1. free all memory occupied by the previous process
-    paging_free_all();
-
-    // 2. kill all threads
-
-    // 3. load binary image
-    int error;
-    void *entry;
-    if ((error = loadelf(filename, &entry)) < 0)
-        return error;
-
-    // 4. prepare stack
-    int argc;
-    void *argvp;
-    unsigned long esp = (unsigned long)cpy_argv_env(argv, envp, &argc, &argvp);
-    *((uint32_t*)(--esp)) = (uint32_t)argv;
-    *((uint32_t*)(--esp)) = (uint32_t)argc;
-
-    // 5. modify kernel stack
-
-    return -ENOSYS;
-}
-
-static int loadelf(char *filename, void **entry)
-{
+    // 1. check wheter the binary image exists and can be read
     int fd;
     if ((fd = sc_open(filename, O_RDONLY)) < 0) // on error, fd = error code
         return fd;
 
+    // 2. create virtual address space
+    delete_pagedir(current_thread->process->pagedir);
+    current_thread->process->pagedir = mk_user_pagedir();
+    apply_pagedir(current_thread->process->pagedir);
+
+    // 3. kill all threads
+
+    // 4. load binary image
+    int error;
+    void *entry;
+    if ((error = loadelf(fd, &entry)) < 0)
+        return error;
+
+    // 5. setup stack
+    unsigned long ebp, esp = GB3;
+    ebp = GB3 - 4096;
+    memset((void*)ebp, 0, 4096);
+
+    /*int argc;
+    void *argvp;
+    unsigned long esp = (unsigned long)cpy_argv_env(argv, envp, &argc, &argvp);
+    *((uint32_t*)(--esp)) = (uint32_t)argv;
+    *((uint32_t*)(--esp)) = (uint32_t)argc;*/
+
+    // 6. create new kernel stack
+    current_thread->kstack.esp = current_thread->kstack.ebp;
+    current_thread->kstack = kstack_init(current_thread->kstack, TYPE_USER, entry, esp, get_eflags(), NULL);
+
+    // 7. Return from System call handler
+    __asm__("mov %0, %%esp;"
+            "jmp irq_syscall_return"
+            : :
+            "g"(current_thread->kstack.esp));
+
+    return SUCCESS;
+}
+
+static int loadelf(int fd, void **entry)
+{
     // get ELF header
     int error;
     struct elf_header_struct elf_header;
@@ -114,7 +132,7 @@ static int loadelf(char *filename, void **entry)
     return SUCCESS;
 }
 
-static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
+/*static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
 {
     int i;
     void *esp = (void*)GB3;
@@ -158,4 +176,4 @@ static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
     }
 
     return esp;
-}
+}*/
