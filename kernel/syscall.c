@@ -69,7 +69,7 @@ void *syscalls[] =
 
 int syscall_handler(struct syscall_context_struct *context)
 {
-    //klog(KLOG_INFO, "system call #%d", context->eax);
+    klog(KLOG_DEBUG, "system call #%d", context->eax);
 
     if (syscalls[context->eax] == NULL)
         return -ENOSYS; // not implemented

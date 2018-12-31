@@ -96,15 +96,23 @@ kstack_t kstack_init(kstack_t kstack, int thread_type, void *start_addr, unsigne
 
     // general purpose are only important for functions like
     // fork(2) that need to establish a certain context and
-    // therefore also initiailize all registers
-    *(--ksp) = registers->eax;
-    *(--ksp) = registers->ecx;
-    *(--ksp) = registers->edx;
-    *(--ksp) = registers->ebx;
-    *(--ksp) = registers->esp;
-    *(--ksp) = registers->ebp;
-    *(--ksp) = registers->esi;
-    *(--ksp) = registers->edi;
+    // therefore also initiailize all registers if 'registers'
+    // is non-NULL
+    if (registers == NULL)
+    {
+        ksp -= 8;
+    }
+    else
+    {
+        *(--ksp) = registers->eax;
+        *(--ksp) = registers->ecx;
+        *(--ksp) = registers->edx;
+        *(--ksp) = registers->ebx;
+        *(--ksp) = registers->esp;
+        *(--ksp) = registers->ebp;
+        *(--ksp) = registers->esi;
+        *(--ksp) = registers->edi;
+    }
 
     *(--ksp) = ds;    // ds = ds
     *(--ksp) = ds;    // es = ds

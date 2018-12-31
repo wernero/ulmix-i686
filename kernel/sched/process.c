@@ -19,7 +19,7 @@ process_t *mk_process(pagedir_t *pagedir,
     uint32_t user_eflags = get_eflags(); // *** temporary!
 
     process_t *process = mk_process_struct(pagedir, type, description);
-    process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags, 0), description);
+    process->threads = mk_thread(process, mk_kstack(type, (void*)entry, kstack_size, esp, user_eflags, NULL), description);
 
     return process;
 }

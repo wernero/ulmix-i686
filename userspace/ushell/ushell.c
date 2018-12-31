@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    printf("ULMIX shell\n");
+    puts("ULMIX shell\n");
 
 
 

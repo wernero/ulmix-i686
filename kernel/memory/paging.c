@@ -67,6 +67,10 @@ int vaddr_info(pagedir_t *pagedir, unsigned long addr, struct paginfo_struct *in
 
 
 
+void delete_pagedir(pagedir_t *pagedir)
+{
+    // TODO: delete page directory
+}
 
 
 void setup_paging(uint32_t phys_memory)

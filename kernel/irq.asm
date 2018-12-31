@@ -5,6 +5,7 @@ global irq_asm_handler
 global irq_asm_handler_end
 global irq_asm_timer
 global irq_syscall
+global irq_syscall_return
 
 extern irq_timer
 extern irq_handler
@@ -53,6 +54,7 @@ irq_syscall:
     call syscall_handler
     add esp, 4
     mov [esp+28], eax
+irq_syscall_return:
     popad
     pop gs
     pop fs
