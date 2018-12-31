@@ -1,4 +1,3 @@
-#include "pagefault.h"
 #include <util/util.h>
 #include <kdebug.h>
 #include <sched/task.h>
@@ -8,11 +7,16 @@
 #include <memory/paging.h>
 
 extern pagedir_t *pagedir_kernel;
-extern thread_t *current_thread;
+extern thread_t  *current_thread;
 
 static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags);
 
-void page_fault_handler(uint32_t error, unsigned long fault_addr)
+/*
+ * page_fault_handler(): the page fault handler is called when the CPU issues
+ * a page fault. the interrupt handler is configured to run as a gate, meaning
+ * that no interrupts occur during the execution of a page fault handler.
+ */
+void page_fault_handler(unsigned long error, unsigned long fault_addr)
 {
     if (error & 4) // occured in user mode?
     {
