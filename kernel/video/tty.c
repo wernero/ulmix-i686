@@ -57,6 +57,13 @@ static int tty_open(void **drv_struct, int flags)
     return SUCCESS;
 }
 
+struct tty_struct *getty(void)
+{
+    // create new tty
+    // for now, return the kernel's tty
+    return ttyk;
+}
+
 static void scroll(struct tty_struct *tty)
 {
     int src = COLUMNS * 2;
