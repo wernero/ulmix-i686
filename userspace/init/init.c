@@ -20,7 +20,7 @@ int main(void)
 static void start_program(char *filename)
 {
     pid_t pid = fork();
-    if (pid)
+    if (pid == 0)
     {
         // start shell
         if (execve(filename, NULL, NULL) < 0)
@@ -29,4 +29,5 @@ static void start_program(char *filename)
             //printf("init: cannot start %s: %s", filename, strerror(errno));
         }
     }
+    // printf("initd: forked pid %d\n");
 }
