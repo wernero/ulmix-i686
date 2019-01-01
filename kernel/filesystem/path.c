@@ -20,39 +20,21 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
     if (working_dir->entries == NULL)
         return -ENOENT;
 
-
-    klog(KLOG_DEBUG, "namei_recursive(): <new recursion> cname=%s rem=%s wd=%x wde=%x",
-        cname,
-        rem,
-    working_dir,
-    working_dir->entries
-        );
-
     struct direntry_struct *entry;
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
 
-        klog(KLOG_DEBUG, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
+        /*klog(KLOG_DEBUG, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
             entry->name,
             entry->type,
             entry->inode_no,
             entry->directory,
             entry->parent->sb,
             entry->parent->sb->fs
-        );
+        );*/
 
         if (strcmp(entry->name, cname) == 0)
         {
-
-
-            klog(KLOG_DEBUG, "namei_recursive(): ****** found: cname=%s name=%s rem_cur=%x rem=%s",
-                cname,
-                entry->name,
-                *rem,
-                rem
-                );
-
-
             if (*rem == 0)
             {
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
@@ -64,11 +46,7 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
 
                 *node = entry;
 
-                klog(KLOG_DEBUG, "namei_recursive(): node=%x",
-                    node
-                    );
-
-
+                klog(KLOG_DEBUG, "namei(): found node=%x", *node);
                 return 0;
             }
 
@@ -102,8 +80,6 @@ int namei(char *path, struct direntry_struct **node)
 
 static char* strccpy(char *dest, char *src, char terminator)
 {
-    char *dest_original = dest;
-    klog(KLOG_DEBUG, "strccpy(): src='%s'",  src);
     char c;
     while ((c = *(src++)))
     {
@@ -114,7 +90,6 @@ static char* strccpy(char *dest, char *src, char terminator)
     if (c == 0)
         src--;
     *dest = 0;
-    klog(KLOG_DEBUG, " returning %d(%s), cname='%s'", *src, src, dest_original);
     return src;
 }
 

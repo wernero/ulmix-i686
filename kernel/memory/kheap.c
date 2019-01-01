@@ -42,8 +42,6 @@ void *kmalloc(size_t size, int alignment, char *description)
             setup_heap((uint32_t)KHEAP_STATIC_LOCATION);
     }
 
-    klog(KLOG_DEBUG, "kmalloc(): size=%S, align=%S, purpose=%s", size, alignment, description);
-
     size_t alignment_offset;
     kheap_entry_t *block;
     block = find_free_block(&alignment_offset, size, alignment);
@@ -110,7 +108,7 @@ void *kmalloc(size_t size, int alignment, char *description)
 
     memset(new_block->start, 0, new_block->size);
 
-    klog(KLOG_DEBUG, "  alloc. memory is at 0x%x", new_block->start);
+    klog(KLOG_DEBUG, "kmalloc(): %S starting at 0x%x (%s)", size, new_block->start, description);
     return new_block->start;
 }
 

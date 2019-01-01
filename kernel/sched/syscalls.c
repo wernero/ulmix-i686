@@ -35,7 +35,7 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
 
 void sc_exit(int status)
 {
-    klog(KLOG_INFO, "exit() with code %d [%d]", status, current_thread->process->pid);
+    klog(KLOG_INFO, "[%d] exit() with code %d", current_thread->process->pid, status);
     kill_process(current_thread->process);
 }
 
