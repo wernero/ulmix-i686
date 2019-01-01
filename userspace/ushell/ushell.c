@@ -2,9 +2,12 @@
 
 static void readline(char *buf)
 {
-    char c;
-    while ((c = getchar()) != '\n')
+    char c = getchar();
+    while (c != '\n' && c != EOF)
+    {
         *(buf++) = c;
+        c = getchar();
+    }
     *buf = 0;
 }
 
