@@ -239,6 +239,8 @@ static void setup_heap(uint32_t heap_start)
 static void setup_pheap()
 {
     // TODO: free up the space blocked by the static heap
+    klog(KLOG_DEBUG, "setup_pheap(): abandoning static heap");
+    heap_dump();
 
     kheap_size = GB1;
     heap = (kheap_entry_t*)GB3;
