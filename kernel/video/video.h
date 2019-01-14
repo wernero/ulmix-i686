@@ -1,8 +1,7 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-#include "util/types.h"
-#include "util/util.h"
+#include <util/util.h>
 
 #define VIDEO_START 0xB8000
 #define COLUMNS     80
