@@ -1,26 +1,18 @@
 #include <stdio.h>
 
-static void readline(char *buf)
-{
-    char c = getchar();
-    while (c != '\n' && c != EOF)
-    {
-        *(buf++) = c;
-        c = getchar();
-    }
-    *buf = 0;
-}
-
 int main(void)
 {
-    puts("ULMIX shell\n");
+    puts("ULMIX shell\n\n $ ");
 
-    char buf[256];
-    readline(buf);
-
-    puts("have read the following line: \n");
-    puts(buf);
-
+    char c;
+    for (;;)
+    {
+        c = getchar();
+        if (c == EOF) break;
+        putchar(c);
+        if (c == '\n')
+            puts("$ ");
+    }
 
     return 0;
 }
