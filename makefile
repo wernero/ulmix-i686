@@ -36,6 +36,6 @@ $(KIMG): $(KOBJ)
 all: $(KIMG)
 
 clean:
-	rm $(KOBJ)
-	rm $(KIMG)
-	rm symbols.map
+	rm -f $(KOBJ)
+	rm -f $(KIMG) $(KIMG).elf
+	rm -f symbols.map
