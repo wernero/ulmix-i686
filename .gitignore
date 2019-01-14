@@ -21,3 +21,6 @@ snapshot.txt*
 *kdev4
 *.kate-swp
 *.a
+vmulmix
+*.elf
+*.map

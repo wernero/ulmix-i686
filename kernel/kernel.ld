@@ -1,6 +1,6 @@
 OUTPUT_FORMAT(binary)
 OUTPUT_ARCH(i386)
-STARTUP(obj/kernel/kernel.o)
+STARTUP(kernel/kernel.o)
 SECTIONS
 {
     . = 0x00100000;

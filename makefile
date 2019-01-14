@@ -1,62 +1,41 @@
-# Define OS-dependant tools
-NASM= nasm
-RM= rm -f
-MV= mv
-CC= gcc
-LD= ld
+# Makefile
+#
 
-OBJDIR= obj
-STAGE1DIR= stage1_bootloader
-STAGE2DIR= stage2_bootloader
-KERNELDIR= kernel
+CC	= gcc -m32
+LD	= ld
+LDSCRIPT= kernel/kernel.ld
+AS	= nasm
+AFLAGS	= -Ox -f elf
+CFLAGS	= -c -g -std=c11 -mtune=generic -Wshadow -Wstrict-prototypes -Wall -O2 \
+	-ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin \
+	-fno-stack-protector -fno-omit-frame-pointer -fno-common -fno-pic \
+	-fno-delete-null-pointer-checks
+LFLAGS	= -T $(LDSCRIPT) -nostdlib --warn-common -nmagic -gc-sections -s \
+	-Map=symbols.map 
 
-# Dependencies
-KERNEL_OBJECTS := $(patsubst %.c, %.o, $(wildcard $(KERNELDIR)/*.c $(KERNELDIR)/*/*.c)) $(patsubst %.asm, %.o, $(wildcard $(KERNELDIR)/*.asm $(KERNELDIR)/*/*.asm))
+KIMG = vmulmix
 
-# Compiler-/Linker flags
-NASMFLAGS= -Ox -f elf
-CCFLAGS= -c -g -std=c11 -march=i486 -mtune=generic -Wshadow -Wstrict-prototypes -m32 -Werror -Wall -O2 -ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin -fno-stack-protector -fno-omit-frame-pointer -fno-common -I$(KERNELDIR) -fno-pic -fno-delete-null-pointer-checks
-LDFLAGS= -nostdlib --warn-common -nmagic -gc-sections -s -Map=out.map
+KOBJ := $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c)) $(patsubst %.s, %.o, $(wildcard kernel/*.s kernel/*/*.s))
 
-# Targets to build one asm or C file to an object file
-vpath %.o $(OBJDIR)
+$(KIMG): $(KOBJ)
+	@ echo " LD  $(KIMG)"
+	@ $(LD) $(LFLAGS)  $(KOBJ) -o $(KIMG)
+	@ $(LD) $(LFLAGS)  $(KOBJ) --oformat elf32-i386 -o $(KIMG).elf
+
 %.o: %.c
-	mkdir -p $(OBJDIR)/$(@D)
-	$(CC) $< $(CCFLAGS) -o $(OBJDIR)/$@
-%.o: %.asm
-	$(NASM) $< $(NASMFLAGS) -I$(KERNELDIR)/ -o $(OBJDIR)/$@
+	@ echo " CC  $<"
+	@ $(CC) $< $(CFLAGS) -I kernel -o $@
 
-.PHONY: all
+%.o: %.s
+	@ echo " AS  $<"
+	@ $(AS) $< $(AFLAGS) -I kernel -o $@
 
-all: ulmix.img userspace
 
-userspace:
-	make -C userspace
 
-# PrettyOS Bootloader
-$(STAGE1DIR)/boot.bin: $(STAGE1DIR)/boot.asm $(STAGE1DIR)/*.inc
-	$(NASM) -f bin -Ox $(STAGE1DIR)/boot.asm -I$(STAGE1DIR)/ -o $(STAGE1DIR)/boot.bin
-$(STAGE2DIR)/BOOT2.BIN: $(STAGE2DIR)/boot2.asm $(STAGE2DIR)/*.inc
-	$(NASM) -f bin -Ox $(STAGE2DIR)/boot2.asm -I$(STAGE2DIR)/ -o $(STAGE2DIR)/BOOT2.BIN
-
-$(KERNELDIR)/KERNEL.BIN: $(KERNEL_OBJECTS)
-	$(LD) $(LDFLAGS) $(addprefix $(OBJDIR)/,$(KERNEL_OBJECTS)) -T $(KERNELDIR)/kernel.ld -o $(KERNELDIR)/KERNEL.BIN
-	grep '^[ ]*0x' out.map | grep -v obj > bochs.symbols
-	rm -f out.map
-	
-ulmix.img: $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	rm -f ulmix.img
-	mkfs.msdos -C ulmix.img 1440
-	mkdir -p mnt
-	sudo mount -o loop ulmix.img mnt
-	sudo cp $(STAGE2DIR)/BOOT2.BIN mnt/BOOT2.BIN
-	sudo cp $(KERNELDIR)/KERNEL.BIN mnt/KERNEL.BIN
-	sudo umount mnt
-	dd if=$(STAGE1DIR)/boot.bin of=ulmix.img bs=512 count=1 conv=notrunc
-
+.phony: all clean
+all: $(KIMG)
 
 clean:
-	rm -rf $(OBJDIR)
-	rm -f $(STAGE1DIR)/boot.bin $(STAGE2DIR)/BOOT2.BIN $(KERNELDIR)/KERNEL.BIN
-	rm -f bochs.symbols
-	rm -f ulmix.img
+	rm $(KOBJ)
+	rm $(KIMG)
+	rm symbols.map
