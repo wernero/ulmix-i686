@@ -2,6 +2,7 @@
 #include "util/util.h"
 #include "filesystem/fs_syscalls.h"
 #include "exec.h"
+#include <sched/process.h>
 #include <errno.h>
 #include <log.h>
 
@@ -67,9 +68,10 @@ void *syscalls[] =
     nop,                // 78	gettimeofday()      *required
 };
 
+extern thread_t *current_thread;
 int syscall_handler(struct syscall_context_struct *context)
 {
-    klog(KLOG_DEBUG, "system call #%d", context->eax);
+    klog(KLOG_DEBUG, "[%d] called system call #%d", current_thread->process->pid, context->eax);
 
     if (syscalls[context->eax] == NULL)
         return -ENOSYS; // not implemented

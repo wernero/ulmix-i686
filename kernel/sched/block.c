@@ -14,10 +14,10 @@ blocklist_t *blocker(void)
     return list;
 }
 
-void blocklist_add(blocklist_t *blocklist, thread_t *task)
+void blocklist_add(blocklist_t *blocklist)
 {
-    scheduler_block(task);
-    blocklist->threads[blocklist->entries++] = task;
+    scheduler_block(current_thread);
+    blocklist->threads[blocklist->entries++] = current_thread;
 }
 
 void blocklist_unblock(blocklist_t *blocklist)

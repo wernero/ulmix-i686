@@ -246,7 +246,7 @@ static pagedir_t *mk_kernel_pagedir()
     mk_pagetables(4, 0, kdir, PAG_SUPV | PAG_RDWR, "pgtables kstatic");
     pagetables_map(4, 0, kdir, PAG_SUPV | PAG_RDWR, 0x00);
 
-    mk_pagetables(256, 768, kdir, PAG_SUPV | PAG_RDWR, "pgtables kheap");
+    mk_pagetables(1, 768, kdir, PAG_SUPV | PAG_RDWR, "pgtable kheap");
 
     return kdir;
 }

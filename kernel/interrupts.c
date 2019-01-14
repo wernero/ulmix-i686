@@ -1,6 +1,5 @@
 #include "interrupts.h"
 #include "log.h"
-#include "video/video.h"
 #include "exceptions.h"
 
 idt_entry_t idt[IDT_ENTRIES];

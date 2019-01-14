@@ -9,14 +9,14 @@
 extern pagedir_t *pagedir_kernel;
 extern thread_t  *current_thread;
 
-static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags);
+static int alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags);
 
 /*
  * page_fault_handler(): the page fault handler is called when the CPU issues
  * a page fault. the interrupt handler is configured to run as a gate, meaning
  * that no interrupts occur during the execution of a page fault handler.
  */
-void page_fault_handler(unsigned long error, unsigned long fault_addr)
+int page_fault_handler(unsigned long error, unsigned long fault_addr)
 {
     if (error & 4) // occured in user mode?
     {
@@ -46,6 +46,7 @@ void page_fault_handler(unsigned long error, unsigned long fault_addr)
              fault_addr);
 
         kill_process(current_thread->process);
+        return -1;
     }
     else
     {
@@ -54,25 +55,30 @@ void page_fault_handler(unsigned long error, unsigned long fault_addr)
             // kernel tried to access heap that's not yet allococated.
             if (pheap_valid_addr(fault_addr))
             {
-                alloc_page(fault_addr, pagedir_kernel, PAG_SUPV | PAG_RDWR);
+                return alloc_page(fault_addr, pagedir_kernel, PAG_SUPV | PAG_RDWR);
             }
             else
             {
-                klog(KLOG_PANIC, "kernel accessed non allocated heap location 0x%x (corrupt pointer?)",
+                klog(KLOG_WARN, "kernel accessed non allocated heap location 0x%x (corrupt pointer?)",
                      fault_addr);
             }
         }
         else
         {
             if (current_thread == NULL || current_thread->process->pagedir == pagedir_kernel)
-                klog(KLOG_PANIC, "kernel tried to access unmapped memory region (%x)", fault_addr);
-
-            alloc_page(fault_addr, current_thread->process->pagedir, PAG_USER | PAG_RDWR);
+            {
+                klog(KLOG_WARN, "kernel tried to access unmapped memory region (%x)", fault_addr);
+            }
+            else
+            {
+                return alloc_page(fault_addr, current_thread->process->pagedir, PAG_USER | PAG_RDWR);
+            }
         }
     }
+    return -1;
 }
 
-static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
+static int alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
 {
     struct paginfo_struct info;
     if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)
@@ -82,7 +88,7 @@ static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
         if (vaddr_info(pagedir, fault_addr, &info) == -PAG_ENOTAB)
         {
             klog(KLOG_PANIC, "alloc_page(): cannot allocate page");
-            return;
+            return -1;
         }
     }
 
@@ -91,7 +97,7 @@ static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
     if (get_free_page(&entry, flags) < 0)
     {
         klog(KLOG_PANIC, "no more pages available");
-        return;
+        return -1;
     }
 
     // change page table
@@ -99,4 +105,5 @@ static void alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
     klog(KLOG_DEBUG, "pagetables changed: virt(0x%x) -> phys(0x%x)",
          fault_addr & 0xfffff000,
          entry & 0xfffff000);
+    return 0;
 }

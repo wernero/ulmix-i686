@@ -1,8 +1,10 @@
 #include "fs_syscalls.h"
 #include "filesystem/path.h"
+#include <drivers/devices.h>
 #include <errno.h>
 #include <sched/task.h>
 #include <sched/process.h>
+#include <video/tty.h>
 #include <kdebug.h>
 
 extern thread_t *current_thread;
@@ -26,24 +28,19 @@ int sc_open(char *pathname, int flags)
 {
     struct direntry_struct *node;
     if (namei(pathname, &node) < 0)
-    {
         return -ENOENT;
-    }
-
-// all stored in direntry_struct
-//    struct inode_struct *inode = (struct inode_struct*)node->payload;
 
     // for now, don't allow to open directories
     if (node->type == DIRECTORY)
         return -EISDIR;
 
     // create file descriptor
-    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sc_open file_struct");
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sys_open(2) file_struct");
     fd->direntry = node;
     fd->open_mode = flags;
     fd->seek_offset = 0;
 
-    node->fd = fd;
+    node->fd = fd;      // there can be multiple file descriptors!
 
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
     {
@@ -79,8 +76,7 @@ ssize_t sc_write(int fd, void *buf, size_t count)
     if (fd == 912)
     {
         // debug !!!
-        klog(KLOG_INFO, buf);
-        return 0;
+        return tty_kernel_write(buf, count);
     }
 
     struct file_struct *fds = current_thread->process->files[fd];
@@ -96,7 +92,6 @@ ssize_t sc_read(int fd, void *buf, size_t count)
     if (fds == NULL)
         return -EBADF;
 
-//    return fds->fops.read(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
     return fds->direntry->parent->sb->fs->fs_read(fds->direntry, buf, count);
 }
 

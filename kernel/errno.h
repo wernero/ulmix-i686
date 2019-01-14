@@ -16,6 +16,7 @@
 #define EAGAIN  11
 #define ENOMEM  12
 
+#define ENODEV  19
 #define ENOTDIR 20
 #define EISDIR  21
 #define EINVAL  22

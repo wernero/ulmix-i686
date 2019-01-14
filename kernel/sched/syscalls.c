@@ -9,6 +9,7 @@ extern thread_t *current_thread;
 
 pid_t sc_fork_c(struct syscall_context_struct *context)
 {
+    klog(KLOG_INFO, "[%d] fork()", current_thread->process->pid);
     process_t *pold = current_thread->process;
 
     // create new process image
@@ -23,18 +24,18 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
     // the return address on the stack.
 
     struct rcontext_struct *rcontext = (struct rcontext_struct*)context;
-    rcontext->eax = pnew->pid; // return value for fork() in the child process
+    rcontext->eax = 0; // return value for fork() in the child process
 
     pnew->threads = mk_thread(pnew,
                               mk_kstack(TYPE_USER, (void*)context->eip, PAGESIZE, context->user_esp, get_eflags(), rcontext),
                               pnew->description);
 
-    return 0; // old process gets 0
+    return pnew->pid; // old process gets the pid of the new one
 }
 
 void sc_exit(int status)
 {
-    klog(KLOG_INFO, "exit() with code %d [%d]", status, current_thread->process->pid);
+    klog(KLOG_INFO, "[%d] exit() with code %d", current_thread->process->pid, status);
     kill_process(current_thread->process);
 }
 

@@ -12,7 +12,7 @@ struct _blocklist
 };
 
 blocklist_t *blocker(void);
-void blocklist_add(blocklist_t *blocklist, thread_t *task);
+void blocklist_add(blocklist_t *blocklist);
 void blocklist_unblock(blocklist_t *blocklist);
 
 int waitirq(int irq);

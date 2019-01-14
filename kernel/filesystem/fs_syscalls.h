@@ -34,11 +34,13 @@ struct file_struct // file descriptor
     struct direntry_struct *direntry;
     openflags_t open_mode;
     size_t seek_offset;
+    void *drv_struct;
 
     struct fd_fops_struct fops;
 };
 
 
+int open_chardev(struct file_struct *fds, int major, int flags);
 
 /* file system related system calls */
 

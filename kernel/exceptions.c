@@ -27,7 +27,7 @@ extern void exc19(void);
 extern void exc20(void);
 extern void exc30(void);
 
-extern void page_fault_handler(uint32_t error, uint32_t fault_addr);
+extern int page_fault_handler(uint32_t error, uint32_t fault_addr);
 
 
 static const char* const exceptions[] =
@@ -47,12 +47,6 @@ void exc_handler(struct exc_context_struct *context)
     uint32_t error = context->error_code;
     uint32_t exc = context->exc;
 
-    klog(KLOG_EXCEPTION, "EXCEPTION: #%d -> %s, error=0x%x, eip=0x%x", exc, exceptions[exc], error, context->eip);
-    klog(KLOG_DEBUG, "eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x",
-         context->eax, context->ebx, context->ecx, context->edx);
-    klog(KLOG_DEBUG, "esi=0x%x, edi=0x%x, esp=0x%x, ebp=0x%x",
-         context->esi, context->edi, context->esp, context->ebp);
-
     if (exc == 13)
     {
         if (current_thread != NULL)
@@ -62,22 +56,27 @@ void exc_handler(struct exc_context_struct *context)
             return;
         }
     }
-
-    // Page Fault
-    if (exc == 14)
+    else if (exc == 14)
     {
         uint32_t cr2;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
-        klog(KLOG_DEBUG, "faulting address: 0x%x", cr2);
 
-        page_fault_handler(error, cr2);
-        return;
+        if (page_fault_handler(error, cr2) >= 0)
+            return;
+
+        klog(KLOG_DEBUG, "faulting address: 0x%x", cr2);
+    }
+    else
+    {
+        cli();
+        hlt();
     }
 
-
-    // Kernel panic
-    cli();
-    hlt();
+    klog(KLOG_EXCEPTION, "EXCEPTION: #%d -> %s, error=0x%x, eip=0x%x", exc, exceptions[exc], error, context->eip);
+    klog(KLOG_DEBUG, "eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x",
+         context->eax, context->ebx, context->ecx, context->edx);
+    klog(KLOG_DEBUG, "esi=0x%x, edi=0x%x, esp=0x%x, ebp=0x%x",
+         context->esi, context->edi, context->esp, context->ebp);
 }
 
 void setup_exception_handlers(void)

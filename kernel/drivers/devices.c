@@ -1,8 +1,10 @@
 #include "devices.h"
-#include "drivers/ata.h"
-#include "drivers/partitions.h"
-#include "memory/kheap.h"
-#include "log.h"
+#include "ata.h"
+#include "keyboard.h"
+#include "partitions.h"
+#include <memory/kheap.h>
+#include <kdebug.h>
+#include <video/tty.h>
 
 static void insert_gendisk(struct gendisk_struct *bd);
 static void insert_chardev(struct chardev_struct *cd);
@@ -14,7 +16,8 @@ void scan_devices()
     klog(KLOG_DEBUG, "scanning devices");
 
     ata_init();
-    // ... more devices
+    keyboard_setup();
+    tty_setup();
 }
 
 struct gendisk_struct *find_gendisk(int major)
@@ -86,4 +89,5 @@ static void insert_chardev(struct chardev_struct *cd)
     gendevice_t dev;
     dev.chardev = cd;
     devices[device_index++] = dev;
+    klog(KLOG_DEBUG, "chardev #%d allocated", device_index-1);
 }
