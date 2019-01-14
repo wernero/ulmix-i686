@@ -1,9 +1,9 @@
 #include "kdebug.h"
-#include <log.h>
-#include <util/util.h>
-#include <drivers/serial.h>
-#include <sched/sync.h>
-#include <video/video.h>
+#include "log.h"
+#include "util/util.h"
+#include "drivers/serial.h"
+#include "sched/sync.h"
+#include "video/video.h"
 
 int kdebug_enabled = 0;
 struct tty_struct *debug_tty = NULL;

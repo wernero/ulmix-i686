@@ -1,8 +1,9 @@
 #include "timer.h"
-#include <interrupts.h>
-#include <util/util.h>
-#include <kdebug.h>
-#include <sched/scheduler.h>
+#include "interrupts.h"
+#include "util/util.h"
+#include "util/types.h"
+#include "sched/scheduler.h"
+#include "log.h"
 
 #define IRQ_TIMER   0x20        // IRQ 0 on PIC1
 #define OSCILLATOR  1193182     // constant

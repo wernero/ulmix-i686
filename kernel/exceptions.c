@@ -1,7 +1,7 @@
 #include "exceptions.h"
-#include <kdebug.h>
-#include <util/util.h>
-#include <sched/task.h>
+#include "log.h"
+#include "util/util.h"
+#include "sched/task.h"
 #include <sched/process.h>
 
 extern thread_t *current_thread;

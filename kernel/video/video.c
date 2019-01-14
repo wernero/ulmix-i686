@@ -1,6 +1,6 @@
 #include "video.h"
-#include <util/string.h>
-#include <memory/kheap.h>
+#include "util/string.h"
+#include "memory/kheap.h"
 
 static void clear(struct tty_struct *tty);
 static void scroll(struct tty_struct *tty);

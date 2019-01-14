@@ -1,8 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include "types.h"
-#include "string.h"
+#include "util/types.h"
+#include "util/string.h"
 
 #define _KERNEL_STACK_BASE_ 1024*1024*6
 

@@ -1,9 +1,9 @@
 #include "syscall.h"
-#include <util/util.h>
-#include <filesystem/fs_syscalls.h>
-#include <exec.h>
+#include "util/util.h"
+#include "filesystem/fs_syscalls.h"
+#include "exec.h"
 #include <errno.h>
-#include <kdebug.h>
+#include <log.h>
 
 #define nop 0
 

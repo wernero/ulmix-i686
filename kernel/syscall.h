@@ -1,7 +1,7 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-#include <sched/task.h>
+#include "sched/task.h"
 
 pid_t sc_fork(void);
 void sc_exit(int status);

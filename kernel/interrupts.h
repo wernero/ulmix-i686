@@ -1,8 +1,8 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include <util/types.h>
-#include <sched/task.h>
+#include "util/types.h"
+#include "sched/task.h"
 
 typedef struct
 {

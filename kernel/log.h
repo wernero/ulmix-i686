@@ -1,7 +1,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include <util/types.h>
+#include "util/types.h"
 
 #define OUT_SERIAL  0x01
 #define OUT_TTY     0x02

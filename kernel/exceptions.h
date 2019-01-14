@@ -1,7 +1,7 @@
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
-#include <interrupts.h>
+#include "interrupts.h"
 
 struct exc_context_struct
 {

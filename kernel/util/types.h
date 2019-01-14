@@ -15,8 +15,8 @@ typedef unsigned long int       uid_t;
 typedef unsigned long int       gid_t;
 
 
-typedef unsigned long size_t;
-typedef signed long ssize_t;
+typedef uint32_t size_t;
+typedef int32_t ssize_t;
 
 
 typedef __builtin_va_list va_list;
