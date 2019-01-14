@@ -14,6 +14,13 @@ will generate debug symbols and write them into the bochs.symbols file, which
 can then be accessed via the bochs debugger. The core kernel source files are
 contained in the 'kernel' directory.
 
+To start Ulmix with qemu, use the following command:
+$ qemu-system-i386 -kernel vmulmix.elf -hda diskimage/hdd.img
+
+If you want to start qemu with the serial output redirected into a file, do
+the following:
+$ qemu-system-i386 -kernel vmulmix.elf -hda diskimage/hdd.img -serial file:ser.txt
+
 To compile, you should be under a Unix-like environment and have the binutils
 and nasm programs installed.
 
