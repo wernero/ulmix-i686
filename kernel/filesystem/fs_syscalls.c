@@ -1,4 +1,5 @@
 #include "fs_syscalls.h"
+#include "filesystem.h"
 #include "path.h"
 #include <drivers/devices.h>
 #include <errno.h>
@@ -8,21 +9,6 @@
 #include <kdebug.h>
 
 extern thread_t *current_thread;
-static int insert_fd(struct file_struct *fd)
-{
-    process_t *p = current_thread->process;
-
-    for (int i = 0; i < MAX_FILES; i++)
-    {
-        if (p->files[i] == NULL)
-        {
-            p->files[i] = fd;
-            return i;
-        }
-    }
-
-    return -ENOBUFS;
-}
 
 int sc_creat(const char *pathname, int mode)
 {
@@ -45,48 +31,11 @@ int sc_open(char *pathname, int flags)
     if (namei(pathname, &node) < 0)
         return -ENOENT;
 
-    // for now, don't allow to open directories
-    if (node->type == DIRECTORY)
-        return -EISDIR;
+    if (node->type == REGULAR)
+        return open_file(node, flags);
 
-    // create file descriptor
-    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "sys_open(2) file_struct");
-    fd->direntry = node;
-    fd->open_mode = flags;
-    fd->seek_offset = 0;
-
-    struct fd_fops_struct fops;
-    fops.close = NULL;
-    fops.read = fd->direntry->parent->sb->fs->fs_read;
-    fops.write = fd->direntry->parent->sb->fs->fs_write;
-    fops.seek = NULL;
-
-    fd->fops = fops;
-
-    node->fd = fd;      // there can be multiple file descriptors!
-
-    if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
-    {
-        // MUTEX!!!
-        if (node->read_opens > 0 || node->write_opens > 0)
-        {
-            return -EMFILE;
-        }
-
-        node->write_opens++;
-    }
-    else
-    {
-        // MUTEX!!!
-        if (node->write_opens > 0)
-        {
-            return -EMFILE;
-        }
-
-        node->read_opens++;
-    }
-
-    return insert_fd(fd);
+    // path is not a regular file
+    return -EIO;
 }
 
 ssize_t sc_write(int fd, void *buf, size_t count)
