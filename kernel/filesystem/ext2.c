@@ -14,8 +14,8 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 static int ext2_get_direntry(struct dir_struct *miss);
 static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no);
 
-static int ext2_read(struct direntry_struct *entry, char *buf, size_t len);
-static int ext2_write(struct direntry_struct *entry, char *buf, size_t len);
+static int ext2_read(struct file_struct *fd, char *buf, size_t len);
+static int ext2_write(struct file_struct *fd, char *buf, size_t len);
 
 
 void install_ext2()
@@ -525,8 +525,11 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
 
 
 
-static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
+//static int ext2_read(struct direntry_struct *entry, char *buf, size_t len)
+static int ext2_read(struct file_struct *fd, char *buf, size_t len)
+{
 
+    struct direntry_struct *entry = fd->direntry;
     struct inode_block_table *current_ibt;
     size_t bytes_read = 0;
     size_t bytes_to_copy = 0;
@@ -624,8 +627,8 @@ static int ext2_read(struct direntry_struct *entry, char *buf, size_t len) {
 
 
 
-static int ext2_write(struct direntry_struct *entry, char *buf, size_t len){
+static int ext2_write(struct file_struct *fd, char *buf, size_t len){
 
-    return -EIO;
+    return -ENOSYS;
 }
 

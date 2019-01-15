@@ -1,7 +1,8 @@
 #ifndef VFSCORE_H
 #define VFSCORE_H
 
-#include "util/types.h"
+#include "fs_syscalls.h"
+#include <util/types.h>
 
 #define VFS_NAME_LEN 255
 #define VFS_INODE_BLOCK_TABLE_LEN 128
@@ -48,13 +49,13 @@ struct direntry_struct
     unsigned int  mode;
     unsigned long size;		// size in bytes
     unsigned long size_blocks;	// block size is always assumed in 512bye
-    
+
     unsigned int read_opens;    // how many times is the file open for read?
     unsigned int write_opens;   // is the file open for write? 0=no, 1=yes
     struct file_struct *fd;	// file descriptor used to access file
 
-    // uid, gid should go here ... 
-    
+    // uid, gid should go here ...
+
     char name[VFS_NAME_LEN];
     unsigned long inode_no;
     void *payload;
@@ -75,7 +76,7 @@ struct dir_struct
     struct hd_struct *partition;
     char name[VFS_NAME_LEN];
     unsigned long inode_no;
- 
+
     struct dir_struct *parent;
     struct direntry_struct *entries;
 };
@@ -115,13 +116,17 @@ struct inode_struct
 
 struct filesystem_struct
 {
+    char *name;
     int (*fs_probe)(struct gendisk_struct *bd, int part);
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
     int (*fs_get_direntry)(struct dir_struct *miss);
     int (*fs_get_inode)(struct direntry_struct *entry, unsigned long inode_no);
-    int (*fs_read)(struct direntry_struct *entry, char *buf, size_t len);
-    int (*fs_write)(struct direntry_struct *entry, char *buf, size_t len);
-    char *name;
+
+    // standard file system calls:
+    //int (*fs_read)(struct direntry_struct *entry, char *buf, size_t len);
+    //int (*fs_write)(struct direntry_struct *entry, char *buf, size_t len);
+    int (*fs_read)(struct file_struct *fd, char *buf, size_t len);
+    int (*fs_write)(struct file_struct *fd, char *buf, size_t len);
 };
 
 struct sb_struct

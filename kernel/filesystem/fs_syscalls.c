@@ -40,6 +40,14 @@ int sc_open(char *pathname, int flags)
     fd->open_mode = flags;
     fd->seek_offset = 0;
 
+    struct fd_fops_struct fops;
+    fops.close = NULL;
+    fops.read = fd->direntry->parent->sb->fs->fs_read;
+    fops.write = fd->direntry->parent->sb->fs->fs_write;
+    fops.seek = NULL;
+
+    fd->fops = fops;
+
     node->fd = fd;      // there can be multiple file descriptors!
 
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
@@ -89,10 +97,11 @@ ssize_t sc_write(int fd, void *buf, size_t count)
 ssize_t sc_read(int fd, void *buf, size_t count)
 {
     struct file_struct *fds = current_thread->process->files[fd];
-    if (fds == NULL)
+    if (fds == NULL || fds->fops.read == NULL)
         return -EBADF;
 
-    return fds->direntry->parent->sb->fs->fs_read(fds->direntry, buf, count);
+    return fds->fops.read(fds, buf, count);
+    //return fds->direntry->parent->sb->fs->fs_read(fds->direntry, buf, count);
 }
 
 int sc_close(int fd)
