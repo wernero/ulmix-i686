@@ -27,6 +27,7 @@ struct fd_fops_struct
     ssize_t (*read) (struct file_struct *fd, char *buf, size_t len);
     ssize_t (*write)(struct file_struct *fd, char *buf, size_t len);
     ssize_t (*seek) (struct file_struct *fd, size_t offset, int whence);
+    int     (*close)(struct file_struct *fd);
 };
 
 struct file_struct // file descriptor
@@ -34,6 +35,7 @@ struct file_struct // file descriptor
     struct direntry_struct *direntry;
     openflags_t open_mode;
     size_t seek_offset;
+
     void *drv_struct;
 
     struct fd_fops_struct fops;
