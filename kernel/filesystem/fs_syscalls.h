@@ -1,8 +1,8 @@
 #ifndef FS_SYSCALLS_H
 #define FS_SYSCALLS_H
 
-#include "util/util.h"
-#include "filesystem/vfscore.h"
+#include <util/util.h>
+#include "vfscore.h"
 
 typedef enum
 {

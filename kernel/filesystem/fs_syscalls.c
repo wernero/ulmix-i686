@@ -1,5 +1,5 @@
 #include "fs_syscalls.h"
-#include "filesystem/path.h"
+#include "path.h"
 #include <drivers/devices.h>
 #include <errno.h>
 #include <sched/task.h>
@@ -22,6 +22,21 @@ static int insert_fd(struct file_struct *fd)
     }
 
     return -ENOBUFS;
+}
+
+int sc_creat(const char *pathname, int mode)
+{
+    return -1;
+}
+
+int sc_link(const char *oldpath, const char *newpath)
+{
+    return -1;
+}
+
+int sc_unlink(const char *pathname)
+{
+    return -1;
 }
 
 int sc_open(char *pathname, int flags)
@@ -74,11 +89,6 @@ int sc_open(char *pathname, int flags)
     return insert_fd(fd);
 }
 
-int sc_creat(const char *pathname, int mode)
-{
-    return -1;
-}
-
 ssize_t sc_write(int fd, void *buf, size_t count)
 {
     if (fd == 912)
@@ -88,10 +98,10 @@ ssize_t sc_write(int fd, void *buf, size_t count)
     }
 
     struct file_struct *fds = current_thread->process->files[fd];
-    if (fds == NULL)
+    if (fds == NULL || fds->fops.write == NULL)
         return -EBADF;
 
-    return fds->fops.write(fds, buf, count);			//TODO why use fops? use route via direntry->dirstruct->sb->fs...
+    return fds->fops.write(fds, buf, count);
 }
 
 ssize_t sc_read(int fd, void *buf, size_t count)
@@ -101,30 +111,15 @@ ssize_t sc_read(int fd, void *buf, size_t count)
         return -EBADF;
 
     return fds->fops.read(fds, buf, count);
-    //return fds->direntry->parent->sb->fs->fs_read(fds->direntry, buf, count);
 }
 
 int sc_close(int fd)
 {
     struct file_struct *fds = current_thread->process->files[fd];
-    if (fds == NULL)
+    if (fds == NULL || fds->fops.close == NULL)
         return -EBADF;
 
-    //struct inode_struct *inode = (struct inode_struct*)fds->direntry->payload;
-
-    // free resources
-
-    return 0;
-}
-
-int sc_link(const char *oldpath, const char *newpath)
-{
-    return -1;
-}
-
-int sc_unlink(const char *pathname)
-{
-    return -1;
+    return fds->fops.close(fds);
 }
 
 ssize_t sc_lseek(int fd, size_t offset, int whence)
@@ -133,6 +128,7 @@ ssize_t sc_lseek(int fd, size_t offset, int whence)
     if (fds == NULL)
         return -EBADF;
 
+    // seek via fops???
 
     switch(whence)
     {

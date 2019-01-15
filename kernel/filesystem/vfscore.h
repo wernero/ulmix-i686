@@ -119,6 +119,7 @@ struct filesystem_struct
     //int (*fs_write)(struct direntry_struct *entry, char *buf, size_t len);
     int (*fs_read)(struct file_struct *fd, char *buf, size_t len);
     int (*fs_write)(struct file_struct *fd, char *buf, size_t len);
+    ssize_t (*fs_seek)(struct file_struct *fd, size_t offset, int whence);
 };
 
 struct sb_struct
