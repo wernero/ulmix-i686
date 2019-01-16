@@ -278,7 +278,8 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
             current_des->read_opens = 0;
             current_des->write_opens = 0;
-        current_des->fd = NULL;
+
+            //current_des->fd = NULL;
 
             if(current_des->inode_no == miss->inode_no) {
                 current_des->directory = miss;
@@ -536,14 +537,14 @@ static int ext2_read(struct file_struct *fd, char *buf, size_t len)
     if(entry == NULL) 			// something is really wrong
       return -EIO;
 
-    if(entry->fd == NULL) 		// no file open which wants to read
+    if(fd == NULL) 		// no file open which wants to read
       return -EIO;
 
     if(entry->blocks == NULL) 		// inode has no blocks to read from
       return -EIO;
 
 
-    size_t read_seek_offset = entry->fd->seek_offset;
+    size_t read_seek_offset = fd->seek_offset;
 
     char * disk_read_buffer = kmalloc(0x400,1,"ext2_read disk_read_buffer");
 

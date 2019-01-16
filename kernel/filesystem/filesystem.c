@@ -75,8 +75,6 @@ int open_file(struct direntry_struct *node, int flags)
 
     fd->fops = fops;
 
-    node->fd = fd;      // there can be multiple file descriptors!
-
     if ((flags | O_WRONLY) || (flags | O_RDWR) || (flags | O_APPEND))
     {
         // MUTEX!!!
