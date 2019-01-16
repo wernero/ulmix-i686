@@ -91,6 +91,12 @@ static void _tty_putchar(struct tty_struct *tty, char c)
         tty->pos_x = 0;
         tty->pos_y++;
     }
+    else if (c == '\b')
+    {
+        tty->vmem[pos - 2] = 0;
+        tty->vmem[pos - 1] = tty->color;
+        tty->pos_x--;
+    }
     else
     {
         tty->vmem[pos] = c;
