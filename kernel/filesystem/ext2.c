@@ -545,7 +545,7 @@ static int ext2_read(struct file_struct *fd, char *buf, size_t len)
         bytes_to_copy = len;
 
     if (bytes_to_copy == 0)
-        goto read_end;
+        goto read_done;
 
     size_t start_block = seek_offset / EXT2_BLOCK_SIZE;
     size_t start_block_offset = seek_offset % EXT2_BLOCK_SIZE;
@@ -601,7 +601,7 @@ static int ext2_read(struct file_struct *fd, char *buf, size_t len)
 
     kfree(disk_read_buffer);
 
-read_end:
+read_done:
     klog(KLOG_DEBUG, "ext2_read(): inode=%d, bytes: requested=%d : read=%d",
          entry->inode_no,
          len,
