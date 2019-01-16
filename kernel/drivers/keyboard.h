@@ -10,6 +10,15 @@
 #include <sched/sync.h>
 #include <util/types.h>
 
+#define KBD_SELECT_MODE     0x10
+#define KBD_MODE_RAWBUF     0x00    // raw scancodes
+#define KBD_MODE_ASCII      0x01    // keyboard in ascii mode
+#define KBD_MODE_ASYNC      0x02    // not yet implemented
+
+#define KBD_SELECT_LAYOUT   0x20
+#define KBD_BILAYOUT_AT     0x00    // builtin keyboard layout: AT
+#define KBD_BILAYOUT_US     0x01    // builtin keyboard layout: US
+
 #define KBD_BUF 4096
 
 typedef enum
@@ -21,15 +30,9 @@ typedef enum
 
 #define SCANSET_SIZE 0x58
 
-
-typedef enum
-{
-    KBD_BUFFER
-} kbd_mode_t;
-
 struct kbd_file_struct
 {
-    kbd_mode_t mode;
+    unsigned long mode;
     unsigned char kbdbuf[KBD_BUF];
     int read_index;
     int write_index;

@@ -55,6 +55,18 @@ int execve(const char *filename,
              (unsigned long)envp, 0);
 }
 
+
+int ioctl(int fd, unsigned long request, unsigned long arg) // 54
+{
+    return __syscall(
+        54,
+        fd,
+        request,
+        arg,
+        0
+    );
+}
+
 // actual syscall implementation
 static unsigned long
 __attribute__((optimize("O0")))

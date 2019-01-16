@@ -114,7 +114,7 @@ static void kbdbuf_put(unsigned char c)
 static int open(struct file_struct *fd, int flags, int varg)
 {
     struct kbd_file_struct *kdesc = kmalloc(sizeof(struct kbd_file_struct), 1, "keyboard descriptor");
-    kdesc->mode = KBD_BUFFER;
+    kdesc->mode = KBD_MODE_ASCII;
     kdesc->read_index = 0;
     kdesc->write_index = 0;
     kdesc->blocker = kbd_block;
@@ -141,9 +141,36 @@ static int release(struct file_struct *fd)
     return SUCCESS;
 }
 
+static int set_mode(struct kbd_file_struct *kbd, unsigned long mode)
+{
+    switch (mode)
+    {
+    case KBD_MODE_ASCII:
+    case KBD_MODE_RAWBUF:
+        kbd->mode = mode;
+        return SUCCESS;
+    case KBD_MODE_ASYNC:
+        return -ENOSYS;
+    default:
+        return -EINVAL;
+    }
+}
+
 static int ioctl(struct file_struct *fd, unsigned long request, unsigned long arg)
 {
+    klog(KLOG_INFO, "keyboard ioctl(): request=%d, arg=%d", request, arg);
     ((struct kbd_file_struct*)fd->drv_struct)->mode = request;
+
+    struct kbd_file_struct *kbd = (struct kbd_file_struct*)fd->drv_struct;
+
+    switch (request)
+    {
+    case KBD_SELECT_MODE:
+        return set_mode(kbd, arg);
+    default:
+        return -EINVAL;
+    }
+
     return SUCCESS;
 }
 
@@ -164,11 +191,15 @@ static unsigned char getcode(struct kbd_file_struct *kbd)
         if (++kbd->read_index >= KBD_BUF)
             kbd->read_index = 0;
 
-        if (kbd->mode == KBD_BUFFER)
+        if (kbd->mode == KBD_MODE_ASCII)
         {
             if (c >= SCANSET_SIZE)
                 return 0;
             return kbd_at[0][c];
+        }
+        else if (kbd->mode == KBD_MODE_RAWBUF)
+        {
+            return c;
         }
         return c;
     }

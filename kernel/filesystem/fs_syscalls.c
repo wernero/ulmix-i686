@@ -89,3 +89,12 @@ ssize_t sys_lseek(int fd, size_t offset, int whence)
 
     return fds->fops.seek(fds, offset, whence);
 }
+
+int sys_ioctl(int fd, unsigned long request, unsigned long arg)
+{
+    struct file_struct *fds = get_fd(fd);
+    if (fds == NULL || fds->fops.ioctl == NULL)
+        return -EBADF;
+
+    return fds->fops.ioctl(fds, request, arg);
+}

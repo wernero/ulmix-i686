@@ -53,6 +53,7 @@ int     sys_close    (int fd);
 int     sys_link     (const char *oldpath, const char *newpath);
 int     sys_unlink   (const char *pathname);
 ssize_t sys_lseek    (int fd, size_t offset, int whence);
+int     sys_ioctl    (int fd, unsigned long request, unsigned long arg);
 
 // stat()
 // mount()
