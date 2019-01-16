@@ -27,34 +27,48 @@ static ssize_t read(struct file_struct *fd, char *buf, size_t len);
 static ssize_t seek(struct file_struct *fd, size_t offset, int whence);
 
 
-char kbd_at[2][SCANSET_SIZE] = {
+char kbd_at[3][SCANSET_SIZE] = {
     {
-        0, ESCAPE,
+        0, 0,
         '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
         'S', '\'', '\b', '\t',
         'q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'u',
-        '+', '\n', CTRL,
+        '+', '\n', 0,
         'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'o', 'a', '^',
-        SHIFT, '#', 'y', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-',
-        SHIFT, '*', ALT, ' ', CAPS,
-        F1, F2, F3, F4, F5, F6, F7, F8, F9, F10,
-        NUMLOCK, ROLL, '7', '8', '9', '-',
+        0, '#', 'y', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-',
+        0, '*', 0, ' ', 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, '7', '8', '9', '-',
         '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, '<',
-        F11, F12
+        0, 0
     },
     {
-        0, ESCAPE,
+        0, 0,
         '!', '"', '?', '$', '%', '&', '/', '(', ')', '=',
         '?', '\'', '\b', '\t',
         'Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'U',
-        '*', '\n', CTRL,
+        '*', '\n', 0,
         'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'O', 'A', '^',
-        SHIFT, '\'', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', ';', ':', '_',
-        SHIFT, '*', ALT, ' ', CAPS,
-        F1, F2, F3, F4, F5, F6, F7, F8, F9, F10,
-        NUMLOCK, ROLL, '7', '8', '9', '-',
+        0, '\'', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', ';', ':', '_',
+        0, '*', 0, ' ', 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, '7', '8', '9', '-',
         '4', '5', '6', '+', '1', '2', '3', '0', '.', 0, '<',
-        F11, F12
+        0, 0
+    },
+    {
+        0, 0,
+        '1', '2', '3', '4', '5', '6', '{', '[', ']', '}',
+        0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        '~', 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0
     }
 };
 
@@ -118,6 +132,8 @@ static int open(struct file_struct *fd, int flags, int varg)
     kdesc->read_index = 0;
     kdesc->write_index = 0;
     kdesc->blocker = kbd_block;
+    kdesc->ctrl_pressed = kdesc->shift_pressed =
+            kdesc->alt_gr_pressed = kdesc->alt_pressed = 0;
     fd->drv_struct = (void*)kdesc;
     for (int i = 0; i < MAX_OPENS; i++)
     {
@@ -193,9 +209,28 @@ static unsigned char getcode(struct kbd_file_struct *kbd)
 
         if (kbd->mode == KBD_MODE_ASCII)
         {
+            switch (c)
+            {
+            case 42:
+            case 54:
+                kbd->shift_pressed = 1;
+                break;
+            case 170:
+            case 182:
+                kbd->shift_pressed = 0;
+                break;
+            default:
+                goto add_to_buf;
+            }
+
+            add_to_buf:
             if (c >= SCANSET_SIZE)
                 return 0;
-            return kbd_at[0][c];
+
+            int selc = 0;
+            if (kbd->shift_pressed)     selc = 1;
+            if (kbd->alt_gr_pressed)    selc = 2;
+            return kbd_at[selc][c];
         }
         else if (kbd->mode == KBD_MODE_RAWBUF)
         {

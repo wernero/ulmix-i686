@@ -23,7 +23,11 @@
 
 typedef enum
 {
-    ESCAPE, CTRL, SHIFT,
+    ESCAPE,
+    CTRL=29,
+    CTRL_R=157,
+    SHIFT1=42,  SHIFT1_R=54,
+    SHIFT2=56,  SHIFT2_R=182,
     ALT, CAPS, NUMLOCK, ROLL,
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12
 } skeys_t;
@@ -36,6 +40,12 @@ struct kbd_file_struct
     unsigned char kbdbuf[KBD_BUF];
     int read_index;
     int write_index;
+
+    int shift_pressed;
+    int ctrl_pressed;
+    int alt_pressed;
+    int alt_gr_pressed;
+
     blocklist_t *blocker;
 };
 

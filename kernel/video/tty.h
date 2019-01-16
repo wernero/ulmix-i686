@@ -24,6 +24,7 @@ struct tty_struct
 };
 
 #define IOCTL_FOCUS 0x10
+#define TABWIDTH     4
 
 void tty_setup(void);
 ssize_t tty_kernel_putchar(char c);
