@@ -13,7 +13,7 @@ extern thread_t *current_thread;
 static struct file_struct *get_fd(int fd)
 {
     struct file_struct *fds = current_thread->process->files[fd];
-    klog(KLOG_INFO, "obtained fd %d -> 0x%x", fd, fds);
+    klog(KLOG_DEBUG, "obtained fd %d -> 0x%x", fd, fds);
     return fds;
 }
 
@@ -37,8 +37,6 @@ int sys_open(char *pathname, int flags)
     struct direntry_struct *node;
     if (namei(pathname, &node) < 0)
         return -ENOENT;
-
-    klog(KLOG_INFO, "open(): node->type = %x", node->type);
 
     if (node->type == REGULAR)
         return open_file(node, flags);

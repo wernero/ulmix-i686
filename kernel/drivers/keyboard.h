@@ -1,7 +1,13 @@
+/*
+ * ULMIX PS/2 keyboard driver
+ * Copyright (C) 2018-2019 The Ulmix Operating System
+ * Written by Alexander Ulmer
+ */
+
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include <sched/block.h>
+#include <sched/sync.h>
 #include <util/types.h>
 
 #define KBD_BUF 4096

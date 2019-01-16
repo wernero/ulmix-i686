@@ -1,8 +1,8 @@
 #ifndef SYNC_H
 #define SYNC_H
 
-#include "sched/task.h"
-#include "sched/block.h"
+#include "task.h"
+#include "block.h"
 
 typedef struct
 {

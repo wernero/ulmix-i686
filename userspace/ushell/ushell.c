@@ -13,8 +13,7 @@ int main(void)
     }
 
     char c;
-    int f = 4;
-    while (f--)
+    while (1)
     {
         if (read(fd, &c, 1) < 1)
         {

@@ -1,11 +1,9 @@
 #include "block.h"
+#include <kdebug.h>
 #include "interrupts.h"
 #include "memory/kheap.h"
 
 extern thread_t *current_thread;
-
-
-
 
 blocklist_t *blocker(void)
 {
@@ -16,8 +14,8 @@ blocklist_t *blocker(void)
 
 void blocklist_add(blocklist_t *blocklist)
 {
-    scheduler_block(current_thread);
     blocklist->threads[blocklist->entries++] = current_thread;
+    scheduler_block(current_thread);
 }
 
 void blocklist_unblock(blocklist_t *blocklist)
@@ -26,6 +24,7 @@ void blocklist_unblock(blocklist_t *blocklist)
     {
         scheduler_unblock(blocklist->threads[i]);
     }
+
     blocklist->entries = 0;
 }
 

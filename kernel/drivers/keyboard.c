@@ -16,6 +16,7 @@ void int_handler(void);
 
 static void kbdbuf_put(unsigned char c);
 
+static blocklist_t *kbd_block = NULL;
 static struct kbd_file_struct *drvp[MAX_OPENS];
 
 static int open(struct file_struct *fd, int flags, int varg);
@@ -63,6 +64,8 @@ void keyboard_setup(void)
     for (int i = 0; i < MAX_OPENS; i++)
         drvp[i] = NULL;
 
+    kbd_block = blocker();
+
     // register character device
     struct fd_fops_struct fops =
     {
@@ -102,9 +105,10 @@ static void kbdbuf_put(unsigned char c)
         drvp[i]->kbdbuf[drvp[i]->write_index++] = c;
         if (drvp[i]->write_index >= KBD_BUF)
             drvp[i]->write_index = 0;
-
-        // klog(KLOG_DEBUG, "put buf: sc=%d, wr=%d", (int)c, drvp[i]->write_index);
     }
+
+    // unblock threads
+    blocklist_unblock(kbd_block);
 }
 
 static int open(struct file_struct *fd, int flags, int varg)
@@ -113,7 +117,7 @@ static int open(struct file_struct *fd, int flags, int varg)
     kdesc->mode = KBD_BUFFER;
     kdesc->read_index = 0;
     kdesc->write_index = 0;
-    kdesc->blocker = blocker();
+    kdesc->blocker = kbd_block;
     fd->drv_struct = (void*)kdesc;
     for (int i = 0; i < MAX_OPENS; i++)
     {
@@ -163,7 +167,7 @@ static unsigned char getcode(struct kbd_file_struct *kbd)
         if (kbd->mode == KBD_BUFFER)
         {
             if (c >= SCANSET_SIZE)
-                return 1;
+                return 0;
             return kbd_at[0][c];
         }
         return c;
@@ -176,7 +180,7 @@ static ssize_t read(struct file_struct *fd, char *buf, size_t len)
 
     unsigned c;
     size_t read_count = 0;
-    while (len--)
+    while (len)
     {
         c = getcode(kbdfile);
 
@@ -185,7 +189,6 @@ static ssize_t read(struct file_struct *fd, char *buf, size_t len)
             if (read_count == 0)
             {
                 // block until data gets available
-                klog(KLOG_INFO, "blocking");
                 blocklist_add(kbdfile->blocker);
                 continue;
             }
@@ -197,6 +200,7 @@ static ssize_t read(struct file_struct *fd, char *buf, size_t len)
 
         *(buf++) = c;
         read_count++;
+        len--;
     }
 
     return read_count;
