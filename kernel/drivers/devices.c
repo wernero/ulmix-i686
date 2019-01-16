@@ -66,7 +66,7 @@ int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops
     return 0;
 }
 
-int register_cd(int major, char *name, struct fops_struct fops)
+int register_cd(int major, char *name, struct fd_fops_struct fops)
 {
     struct chardev_struct *cd = kmalloc(sizeof(struct chardev_struct), 1, "chardev_struct");
     cd->fops = fops;

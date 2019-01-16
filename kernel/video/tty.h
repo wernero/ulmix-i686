@@ -26,7 +26,6 @@ struct tty_struct
 #define IOCTL_FOCUS 0x10
 
 void tty_setup(void);
-struct tty_struct *getty(void);
 ssize_t tty_kernel_putchar(char c);
 ssize_t tty_kernel_write(char *buf, size_t count);
 

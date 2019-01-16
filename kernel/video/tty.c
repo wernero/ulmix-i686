@@ -4,7 +4,7 @@
 #include <filesystem/fs_syscalls.h>
 #include <drivers/devices.h>
 
-static struct tty_struct *ttyk = NULL;
+static struct file_struct *ttyk = NULL;
 struct file_struct *keyboard;
 
 
@@ -41,9 +41,10 @@ static void clear(struct tty_struct *tty)
     set_cursor(tty);
 }
 
-static int tty_open(void **drv_struct, int flags)
+static int tty_open(struct file_struct *fd, int flags, int varg)
 {
     (void)flags;
+    (void)varg;
 
     struct tty_struct *tty = kmalloc(sizeof(struct tty_struct), 1, "tty_struct");
     tty->pos_x = 0;
@@ -53,15 +54,8 @@ static int tty_open(void **drv_struct, int flags)
 
     clear(tty);
     tty_focus(tty);
-    *drv_struct = tty;
+    fd->drv_struct = tty;
     return SUCCESS;
-}
-
-struct tty_struct *getty(void)
-{
-    // create new tty
-    // for now, return the kernel's tty
-    return ttyk;
 }
 
 static void scroll(struct tty_struct *tty)
@@ -116,9 +110,9 @@ static void _tty_putchar(struct tty_struct *tty, char c)
     }
 }
 
-static ssize_t tty_write(void *drv_struct, char *buf, size_t count)
+static ssize_t tty_write(struct file_struct *fd, char *buf, size_t count)
 {
-    struct tty_struct *tty = (struct tty_struct*)drv_struct;
+    struct tty_struct *tty = (struct tty_struct*)fd->drv_struct;
     int i;
     for (i = 0; i < count; i++)
     {
@@ -128,7 +122,7 @@ static ssize_t tty_write(void *drv_struct, char *buf, size_t count)
     return i;
 }
 
-static ssize_t tty_read(void *drv_struct, char *buf, size_t count)
+static ssize_t tty_read(struct file_struct *fd, char *buf, size_t count)
 {
     if (keyboard == NULL)
         return -EAGAIN;
@@ -137,37 +131,37 @@ static ssize_t tty_read(void *drv_struct, char *buf, size_t count)
     return -ENOSYS;
 }
 
-static ssize_t tty_seek(void *drv_struct, size_t offset, int whence)
+static ssize_t tty_seek(struct file_struct *fd, size_t offset, int whence)
 {
     return -ENOSYS;
 }
 
-static int tty_ioctl(void *drv_struct, unsigned long request)
+static int tty_ioctl(struct file_struct *fd, unsigned long request, unsigned long arg)
 {
     if (request == IOCTL_FOCUS)
     {
-        tty_focus(drv_struct);
+        tty_focus(fd->drv_struct);
         return SUCCESS;
     }
 
     return -ENOSYS;
 }
 
-static int tty_release(void *drv_struct)
+static int tty_release(struct file_struct *fd)
 {
     return -ENOSYS;
 }
 
 void tty_setup(void)
 {
-    struct fops_struct fops =
+    struct fd_fops_struct fops =
     {
         .open = tty_open,
         .ioctl = tty_ioctl,
         .read = tty_read,
         .write = tty_write,
         .seek = tty_seek,
-        .release = tty_release
+        .close = tty_release
     };
     register_cd(MAJOR_TTY, "tty", fops);
 
@@ -180,7 +174,8 @@ void tty_setup(void)
 
 static int ttyk_init(void)
 {
-    return tty_open((void**)&ttyk, 0);
+    ttyk = kmalloc(sizeof(struct file_struct), 1, "file_struct ttyk");
+    return tty_open(ttyk, 0, 0);
 }
 
 static void tty_putchar(struct tty_struct *tty, char c)
@@ -199,7 +194,7 @@ ssize_t tty_kernel_putchar(char c)
         }
     }
 
-    tty_putchar(ttyk, c);
+    tty_putchar((struct tty_struct*)ttyk->drv_struct, c);
     return SUCCESS;
 }
 

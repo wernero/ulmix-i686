@@ -275,7 +275,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         ext2_get_inode(current_des, current_des->inode_no);
 
         if(current_des->mode & 0x4000) {   // inode is a directory entry
-            current_des->type = DIRECTORY;
+            //current_des->type = DIRECTORY;
             current_des->directory->parent = miss;
 
             current_des->read_opens = 0;
@@ -313,13 +313,13 @@ static int ext2_get_direntry(struct dir_struct *miss)
             }
 
         } else if(current_des->mode & 0x8000) {   // inode is a file entry
-            current_des->type = REGULAR;
+            //current_des->type = REGULAR;
             current_des->read_opens = 0;
             current_des->write_opens = 0;
 
             current_des->directory = NULL;
         } else {
-            current_des->type = UNKOWN;
+            //current_des->type = UNKOWN;
             current_des->read_opens = 1;
             current_des->write_opens = 1;
         }
@@ -387,8 +387,10 @@ static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
         );
 
     entry->mode = inode->i_mode;
+    entry->type = entry->mode & 0xf000;
     entry->size = inode->i_size;
     entry->size_blocks = inode->i_blocks;
+    entry->bptr1 = inode->i_block[0];
 
 
     if(inode->i_block[0] != NULL) {
@@ -602,8 +604,9 @@ static int ext2_read(struct file_struct *fd, char *buf, size_t len)
     kfree(disk_read_buffer);
 
 read_done:
-    klog(KLOG_DEBUG, "ext2_read(): inode=%d, bytes: requested=%d : read=%d",
+    klog(KLOG_DEBUG, "ext2_read(): inode=%d, size=%S, bytes: requested=%d : read=%d",
          entry->inode_no,
+         entry->size,
          len,
          total_bytes_read);
 

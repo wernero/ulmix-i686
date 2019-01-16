@@ -24,9 +24,11 @@ struct file_struct;
 
 struct fd_fops_struct
 {
+    int     (*open) (struct file_struct *fd, int flags, int varg);
     ssize_t (*read) (struct file_struct *fd, char *buf, size_t len);
     ssize_t (*write)(struct file_struct *fd, char *buf, size_t len);
     ssize_t (*seek) (struct file_struct *fd, size_t offset, int whence);
+    int     (*ioctl)(struct file_struct *fd, unsigned long request, unsigned long arg);
     int     (*close)(struct file_struct *fd);
 };
 
@@ -40,9 +42,6 @@ struct file_struct // file descriptor
 
     struct fd_fops_struct fops;
 };
-
-
-int open_chardev(struct file_struct *fds, int major, int flags);
 
 /* file system related system calls */
 

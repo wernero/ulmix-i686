@@ -1,8 +1,9 @@
 #ifndef DEVICES_H
 #define DEVICES_H
 
-#include "util/util.h"
-#include "sched/sync.h"
+#include <util/util.h>
+#include <sched/sync.h>
+#include <filesystem/fs_syscalls.h>
 
 #define MAJOR_TTY       1
 #define MAJOR_KEYBOARD  2
@@ -12,6 +13,14 @@
 #define MAJOR_ATA2      10
 #define MAJOR_ATA3      11
 #define MAJOR_AUDIO     12
+
+struct hd_struct
+{
+    char name[16];
+    size_t sector_offset;
+    size_t sector_count;
+    uint8_t fs_type;    // 0x83 -> linux native: ext2, ext3, ext4, ReiserFS
+};
 
 struct fops_struct
 {
@@ -23,14 +32,6 @@ struct fops_struct
     ssize_t (*seek)(void *drv_struct, size_t offset, int whence);
 
     int (*ioctl)(void *drv_struct, unsigned long request);
-};
-
-struct hd_struct
-{
-    char name[16];
-    size_t sector_offset;
-    size_t sector_count;
-    uint8_t fs_type;    // 0x83 -> linux native: ext2, ext3, ext4, ReiserFS
 };
 
 struct gendisk_struct
@@ -49,7 +50,7 @@ struct chardev_struct
 {
     int major;
     char name[16];
-    struct fops_struct fops;
+    struct fd_fops_struct fops;
 };
 
 typedef union
@@ -62,6 +63,6 @@ void scan_devices(void);
 struct gendisk_struct *find_gendisk(int major);
 struct chardev_struct *find_chardev(int major);
 int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
-int register_cd(int major, char *name, struct fops_struct fops);
+int register_cd(int major, char *name, struct fd_fops_struct fops);
 
 #endif // DEVICES_H

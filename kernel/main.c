@@ -31,7 +31,6 @@ static void kmainthread(void)
     // Test function for scheduler
     klog(KLOG_INFO, "Welcome to the kernel main thread, my esp = 0x%x", get_esp());
 
-
     scan_devices();
     vfs_init();
 

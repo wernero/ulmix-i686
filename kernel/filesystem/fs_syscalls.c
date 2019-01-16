@@ -1,5 +1,6 @@
 #include "fs_syscalls.h"
 #include "filesystem.h"
+#include "open.h"
 #include "path.h"
 #include <drivers/devices.h>
 #include <errno.h>
@@ -9,6 +10,12 @@
 #include <kdebug.h>
 
 extern thread_t *current_thread;
+static struct file_struct *get_fd(int fd)
+{
+    struct file_struct *fds = current_thread->process->files[fd];
+    klog(KLOG_INFO, "obtained fd %d -> 0x%x", fd, fds);
+    return fds;
+}
 
 int sys_creat(const char *pathname, int mode)
 {
@@ -31,8 +38,13 @@ int sys_open(char *pathname, int flags)
     if (namei(pathname, &node) < 0)
         return -ENOENT;
 
+    klog(KLOG_INFO, "open(): node->type = %x", node->type);
+
     if (node->type == REGULAR)
         return open_file(node, flags);
+
+    if (node->type == CHARDEVICE)
+        return open_device(node, flags);
 
     // path is not a regular file
     return -EIO;
@@ -55,7 +67,7 @@ ssize_t sys_write(int fd, void *buf, size_t count)
 
 ssize_t sys_read(int fd, void *buf, size_t count)
 {
-    struct file_struct *fds = current_thread->process->files[fd];
+    struct file_struct *fds = get_fd(fd);
     if (fds == NULL || fds->fops.read == NULL)
         return -EBADF;
 

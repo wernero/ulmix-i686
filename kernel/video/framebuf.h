@@ -2,7 +2,7 @@
 #define FRAMEBUF_H
 
 #define COLUMNS     80
-#define LINES       28
+#define LINES       24
 #define VIDEO_START 0xb8000
 
 #define VMODE get_video_mode()

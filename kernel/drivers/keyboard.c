@@ -18,12 +18,12 @@ static void kbdbuf_put(unsigned char c);
 
 static struct kbd_file_struct *drvp[MAX_OPENS];
 
-static int open(void **drv_struct, int flags);
-static int release(void *drv_struct);
-static int ioctl(void *drv_struct, unsigned long request);
-static ssize_t write(void *drv_struct, char *buf, size_t len);
-static ssize_t read(void *drv_struct, char *buf, size_t len);
-static ssize_t seek(void *drv_struct, size_t offset, int whence);
+static int open(struct file_struct *fd, int flags, int varg);
+static int release(struct file_struct *fd);
+static int ioctl(struct file_struct *fd, unsigned long request, unsigned long arg);
+static ssize_t write(struct file_struct *fd, char *buf, size_t len);
+static ssize_t read(struct file_struct *fd, char *buf, size_t len);
+static ssize_t seek(struct file_struct *fd, size_t offset, int whence);
 
 
 char kbd_at[2][SCANSET_SIZE] = {
@@ -64,10 +64,10 @@ void keyboard_setup(void)
         drvp[i] = NULL;
 
     // register character device
-    struct fops_struct fops =
+    struct fd_fops_struct fops =
     {
         .open = open,
-        .release = release,
+        .close = release,
         .ioctl = ioctl,
         .read = read,
         .write = write,
@@ -107,14 +107,14 @@ static void kbdbuf_put(unsigned char c)
     }
 }
 
-static int open(void **drv_struct, int flags)
+static int open(struct file_struct *fd, int flags, int varg)
 {
     struct kbd_file_struct *kdesc = kmalloc(sizeof(struct kbd_file_struct), 1, "keyboard descriptor");
     kdesc->mode = KBD_BUFFER;
     kdesc->read_index = 0;
     kdesc->write_index = 0;
     kdesc->blocker = blocker();
-    *drv_struct = (void*)kdesc;
+    fd->drv_struct = (void*)kdesc;
     for (int i = 0; i < MAX_OPENS; i++)
     {
         if (drvp[i] == NULL)
@@ -126,24 +126,24 @@ static int open(void **drv_struct, int flags)
     return -EMFILE;
 }
 
-static int release(void *drv_struct)
+static int release(struct file_struct *fd)
 {
-    kfree(drv_struct);
+    kfree(fd->drv_struct);
     for (int i = 0; i < MAX_OPENS; i++)
     {
-        if (drvp[i] == drv_struct)
+        if (drvp[i] == fd->drv_struct)
             drvp[i] = NULL;
     }
     return SUCCESS;
 }
 
-static int ioctl(void *drv_struct, unsigned long request)
+static int ioctl(struct file_struct *fd, unsigned long request, unsigned long arg)
 {
-    ((struct kbd_file_struct*)drv_struct)->mode = request;
+    ((struct kbd_file_struct*)fd->drv_struct)->mode = request;
     return SUCCESS;
 }
 
-static ssize_t write(void *drv_struct, char *buf, size_t len)
+static ssize_t write(struct file_struct *fd, char *buf, size_t len)
 {
     return -ENOSYS;
 }
@@ -170,9 +170,9 @@ static unsigned char getcode(struct kbd_file_struct *kbd)
     }
 }
 
-static ssize_t read(void *drv_struct, char *buf, size_t len)
+static ssize_t read(struct file_struct *fd, char *buf, size_t len)
 {
-    struct kbd_file_struct *kbdfile = (struct kbd_file_struct*)drv_struct;
+    struct kbd_file_struct *kbdfile = (struct kbd_file_struct*)fd->drv_struct;
 
     unsigned c;
     size_t read_count = 0;
@@ -185,6 +185,7 @@ static ssize_t read(void *drv_struct, char *buf, size_t len)
             if (read_count == 0)
             {
                 // block until data gets available
+                klog(KLOG_INFO, "blocking");
                 blocklist_add(kbdfile->blocker);
                 continue;
             }
@@ -201,7 +202,7 @@ static ssize_t read(void *drv_struct, char *buf, size_t len)
     return read_count;
 }
 
-static ssize_t seek(void *drv_struct, size_t offset, int whence)
+static ssize_t seek(struct file_struct *fd, size_t offset, int whence)
 {
     return -ENOSYS;
 }

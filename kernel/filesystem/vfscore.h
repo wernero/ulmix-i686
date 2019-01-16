@@ -9,14 +9,14 @@
 
 typedef enum
 {
-    FIFO,
-    CHARDEVICE,
-    DIRECTORY,
-    BLOCKDEVICE,
-    REGULAR,
-    SYMLINK,
-    SOCKET,
-    UNKOWN
+    FIFO        = 0x1000,
+    CHARDEVICE  = 0x2000,
+    DIRECTORY   = 0x4000,
+    BLOCKDEVICE = 0x6000,
+    REGULAR     = 0x8000,
+    SYMLINK     = 0xa000,
+    SOCKET      = 0xc000,
+    UNKOWN      = 0x0000
 } ftype_t;
 
 struct gd_struct // group descriptor -> ext2 specific
@@ -35,7 +35,7 @@ struct gd_struct // group descriptor -> ext2 specific
 struct direntry_struct // kernel's representation of an inode
 {
     ftype_t type;               // unix file type
-    unsigned int  mode;         // permissions, etc.
+    uint16_t  mode;             // permissions, etc.
     unsigned long size;         // size in bytes
     unsigned long size_blocks;	// block size is always assumed in 512bye
 
@@ -48,6 +48,7 @@ struct direntry_struct // kernel's representation of an inode
     unsigned long inode_no;     // inode number in the disk filesystem
 
     void *payload;
+    uint32_t bptr1;
     struct inode_block_table *blocks;   // *TODO: what's that?
 
     struct dir_struct *parent;          // *TODO: parent vs. directory? what's the difference?
