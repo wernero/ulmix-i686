@@ -12,9 +12,7 @@
 extern thread_t *current_thread;
 static struct file_struct *get_fd(int fd)
 {
-    struct file_struct *fds = current_thread->process->files[fd];
-    klog(KLOG_DEBUG, "obtained fd %d -> 0x%x", fd, fds);
-    return fds;
+    return current_thread->process->files[fd];
 }
 
 int sys_creat(const char *pathname, int mode)
