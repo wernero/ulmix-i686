@@ -1,7 +1,7 @@
 #include "path.h"
+#include "filesystem.h"
 #include <sched/task.h>
 #include <sched/process.h>
-#include <filesystem/filesystem.h>
 #include <errno.h>
 #include <kdebug.h>
 
@@ -23,16 +23,6 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
     struct direntry_struct *entry;
     for (entry = working_dir->entries; entry != NULL; entry = entry->next)
     {
-
-        /*klog(KLOG_DEBUG, "namei_recursive(): entry: name=%s type=%x, inode=%d, dir=%x, sb=%x, fs=%x",
-            entry->name,
-            entry->type,
-            entry->inode_no,
-            entry->directory,
-            entry->parent->sb,
-            entry->parent->sb->fs
-        );*/
-
         if (strcmp(entry->name, cname) == 0)
         {
             if (*rem == 0)
@@ -40,14 +30,12 @@ static int namei_recursive(char *path, struct dir_struct *working_dir, struct di
                 if (*(rem - 1) == '/' && entry->type != DIRECTORY)
                     return -ENOTDIR;
 
-//                if (entry->payload == NULL)  // payload is the raw inode data
-//                    direntry_get_inode(entry);
-
-
                 *node = entry;
 
-                klog(KLOG_DEBUG, "namei(): found node=%x", *node);
-                return 0;
+                klog(KLOG_DEBUG, "namei(): '%s' -> inode #%d",
+                     cname,
+                     (*node)->inode_no);
+                return SUCCESS;
             }
 
             if (entry->type != DIRECTORY)

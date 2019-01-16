@@ -1,7 +1,7 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include <filesystem/vfscore.h>
+#include "vfscore.h"
 
 int namei(char *path, struct direntry_struct **node);
 
