@@ -4,10 +4,6 @@ The ULMIX Operating System wants to become a Unix-like operating system with
 advanced memory management features and preemtive multitasking. It's currently
 under heavy development and a little far from stable.
 
-Currently the ULMIX Operating System uses the bootloader of the PrettyOS
-project (http://www.prettyos.de). However, a custom bootloader that has ext2
-support is planned.
-
 -> Compile with 'make all'. Note that this uses the mount(1) command to copy
 the files to an image file and thus requres root permissions. The makefile
 will generate debug symbols and write them into the bochs.symbols file, which
