@@ -82,7 +82,7 @@ int sys_close(int fd)
 ssize_t sys_lseek(int fd, size_t offset, int whence)
 {
     struct file_struct *fds = current_thread->process->files[fd];
-    if (fds == NULL)
+    if (fds == NULL || fds->fops.seek == NULL)
         return -EBADF;
 
     return fds->fops.seek(fds, offset, whence);
