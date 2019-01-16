@@ -14,17 +14,17 @@
 void *syscalls[] =
 {
     nop,                // 0
-    sc_exit,            // 1    exit()              *required
-    sc_fork,            // 2    fork()              *required
-    sc_read,            // 3    read()              *required
-    sc_write,           // 4    write()             *required
-    sc_open,            // 5    open()              *required
-    sc_close,           // 6    close()             *required
-    sc_waitpid,         // 7    waitpid()           *required
-    sc_creat,           // 8    creat()
-    sc_link,            // 9    link()              *required
-    sc_unlink,          // 10   unlink()            *required
-    sc_execve,          // 11   execve()            *required
+    sys_exit,            // 1    exit()              *required
+    sys_fork,            // 2    fork()              *required
+    sys_read,            // 3    read()              *required
+    sys_write,           // 4    write()             *required
+    sys_open,            // 5    open()              *required
+    sys_close,           // 6    close()             *required
+    sys_waitpid,         // 7    waitpid()           *required
+    sys_creat,           // 8    creat()
+    sys_link,            // 9    link()              *required
+    sys_unlink,          // 10   unlink()            *required
+    sys_execve,          // 11   execve()            *required
     nop,                // 12   chdir()
     nop,                // 13   time()
     nop,                // 14   mknod()
@@ -32,7 +32,7 @@ void *syscalls[] =
     nop,                // 16   lchown16()
     nop,                // 17
     nop,                // 18   stat()              *required
-    sc_lseek,           // 19   lseek()             *required
+    sys_lseek,           // 19   lseek()             *required
     nop,                // 20   getpid()            *required
     nop,                // 21   mount()
     nop,                // 22   oldumount()

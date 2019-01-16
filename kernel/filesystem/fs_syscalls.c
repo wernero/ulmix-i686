@@ -10,22 +10,22 @@
 
 extern thread_t *current_thread;
 
-int sc_creat(const char *pathname, int mode)
+int sys_creat(const char *pathname, int mode)
 {
     return -1;
 }
 
-int sc_link(const char *oldpath, const char *newpath)
+int sys_link(const char *oldpath, const char *newpath)
 {
     return -1;
 }
 
-int sc_unlink(const char *pathname)
+int sys_unlink(const char *pathname)
 {
     return -1;
 }
 
-int sc_open(char *pathname, int flags)
+int sys_open(char *pathname, int flags)
 {
     struct direntry_struct *node;
     if (namei(pathname, &node) < 0)
@@ -38,7 +38,7 @@ int sc_open(char *pathname, int flags)
     return -EIO;
 }
 
-ssize_t sc_write(int fd, void *buf, size_t count)
+ssize_t sys_write(int fd, void *buf, size_t count)
 {
     if (fd == 912)
     {
@@ -53,7 +53,7 @@ ssize_t sc_write(int fd, void *buf, size_t count)
     return fds->fops.write(fds, buf, count);
 }
 
-ssize_t sc_read(int fd, void *buf, size_t count)
+ssize_t sys_read(int fd, void *buf, size_t count)
 {
     struct file_struct *fds = current_thread->process->files[fd];
     if (fds == NULL || fds->fops.read == NULL)
@@ -62,7 +62,7 @@ ssize_t sc_read(int fd, void *buf, size_t count)
     return fds->fops.read(fds, buf, count);
 }
 
-int sc_close(int fd)
+int sys_close(int fd)
 {
     struct file_struct *fds = current_thread->process->files[fd];
     if (fds == NULL || fds->fops.close == NULL)
@@ -71,7 +71,7 @@ int sc_close(int fd)
     return fds->fops.close(fds);
 }
 
-ssize_t sc_lseek(int fd, size_t offset, int whence)
+ssize_t sys_lseek(int fd, size_t offset, int whence)
 {
     struct file_struct *fds = current_thread->process->files[fd];
     if (fds == NULL)

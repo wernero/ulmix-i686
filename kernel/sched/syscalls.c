@@ -7,7 +7,7 @@
 
 extern thread_t *current_thread;
 
-pid_t sc_fork_c(struct syscall_context_struct *context)
+pid_t sys_fork_c(struct syscall_context_struct *context)
 {
     klog(KLOG_INFO, "[%d] fork()", current_thread->process->pid);
     process_t *pold = current_thread->process;
@@ -33,18 +33,18 @@ pid_t sc_fork_c(struct syscall_context_struct *context)
     return pnew->pid; // old process gets the pid of the new one
 }
 
-void sc_exit(int status)
+void sys_exit(int status)
 {
     klog(KLOG_INFO, "[%d] exit() with code %d", current_thread->process->pid, status);
     kill_process(current_thread->process);
 }
 
-pid_t sc_wait(int *wstatus)
+pid_t sys_wait(int *wstatus)
 {
     return -1;
 }
 
-pid_t sc_waitpid(pid_t pid, int *wstatus, int options)
+pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
 {
     return -1;
 }

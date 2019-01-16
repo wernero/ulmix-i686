@@ -33,7 +33,7 @@
  * |  Kernel heap  |
  * |_______________|    4GiB
  */
-int sc_execve(char *filename, char *argv[], char *envp[]);
+int sys_execve(char *filename, char *argv[], char *envp[]);
 int kfexec(char *img_path, char *description);
 
 #endif // EXEC_H

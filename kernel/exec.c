@@ -17,7 +17,7 @@ int kfexec(char *img_path, char *description)
 {
     klog(KLOG_INFO, "kfexec(): loading elf binary");
     int fd;
-    if ((fd = sc_open(img_path, O_RDONLY)) < 0) // on error, fd = error code
+    if ((fd = sys_open(img_path, O_RDONLY)) < 0) // on error, fd = error code
         return fd;
 
     klog(KLOG_DEBUG, "kfexec(): creating address space");
@@ -45,13 +45,13 @@ int kfexec(char *img_path, char *description)
     return SUCCESS;
 }
 
-int sc_execve(char *filename, char *argv[], char *envp[])
+int sys_execve(char *filename, char *argv[], char *envp[])
 {
     klog(KLOG_INFO, "[%d] execve(): file=%s", current_thread->process->pid, filename);
 
     // 1. check wheter the binary image exists and can be read
     int fd;
-    if ((fd = sc_open(filename, O_RDONLY)) < 0) // on error, fd = error code
+    if ((fd = sys_open(filename, O_RDONLY)) < 0) // on error, fd = error code
         return fd;
 
     // 2. create virtual address space
@@ -122,8 +122,8 @@ static int loadelf(int fd, void **entry)
 
             // clear region to zero and load
             memset((void*)(pht_entry.p_vaddr + pht_entry.p_filesz), 0, pht_entry.p_memsz - pht_entry.p_filesz);
-            sc_lseek(fd, pht_entry.p_file, SEEK_SET);
-            sc_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
+            sys_lseek(fd, pht_entry.p_file, SEEK_SET);
+            sys_read(fd, (void*)pht_entry.p_vaddr, pht_entry.p_filesz);
         }
     }
 
@@ -145,7 +145,7 @@ static int loadelf(int fd, void **entry)
         argv[i] = esp;
     }
 
-    // create argv pointersc_execve( array
+    // create argv pointersys_execve( array
     esp -= i;
     *_argc = i;
     *_argv = esp;

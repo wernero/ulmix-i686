@@ -46,14 +46,14 @@ int open_chardev(struct file_struct *fds, int major, int flags);
 
 /* file system related system calls */
 
-int     sc_open     (char *pathname, int flags);
-int     sc_creat    (const char *pathname, int mode);
-ssize_t sc_write    (int fd, void *buf, size_t count);
-ssize_t sc_read     (int fd, void *buf, size_t count);
-int     sc_close    (int fd);
-int     sc_link     (const char *oldpath, const char *newpath);
-int     sc_unlink   (const char *pathname);
-ssize_t sc_lseek    (int fd, size_t offset, int whence);
+int     sys_open     (char *pathname, int flags);
+int     sys_creat    (const char *pathname, int mode);
+ssize_t sys_write    (int fd, void *buf, size_t count);
+ssize_t sys_read     (int fd, void *buf, size_t count);
+int     sys_close    (int fd);
+int     sys_link     (const char *oldpath, const char *newpath);
+int     sys_unlink   (const char *pathname);
+ssize_t sys_lseek    (int fd, size_t offset, int whence);
 
 // stat()
 // mount()

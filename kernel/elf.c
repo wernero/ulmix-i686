@@ -6,7 +6,7 @@
 
 int elf_read_header(int fd, struct elf_header_struct *header)
 {
-    if (sc_read(fd, header, sizeof(struct elf_header_struct)) < 0)
+    if (sys_read(fd, header, sizeof(struct elf_header_struct)) < 0)
     {
         return -EIO;
     }
@@ -29,8 +29,8 @@ int elf_get_pht_entry(int fd, int index, struct elf_header_struct *header, struc
 {
     unsigned long seek = header->phtable_pos + (index * sizeof(struct elf_pht_entry_struct));
 
-    sc_lseek(fd, seek, SEEK_SET);
-    if (sc_read(fd, entry, sizeof(struct elf_pht_entry_struct)) < 0)
+    sys_lseek(fd, seek, SEEK_SET);
+    if (sys_read(fd, entry, sizeof(struct elf_pht_entry_struct)) < 0)
     {
         return -EIO;
     }

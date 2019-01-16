@@ -3,10 +3,10 @@
 
 #include "sched/task.h"
 
-pid_t sc_fork(void);
-void sc_exit(int status);
-pid_t sc_wait(int *wstatus);
-pid_t sc_waitpid(pid_t pid, int *wstatus, int options);
+pid_t sys_fork(void);
+void sys_exit(int status);
+pid_t sys_wait(int *wstatus);
+pid_t sys_waitpid(pid_t pid, int *wstatus, int options);
 
 struct syscall_context_struct
 {
