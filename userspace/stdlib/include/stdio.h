@@ -1,9 +1,13 @@
+/* ulibc - Ulmix C Library
+ * Copyright (C) 2018-2019 The Ulmix Operating System
+ * Written by Alexander Ulmer
+ */
+
 #ifndef STDIO_H
 #define STDIO_H
 
 
 #define EOF -1
-#define NULL 0
 
 typedef struct file_struct
 {
@@ -29,7 +33,7 @@ typedef __builtin_va_list va_list;
 #endif
 #define __va_copy(d,s)	__builtin_va_copy(d,s)
 
-void printf(const char *format, ...);
-void vprintf(FILE *stream, const char *format, va_list ap);
+int printf(const char *format, ...);
+int sprintf(char *buf, const char *format, va_list ap);
 
 #endif // STDIO_H

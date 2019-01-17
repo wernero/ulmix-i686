@@ -1,17 +1,15 @@
+/* ulibc - Ulmix C Library
+ * Copyright (C) 2018-2019 The Ulmix Operating System
+ * Written by Alexander Ulmer
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#define FD_KLOG   912
-#define FD_STDIN  0
-#define FD_STDOUT 0
-#define FD_STDERR 1
-
-
-
 void puts(char *s)
 {
-    write(stdout->fileno, s, strlen(s) + 1);
+    write(stdout->fileno, s, strlen(s));
 }
 
 void putchar(char c)
@@ -28,28 +26,16 @@ char getchar(void)
 }
 
 
-void printf(const char *format, ...)
+int printf(const char *format, ...)
 {
+    char buf[256];
+    size_t len;
+
     va_list args;
     va_start(args, format);
-    vprintf(stdout, format, args);
+    len = sprintf(buf, format, args);
     va_end(args);
+
+    return write(stdout->fileno, buf, len);
 }
 
-void vprintf(FILE *stream, const char *format, va_list ap)
-{
-    for (int i = 0; format[i] != '\0'; i++)
-    {
-        if (format[i] == '%')
-        {
-            if (format[++i] == '%')
-                putchar('%');
-
-
-            continue;
-        }
-
-        putchar(format[i]);
-    }
-    va_end(ap);
-}

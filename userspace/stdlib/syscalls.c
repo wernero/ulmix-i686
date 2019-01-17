@@ -1,3 +1,8 @@
+/* ulibc - Ulmix C Library
+ * Copyright (C) 2018-2019 The Ulmix Operating System
+ * Written by Alexander Ulmer
+ */
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -53,18 +58,6 @@ int execve(const char *filename,
              (unsigned long)filename,
              (unsigned long)argv,
              (unsigned long)envp, 0);
-}
-
-
-int ioctl(int fd, unsigned long request, unsigned long arg) // 54
-{
-    return __syscall(
-        54,
-        fd,
-        request,
-        arg,
-        0
-    );
 }
 
 // actual syscall implementation

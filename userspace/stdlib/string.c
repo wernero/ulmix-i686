@@ -1,3 +1,8 @@
+/* ulibc - Ulmix C Library
+ * Copyright (C) 2018-2019 The Ulmix Operating System
+ * Written by Alexander Ulmer
+ */
+
 #include <string.h>
 
 static char *errnos[] = {
@@ -165,4 +170,103 @@ int strcmp(char *s1, char *s2)
             return 0;
         }
     }
+}
+
+void reverse(char *s)
+{
+    int i, j;
+    char c;
+
+    for (i = 0, j = strlen(s)-1; i<j; i++, j--)
+    {
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
+}
+
+size_t strcat(char *dest, char *src)
+{
+    if (*dest != 0)
+    {
+        while (*(dest++) != 0);
+        dest--;
+    }
+
+    size_t length = 0;
+    while (*src != 0)
+    {
+        *(dest++) = *(src++);
+        length++;
+    }
+    *dest = 0;
+    return length;
+}
+
+char *strsize(unsigned long n, char *buf)
+{
+    char *unit;
+    unsigned long d;
+    if ((d = (n / (1024*1024*1024))) > 0)
+        unit = "G";
+    else if ((d = (n / (1024*1024))) > 0)
+        unit = "M";
+    else if ((d = (n / 1024)) > 0)
+        unit = "K";
+    else
+    {
+        unit = "B";
+        d = n;
+    }
+
+    itoa(d, buf, 10);
+    strcat(buf, unit);
+    return buf;
+}
+
+static char get_letter(int n)
+{
+    if (n < 10)
+        return '0' + n;
+    return 'a' - 10 + n;
+}
+
+char *itoa(int n, char *str, int base)
+{
+    char *buf = str;
+    if (n == 0)
+    {
+        strcpy(buf, "0");
+        return str;
+    }
+
+    if (n < 0)
+    {
+        n = -n;
+        str[0] = '-';
+        buf++;
+    }
+
+    int last_div = 1;
+    int div = base;
+
+    while (n / last_div != 0)
+    {
+        *(buf++) = get_letter((n % div) / last_div);
+        last_div = div;
+        div *= base;
+    }
+
+    *buf = '\0';
+    reverse(str);
+    return str;
+}
+
+void strcpy(char *dest, char *src)
+{
+    while (*src)
+    {
+        *(dest++) = *(src++);
+    }
+    *dest = 0;
 }
