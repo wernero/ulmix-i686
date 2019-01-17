@@ -18,6 +18,8 @@ sudo mount /dev/loop1 mnt
 sudo mkdir mnt/bin
 sudo mkdir mnt/dev
 sudo mknod mnt/dev/tty c 1 0
+sudo mknod mnt/dev/tty1 c 1 1
+sudo mknod mnt/dev/tty2 c 1 2
 sudo mknod mnt/dev/kbd c 2 0
 sudo mknod mnt/dev/hda c 8 0
 sudo mknod mnt/dev/hda1 c 8 1
