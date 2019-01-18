@@ -1,10 +1,11 @@
 #include "tty.h"
 #include <errno.h>
 #include <kdebug.h>
+#include <filesystem/open.h>
 #include <filesystem/fs_syscalls.h>
 #include <drivers/devices.h>
 
-struct file_struct *keyboard;
+struct file_struct *kbd = NULL;
 struct tty_struct *tty1;
 
 static void set_cursor(struct tty_struct *tty)
@@ -133,11 +134,13 @@ static ssize_t tty_write(struct file_struct *fd, char *buf, size_t count)
 
 static ssize_t tty_read(struct file_struct *fd, char *buf, size_t count)
 {
-    if (keyboard == NULL)
+    if (kbd == NULL)
         return -EAGAIN;
 
-    // we should have a per-device keyboard buffer
-    return -ENOSYS;
+    if (kbd->fops.read == NULL)
+        return -EAGAIN;
+
+    return kbd->fops.read(kbd, buf, count);
 }
 
 static int tty_ioctl(struct file_struct *fd, unsigned long request, unsigned long arg)
@@ -179,4 +182,14 @@ void tty_setup(void)
 
     clear(tty1);
     tty_focus(tty1);
+
+    int kbdfd = open_by_major(MAJOR_KEYBOARD, 1, O_RDONLY, NULL);
+    if (kbdfd < 0)
+    {
+        klog(KLOG_WARN, "tty: could not open keyboard (errno %d)", -kbdfd);
+    }
+    else
+    {
+        kbd = get_fd(kbdfd);
+    }
 }

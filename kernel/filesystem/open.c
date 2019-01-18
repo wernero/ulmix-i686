@@ -42,15 +42,8 @@ int open_file(struct direntry_struct *node, int flags)
     return insert_fd(fd);
 }
 
-int open_device(struct direntry_struct *node, int flags)
+int open_by_major(int major, int minor, int flags, struct direntry_struct *node)
 {
-    if (node->type != CHARDEVICE && node->type != BLOCKDEVICE)
-        return -EIO;
-
-    // somehow, major/minor are only 8 bit???
-    int major = (node->bptr1 & 0xff00) >> 8;
-    int minor = node->bptr1 & 0xff;
-
     struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct device");
     fd->direntry = node;
     fd->open_mode = flags;
@@ -70,4 +63,16 @@ int open_device(struct direntry_struct *node, int flags)
     }
 
     return insert_fd(fd);
+}
+
+int open_device(struct direntry_struct *node, int flags)
+{
+    if (node->type != CHARDEVICE && node->type != BLOCKDEVICE)
+        return -EIO;
+
+    // somehow, major/minor are only 8 bit???
+    int major = (node->bptr1 & 0xff00) >> 8;
+    int minor = node->bptr1 & 0xff;
+
+    return open_by_major(major, minor, flags, node);
 }

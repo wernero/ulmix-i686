@@ -43,6 +43,8 @@ struct file_struct // file descriptor
     struct fd_fops_struct fops;
 };
 
+struct file_struct *get_fd(int fd);
+
 /* file system related system calls */
 
 int     sys_open     (char *pathname, int flags);

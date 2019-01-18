@@ -10,7 +10,7 @@
 #include <kdebug.h>
 
 extern thread_t *current_thread;
-static struct file_struct *get_fd(int fd)
+struct file_struct *get_fd(int fd)
 {
     return current_thread->process->files[fd];
 }

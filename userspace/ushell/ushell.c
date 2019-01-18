@@ -12,6 +12,14 @@ int main(void)
 
     printf("$ ");
 
+    char c;
+    while ((c = getchar()) != '\n')
+    {
+        if (c == EOF)
+            break;
+        putchar(c);
+    }
+
     printf("\n\nexit\n");
     return 0;
 }
