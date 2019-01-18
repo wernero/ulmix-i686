@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 extern int main(int argc, char *argv[]);
 
@@ -15,8 +16,12 @@ FILE *stderr;
 
 void _start(void)
 {
+    int fd = open("/dev/tty1", O_RDWR);
+    if (fd < 0)
+        exit(-fd);
+
     FILE std;
-    std.fileno = 912;
+    std.fileno = fd;
     stdin = stdout = stderr = &std;
 
     int ret = main(0, NULL);

@@ -48,12 +48,6 @@ int sys_open(char *pathname, int flags)
 
 ssize_t sys_write(int fd, void *buf, size_t count)
 {
-    if (fd == 912)
-    {
-        // debug !!!
-        return tty_kernel_write(buf, count);
-    }
-
     struct file_struct *fds = current_thread->process->files[fd];
     if (fds == NULL || fds->fops.write == NULL)
         return -EBADF;

@@ -4,9 +4,8 @@
 #include <filesystem/fs_syscalls.h>
 #include <drivers/devices.h>
 
-static struct file_struct *ttyk = NULL;
 struct file_struct *keyboard;
-
+struct tty_struct *tty1;
 
 static void set_cursor(struct tty_struct *tty)
 {
@@ -44,17 +43,13 @@ static void clear(struct tty_struct *tty)
 static int tty_open(struct file_struct *fd, int flags, int varg)
 {
     (void)flags;
-    (void)varg;
 
-    struct tty_struct *tty = kmalloc(sizeof(struct tty_struct), 1, "tty_struct");
-    tty->pos_x = 0;
-    tty->pos_y = 0;
-    tty->vmem = tty->tty_mem;
-    tty->color = WHITE | (BLACK << 4);
+    if (varg != 1)
+    {
+        return -ENODEV;
+    }
 
-    clear(tty);
-    tty_focus(tty);
-    fd->drv_struct = tty;
+    fd->drv_struct = (void*)varg;
     return SUCCESS;
 }
 
@@ -127,13 +122,12 @@ static void _tty_putchar(struct tty_struct *tty, char c)
 
 static ssize_t tty_write(struct file_struct *fd, char *buf, size_t count)
 {
-    struct tty_struct *tty = (struct tty_struct*)fd->drv_struct;
     int i;
     for (i = 0; i < count; i++)
     {
-        _tty_putchar(tty, buf[i]);
+        _tty_putchar(tty1, buf[i]);
     }
-    set_cursor(tty);
+    set_cursor(tty1);
     return i;
 }
 
@@ -146,13 +140,10 @@ static ssize_t tty_read(struct file_struct *fd, char *buf, size_t count)
     return -ENOSYS;
 }
 
-static ssize_t tty_seek(struct file_struct *fd, size_t offset, int whence)
-{
-    return -ENOSYS;
-}
-
 static int tty_ioctl(struct file_struct *fd, unsigned long request, unsigned long arg)
 {
+    (void)arg;
+
     if (request == IOCTL_FOCUS)
     {
         tty_focus(fd->drv_struct);
@@ -164,7 +155,7 @@ static int tty_ioctl(struct file_struct *fd, unsigned long request, unsigned lon
 
 static int tty_release(struct file_struct *fd)
 {
-    return -ENOSYS;
+    return SUCCESS;
 }
 
 void tty_setup(void)
@@ -175,53 +166,17 @@ void tty_setup(void)
         .ioctl = tty_ioctl,
         .read = tty_read,
         .write = tty_write,
-        .seek = tty_seek,
+        .seek = NULL,
         .close = tty_release
     };
     register_cd(MAJOR_TTY, "tty", fops);
 
-    /*if (open_chardev(&keyboard, MAJOR_KEYBOARD, O_RDONLY) < 0)
-    {
-        klog(KLOG_WARN, "tty_setup(): failed to open keyboard");
-        keyboard = NULL;
-    }*/
-}
+    tty1 = kmalloc(sizeof(struct tty_struct), 1, "tty_struct");
+    tty1->pos_x = 0;
+    tty1->pos_y = 0;
+    tty1->vmem = tty1->tty_mem;
+    tty1->color = WHITE | (BLACK << 4);
 
-static int ttyk_init(void)
-{
-    ttyk = kmalloc(sizeof(struct file_struct), 1, "file_struct ttyk");
-    return tty_open(ttyk, 0, 0);
-}
-
-static void tty_putchar(struct tty_struct *tty, char c)
-{
-    _tty_putchar(tty, c);
-    set_cursor(tty);
-}
-
-ssize_t tty_kernel_putchar(char c)
-{
-    if (ttyk == NULL)
-    {
-        if (ttyk_init() < 0)
-        {
-            return -1;
-        }
-    }
-
-    tty_putchar((struct tty_struct*)ttyk->drv_struct, c);
-    return SUCCESS;
-}
-
-ssize_t tty_kernel_write(char *buf, size_t count)
-{
-    if (ttyk == NULL)
-    {
-        if (ttyk_init() < 0)
-        {
-            return -1;
-        }
-    }
-
-    return tty_write(ttyk, buf, count);
+    clear(tty1);
+    tty_focus(tty1);
 }
