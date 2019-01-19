@@ -8,7 +8,7 @@
 #include <sched/process.h>
 #include <sched/scheduler.h>
 #include <sched/syscalls.h>
-#include "drivers/devices.h"
+#include <devices/devices.h>
 #include <filesystem/vfscore.h>
 #include <errno.h>
 #include <exec.h>

@@ -1,7 +1,7 @@
 #include "devices.h"
-#include "ata.h"
-#include "keyboard.h"
 #include "partitions.h"
+#include <drivers/ata.h>
+#include <drivers/keyboard.h>
 #include <memory/kheap.h>
 #include <kdebug.h>
 #include <video/tty.h>

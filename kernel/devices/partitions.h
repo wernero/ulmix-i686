@@ -1,7 +1,7 @@
 #ifndef PARTITIONS_H
 #define PARTITIONS_H
 
-#include "drivers/devices.h"
+#include "devices.h"
 
 struct mbr_entry_struct
 {

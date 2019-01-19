@@ -2,7 +2,7 @@
 
 #include <sched/task.h>
 #include <sched/process.h>
-#include <drivers/devices.h>
+#include <devices/devices.h>
 #include <kdebug.h>
 #include <errno.h>
 

@@ -3,7 +3,7 @@
 #include <kdebug.h>
 #include <filesystem/open.h>
 #include <filesystem/fs_syscalls.h>
-#include <drivers/devices.h>
+#include <devices/devices.h>
 
 struct file_struct *kbd = NULL;
 struct tty_struct *tty1;

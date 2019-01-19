@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "devices.h"
+#include <devices/devices.h>
 #include <util/util.h>
 #include <interrupts.h>
 #include <kdebug.h>

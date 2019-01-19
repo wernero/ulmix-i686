@@ -2,7 +2,7 @@
 #include "filesystem.h"
 #include "open.h"
 #include "path.h"
-#include <drivers/devices.h>
+#include <devices/devices.h>
 #include <errno.h>
 #include <sched/task.h>
 #include <sched/process.h>

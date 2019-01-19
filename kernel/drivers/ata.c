@@ -2,7 +2,7 @@
 #include "util/util.h"
 #include "log.h"
 #include "memory/kheap.h"
-#include "drivers/devices.h"
+#include "devices/devices.h"
 #include "interrupts.h"
 #include "sched/task.h"
 #include "sched/block.h"

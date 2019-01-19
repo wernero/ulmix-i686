@@ -3,7 +3,7 @@
 
 #include "vfscore.h"
 #include <util/util.h>
-#include <drivers/devices.h>
+#include <devices/devices.h>
 
 void init_filesystems(void);
 int  install_fs(struct filesystem_struct *fs);

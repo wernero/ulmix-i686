@@ -1,7 +1,7 @@
 #include "filesystem.h"
 #include "ext2.h"
 #include <memory/kheap.h>
-#include <drivers/devices.h>
+#include <devices/devices.h>
 #include <kdebug.h>
 #include <errno.h>
 
