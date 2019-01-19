@@ -14,9 +14,6 @@ struct chardev_struct *char_devices[MAX_DEVICES];
 
 void scan_devices()
 {
-    int i;
-    for (i = 0; i < MAX_DEVICES; i++)   blk_devices[i] = NULL;
-    for (i = 0; i < MAX_DEVICES; i++)   char_devices[i] = NULL;
     klog(KLOG_DEBUG, "scanning devices");
 
     ata_init();
