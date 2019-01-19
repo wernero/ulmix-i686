@@ -8,42 +8,20 @@
 
 static void insert_gendisk(struct gendisk_struct *bd);
 static void insert_chardev(struct chardev_struct *cd);
-gendevice_t devices[20];
-int device_index = 0;
+
+struct gendisk_struct *blk_devices[MAX_DEVICES];
+struct chardev_struct *char_devices[MAX_DEVICES];
 
 void scan_devices()
 {
+    int i;
+    for (i = 0; i < MAX_DEVICES; i++)   blk_devices[i] = NULL;
+    for (i = 0; i < MAX_DEVICES; i++)   char_devices[i] = NULL;
     klog(KLOG_DEBUG, "scanning devices");
 
     ata_init();
     keyboard_setup();
     tty_setup();
-}
-
-struct gendisk_struct *find_gendisk(int major)
-{
-    for (int i = 0; i < device_index; i++)
-    {
-        if (major == devices[i].gendisk->major)
-        {
-            return devices[i].gendisk;
-        }
-    }
-
-    return NULL;
-}
-
-struct chardev_struct *find_chardev(int major)
-{
-    for (int i = 0; i < device_index; i++)
-    {
-        if (major == devices[i].chardev->major)
-        {
-            return devices[i].chardev;
-        }
-    }
-
-    return NULL;
 }
 
 int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity)
@@ -79,15 +57,54 @@ int register_cd(int major, char *name, struct fd_fops_struct fops)
 
 static void insert_gendisk(struct gendisk_struct *bd)
 {
-    gendevice_t dev;
-    dev.gendisk = bd;
-    devices[device_index++] = dev;
+    for (int i = 0; i < MAX_DEVICES; i++)
+    {
+        if (blk_devices[i] == NULL)
+        {
+            blk_devices[i] = bd;
+            return;
+        }
+    }
 }
 
 static void insert_chardev(struct chardev_struct *cd)
 {
-    gendevice_t dev;
-    dev.chardev = cd;
-    devices[device_index++] = dev;
-    klog(KLOG_DEBUG, "chardev #%d allocated", device_index-1);
+    for (int i = 0; i < MAX_DEVICES; i++)
+    {
+        if (char_devices[i] == NULL)
+        {
+            char_devices[i] = cd;
+            return;
+        }
+    }
+}
+
+struct gendisk_struct *find_gendisk(int major)
+{
+    for (int i = 0; i < MAX_DEVICES; i++)
+    {
+        if (blk_devices[i] == NULL)
+            continue;
+        if (major == blk_devices[i]->major)
+        {
+            return blk_devices[i];
+        }
+    }
+
+    return NULL;
+}
+
+struct chardev_struct *find_chardev(int major)
+{
+    for (int i = 0; i < MAX_DEVICES; i++)
+    {
+        if (char_devices[i] == NULL)
+            continue;
+        if (major == char_devices[i]->major)
+        {
+            return char_devices[i];
+        }
+    }
+
+    return NULL;
 }

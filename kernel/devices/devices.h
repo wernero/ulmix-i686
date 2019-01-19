@@ -5,6 +5,8 @@
 #include <sched/sync.h>
 #include <filesystem/fs_syscalls.h>
 
+#define MAX_DEVICES     64
+
 #define MAJOR_TTY       1
 #define MAJOR_KEYBOARD  2
 #define MAJOR_MOUSE     3
@@ -52,12 +54,6 @@ struct chardev_struct
     char name[16];
     struct fd_fops_struct fops;
 };
-
-typedef union
-{
-    struct gendisk_struct *gendisk;
-    struct chardev_struct *chardev;
-} gendevice_t;
 
 void scan_devices(void);
 struct gendisk_struct *find_gendisk(int major);
