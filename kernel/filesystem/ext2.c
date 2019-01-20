@@ -7,12 +7,14 @@
 #include "filesystem/fs_syscalls.h"
 #include "filesystem/vfscore.h"
 
-#define EXT2_BLOCK_SIZE         0x400
+#define EXT2_BLOCK_SIZE         0x400   // defined by a field in the superblock
+#define EXT2_INODE_SIZE         0x80    // defined by a field in the superblock
+#define IO_SIZE                 0x200   // actually defined by the actual gendisk_struct
 
 static int ext2_probe(struct gendisk_struct *bd, int partition);
 static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
 static int ext2_get_direntry(struct dir_struct *miss);
-static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no);
+static int ext2_get_inode(struct direntry_struct *entry);
 
 static int ext2_read(struct file_struct *fd, char *buf, size_t len);
 static int ext2_write(struct file_struct *fd, char *buf, size_t len);
@@ -272,7 +274,7 @@ static int ext2_get_direntry(struct dir_struct *miss)
         current_des->directory = NULL;
         current_des->next = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
 
-        ext2_get_inode(current_des, current_des->inode_no);
+        ext2_get_inode(current_des);
 
         if(current_des->mode & 0x4000) {   // inode is a directory entry
             //current_des->type = DIRECTORY;
@@ -331,61 +333,48 @@ static int ext2_get_direntry(struct dir_struct *miss)
     return 0;
 }
 
-static int ext2_get_inode(struct direntry_struct *entry, unsigned long inode_no)
+static int fetch_inode(struct direntry_struct *entry, ext2_inode_t *inode)
 {
+    if (entry->inode_no > entry->parent->sb->s_inodes_total)
+        return -ENOENT;
 
-    struct gd_struct * gds;
-    int block_group = 0;
-    int inode_group_offset = 0;
-    //int inode_offset = 0;
-    int i,n;
-    int block_counter = 0;
-
-    char *inode_buf = kmalloc(0x200, 1, "inode_buf");
-    ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
-
-    struct inode_block_table *current_ibt;
-
-    // which inode do we want to read
-    // which block group is required - inode / inode per block
-    block_group =  (entry->inode_no - 1) / entry->parent->sb->s_inodes_per_group;
-
-    gds = entry->parent->sb->s_group_desc; // this is group descriptor 0;
-
-    for(i=1; i <= block_group; i++){
+    // get group descriptor for the block group that contains the inode
+    struct gd_struct *gds = entry->parent->sb->s_group_desc;
+    int block_group = (entry->inode_no - 1) / entry->parent->sb->s_inodes_per_group;
+    for(int i = 0; i < block_group; i++)
         gds = gds->bg_next;
+
+    // calculate inode offset inside the group
+    int inodes_per_disk_sector = IO_SIZE / EXT2_INODE_SIZE;
+    int inode_group_offset = ((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / inodes_per_disk_sector;
+
+    // read inode from disk
+    char *inode_buf = kmalloc(IO_SIZE, 1, "ext2 inode_buf");
+
+    entry->parent->bd->fops.seek(entry->parent->bd->drv_struct,
+                                 entry->parent->partition->sector_offset + + inode_group_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / IO_SIZE),
+                                 SEEK_SET);
+    entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_buf, 1);
+
+    memcpy(inode, inode_buf + (((entry->inode_no - 1) % inodes_per_disk_sector) * EXT2_INODE_SIZE), EXT2_INODE_SIZE);
+    kfree(inode_buf);
+    return SUCCESS;
+}
+
+static int ext2_get_inode(struct direntry_struct *entry)
+{
+    int ret;
+    ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
+    if ((ret = fetch_inode(entry, inode)) < 0)
+    {
+        kfree(inode);
+        return -ret;
     }
 
-    // there are 4 inodes structs (0x80) (inode_groups) per disk block (0x200) - calculate the offset of the inode address table beginning
+    int n;
+    int block_counter = 0;
 
-    inode_group_offset = (((entry->inode_no - 1) % entry->parent->sb->s_inodes_per_group) / 4);
-
-    klog(KLOG_DEBUG, "ext2_get_inode(): bg=%d, inode=%d, sb=%x, offset=%d, name=%s, bg_inode_table=%x, part_off=%d, read_at=%d : %x",
-        block_group,
-        entry->inode_no,
-    entry->parent->sb,
-        inode_group_offset,
-        entry->name,
-        gds->bg_inode_table,
-        entry->parent->partition->sector_offset,
-        entry->parent->partition->sector_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / 512) + inode_group_offset,
-        (entry->parent->partition->sector_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / 512) + inode_group_offset)*0x200
-        );
-
-    // get inode address table from respective block and jump to it
-    entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / 512) + inode_group_offset, SEEK_SET);
-    entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_buf, 0x200 / 512);
-
-    memcpy(inode,(inode_buf + (((entry->inode_no - 1) % 4) * 0x80)), 0x80);
-
-    kfree(inode_buf); // be nice and free up space
-
-    klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, mode=%x, size=%d",
-        entry->inode_no,
-        inode->i_mode,
-        inode->i_size
-        );
-
+    struct inode_block_table *current_ibt;
     entry->mode = inode->i_mode;
     entry->type = entry->mode & 0xf000;
     entry->size = inode->i_size;

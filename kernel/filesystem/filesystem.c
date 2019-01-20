@@ -32,7 +32,7 @@ int install_fs(struct filesystem_struct *fs)
 
 int direntry_get_inode(struct direntry_struct *file)
 {
-    return file->parent->sb->fs->fs_get_inode(file, file->inode_no);  /// get_inode function changed !!!!
+    return file->parent->sb->fs->fs_get_inode(file);  /// get_inode function changed !!!!
 }
 
 int direntry_get_dir(struct dir_struct *dir)

@@ -89,7 +89,7 @@ struct filesystem_struct // filesystem interface
     int (*fs_probe)(struct gendisk_struct *bd, int part);
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
     int (*fs_get_direntry)(struct dir_struct *miss);
-    int (*fs_get_inode)(struct direntry_struct *entry, unsigned long inode_no);
+    int (*fs_get_inode)(struct direntry_struct *entry);
 
     // standard file system calls:
     int (*fs_read)(struct file_struct *fd, char *buf, size_t len);
