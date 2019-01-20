@@ -40,7 +40,7 @@ int direntry_get_dir(struct dir_struct *dir)
     return dir->sb->fs->fs_get_direntry(dir);
 }
 
-int kmount(struct dir_struct *mountpoint, int major, int partition)
+int kmount(struct dir_struct *mountpoint, int major, int minor)
 {
     struct gendisk_struct *disk;
     if ((disk = find_gendisk(major)) == NULL)
@@ -52,15 +52,15 @@ int kmount(struct dir_struct *mountpoint, int major, int partition)
     for (int i = 0; i < SUP_FS_COUNT; i++)
     {
         struct filesystem_struct *pfs = supported_filesystems[i];
-        if (pfs != NULL && (pfs->fs_probe(disk, partition) >= 0))
+        if (pfs != NULL && (pfs->fs_probe(disk, minor) >= 0))
         {
             klog(KLOG_INFO, "kmount(): major=%d, start=0x%x, size=%S, type=%s",
                  major,
-                 disk->part_list[partition].sector_offset * 512,
-                 disk->part_list[partition].sector_count * 512,
+                 disk->part_list[minor].sector_offset * 512,
+                 disk->part_list[minor].sector_count * 512,
                  pfs->name);
 
-            return pfs->fs_mount(pfs, mountpoint, disk, partition);
+            return pfs->fs_mount(pfs, mountpoint, disk, minor);
         }
     }
 
