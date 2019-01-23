@@ -33,6 +33,13 @@ static inline uint8_t inb(uint16_t port)
     return ret_val;
 }
 
+static inline uint32_t inl(uint16_t port)
+{
+    uint32_t ret_val;
+    __asm__ volatile ("inl %1, %0" : "=a"(ret_val) : "Nd"(port));
+    return ret_val;
+}
+
 static inline void repinsb(uint16_t port, uint8_t* buf, uint32_t count)
 {
     uint32_t temp = (uint32_t)buf;
@@ -48,6 +55,11 @@ static inline void repinsw(uint16_t port, uint16_t* buf, uint32_t count)
 static inline void outw(uint16_t port, uint16_t val)
 {
     __asm__ volatile ("outw %0, %1" :: "a"(val), "Nd"(port));
+}
+
+static inline void outl(uint16_t port, uint32_t lng)
+{
+    __asm__ volatile ("outl %0, %1" :: "a"(lng), "Nd"(port));
 }
 
 static inline void outb(uint16_t port, uint8_t val)

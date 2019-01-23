@@ -1,4 +1,5 @@
 #include "devices.h"
+#include "pci.h"
 #include "partitions.h"
 #include <drivers/ata.h>
 #include <drivers/keyboard.h>
@@ -16,6 +17,7 @@ void scan_devices()
 {
     klog(KLOG_DEBUG, "scanning devices");
 
+    setup_pci();
     ata_init();
     keyboard_setup();
     tty_setup();

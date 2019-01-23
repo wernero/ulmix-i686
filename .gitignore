@@ -24,3 +24,4 @@ snapshot.txt*
 vmulmix
 *.elf
 *.map
+launch.sh
