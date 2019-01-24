@@ -172,7 +172,7 @@ void tty_setup(void)
         .seek = NULL,
         .close = tty_release
     };
-    register_cd(MAJOR_TTY, "tty", fops);
+    register_cd(MAJOR_TTY, 1, fops);
 
     tty1 = kmalloc(sizeof(struct tty_struct), 1, "tty_struct");
     tty1->pos_x = 0;
@@ -183,7 +183,7 @@ void tty_setup(void)
     clear(tty1);
     tty_focus(tty1);
 
-    int kbdfd = open_by_major(MAJOR_KEYBOARD, 1, O_RDONLY, NULL);
+    int kbdfd = open_by_major(MAJOR_KEYBOARD, 0, O_RDONLY, NULL);
     if (kbdfd < 0)
     {
         klog(KLOG_WARN, "tty: could not open keyboard (errno %d)", -kbdfd);

@@ -49,7 +49,7 @@ int open_by_major(int major, int minor, int flags, struct direntry_struct *node)
     fd->open_mode = flags;
     fd->seek_offset = 0;
 
-    struct chardev_struct *cd = find_chardev(major);
+    struct chardev_struct *cd = find_chardev(major, minor);
     if (cd == NULL)
         return -ENODEV;
 

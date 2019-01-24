@@ -90,7 +90,7 @@ void keyboard_setup(void)
         .write = write,
         .seek = seek
     };
-    register_cd(MAJOR_KEYBOARD, "kbd", fops);
+    register_cd(MAJOR_KEYBOARD, 0, fops);
 
     // install irq handler
     irq_install_handler(KBD_INTERRUPT, int_handler);

@@ -51,14 +51,14 @@ struct gendisk_struct
 struct chardev_struct
 {
     int major;
-    char name[16];
+    int minor;
     struct fd_fops_struct fops;
 };
 
 void scan_devices(void);
 struct gendisk_struct *find_gendisk(int major);
-struct chardev_struct *find_chardev(int major);
+struct chardev_struct *find_chardev(int major, int minor);
 int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
-int register_cd(int major, char *name, struct fd_fops_struct fops);
+int register_cd(int major, int minor, struct fd_fops_struct fops);
 
 #endif // DEVICES_H

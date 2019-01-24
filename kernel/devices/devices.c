@@ -43,12 +43,12 @@ int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops
     return 0;
 }
 
-int register_cd(int major, char *name, struct fd_fops_struct fops)
+int register_cd(int major, int minor, struct fd_fops_struct fops)
 {
     struct chardev_struct *cd = kmalloc(sizeof(struct chardev_struct), 1, "chardev_struct");
     cd->fops = fops;
     cd->major = major;
-    strcpy(cd->name, name);
+    cd->minor = minor;
 
     insert_chardev(cd);
     return 0;
@@ -93,13 +93,14 @@ struct gendisk_struct *find_gendisk(int major)
     return NULL;
 }
 
-struct chardev_struct *find_chardev(int major)
+struct chardev_struct *find_chardev(int major, int minor)
 {
     for (int i = 0; i < MAX_DEVICES; i++)
     {
         if (char_devices[i] == NULL)
             continue;
-        if (major == char_devices[i]->major)
+        if (major == char_devices[i]->major &&
+                minor == char_devices[i]->minor)
         {
             return char_devices[i];
         }
