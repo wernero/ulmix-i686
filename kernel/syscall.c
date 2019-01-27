@@ -75,10 +75,12 @@ void *syscalls[] =
 extern thread_t *current_thread;
 int syscall_handler(struct syscall_context_struct *context)
 {
-    klog(KLOG_DEBUG, "[%d] called system call #%d", current_thread->process->pid, context->eax);
-
     if (syscalls[context->eax] == NULL)
-        return -ENOSYS; // not implemented
+    {
+        klog(KLOG_DEBUG, "pid %d: called unimplemented system call (%d)",
+             current_thread->process->pid, context->eax);
+        return -ENOSYS;
+    }
 
     // call actual syscall handler
     int ret;

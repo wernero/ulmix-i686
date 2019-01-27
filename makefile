@@ -17,6 +17,8 @@ KIMG = vmulmix
 
 KOBJ := $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c)) $(patsubst %.s, %.o, $(wildcard kernel/*.s kernel/*/*.s))
 
+all: $(KIMG)
+
 $(KIMG): $(KOBJ)
 	@ echo " LD  $(KIMG)"
 	@ $(LD) $(LFLAGS)  $(KOBJ) -o $(KIMG)
@@ -29,8 +31,6 @@ $(KIMG): $(KOBJ)
 %.o: %.s
 	@ echo " AS  $<"
 	@ $(AS) $< $(AFLAGS) -I kernel -o $@
-
-
 
 .phony: all clean
 all: $(KIMG)
