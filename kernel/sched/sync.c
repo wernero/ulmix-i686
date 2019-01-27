@@ -8,40 +8,35 @@ extern volatile scheduler_state_t scheduler_state;
 
 mutex_t *mutex(void)
 {
-    /*mutex_t *mtx = kmalloc(sizeof(mutex_t), 1, "mutex_t");
+    mutex_t *mtx = kmalloc(sizeof(mutex_t), 1, "mutex_t");
     mtx->blocked = 0;
     mtx->blocker = NULL;
     mtx->blocklist = blocker();
-    return mtx;*/
-    return NULL;
+    return mtx;
 }
 
-void mutex_lock(mutex_t *mutex)
+void mutex_lock(mutex_t *mtx)
 {
-    /*cli();
-    scheduler_state_t tmp = scheduler_state;
-    scheduler_state = SCHED_PAUSED;
-    sti();
-
-    if (!mutex->blocked)
+    cli();
+    if (!mtx->blocked)
     {
-        mutex->blocked = 1;
-        mutex->blocker = current_thread;
+        mtx->blocked = 1;
+        mtx->blocker = current_thread;
+        sti();
     }
     else
     {
-        blocklist_add(mutex->blocklist, current_thread);
+        sti();
+        blocklist_add(mtx->blocklist);
+        mutex_lock(mtx);
     }
-
-    scheduler_state = tmp;*/
 }
 
-void mutex_unlock(mutex_t *mutex)
+void mutex_unlock(mutex_t *mtx)
 {
-    if (!mutex->blocked)
-        return;
-
-    mutex->blocked = 0;
-
-    // unblock thread(s)
+    if (mtx->blocked && mtx->blocker == current_thread)
+    {
+        mtx->blocked = 0;
+        blocklist_unblock(mtx->blocklist);
+    }
 }

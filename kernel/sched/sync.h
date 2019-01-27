@@ -12,7 +12,7 @@ typedef struct
 } mutex_t;
 
 mutex_t *mutex(void);
-void mutex_lock(mutex_t *mutex);
-void mutex_unlock(mutex_t *mutex);
+void mutex_lock(mutex_t *mtx);
+void mutex_unlock(mutex_t *mtx);
 
 #endif // SYNC_H

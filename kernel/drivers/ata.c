@@ -30,6 +30,7 @@ typedef struct
     int drive_select;
     uint16_t data[256];
     int irq;
+    mutex_t *mtx;
 } ata_drive_t;
 
 static int get_drive_addr(int drive, ata_drive_t *ata_drive);
@@ -57,6 +58,7 @@ void ata_init()
         {
             drives[i] = kmalloc(sizeof(ata_drive_t), 1, "ata_drive_t");
             *(drives[i]) = ata_drive;
+            (drives[i])->mtx = mutex();
 
             struct fd_fops_struct fops =
             {
@@ -134,6 +136,8 @@ static ssize_t ata_read(struct file_struct *fd, char *buf, size_t count)
     // +5 R/W - Cylinder High Register
     // +6 R/W - Drive / Head Register
 
+    mutex_lock(drive->mtx);
+
     outb(drive->io_base + 6, drive->drive_select);                      // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high      // TODO >> 24??
     outb(drive->io_base + 3, (offset >> 24) & 0xff);        // byte 4
@@ -153,6 +157,8 @@ static ssize_t ata_read(struct file_struct *fd, char *buf, size_t count)
 
         repinsw(drive->io_base, (uint16_t*)(buf + SECTOR_SIZE * i), 256);
     }
+
+    mutex_unlock(drive->mtx);
     return count;
 }
 
@@ -163,6 +169,8 @@ static ssize_t ata_write(struct file_struct *fd, char *buf, size_t count)
 
     size_t offset = fd->lock_offset + fd->seek_offset;
     fd->seek_offset += count;
+
+    mutex_lock(drive->mtx);
 
     outb(drive->io_base + 6, drive->drive_select);                      // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high     // >> 24 ???
@@ -186,6 +194,8 @@ static ssize_t ata_write(struct file_struct *fd, char *buf, size_t count)
 
     outb(drive->io_base + 7, 0xe7); // CACHE FLUSH
     waitBSY(drive);
+
+    mutex_unlock(drive->mtx);
     return count;
 }
 
