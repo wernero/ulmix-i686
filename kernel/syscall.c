@@ -1,10 +1,10 @@
 #include "syscall.h"
-#include "util/util.h"
-#include "filesystem/fs_syscalls.h"
-#include "exec.h"
+#include <util/util.h>
+#include <filesystem/fs_syscalls.h>
+#include <exec.h>
 #include <sched/process.h>
 #include <errno.h>
-#include <log.h>
+#include <kdebug.h>
 
 #define nop 0
 
@@ -25,7 +25,7 @@ void *syscalls[] =
     sys_link,           // 9    link()              *required
     sys_unlink,         // 10   unlink()            *required
     sys_execve,         // 11   execve()            *required
-    nop,                // 12   chdir()
+    sys_chdir,          // 12   chdir()
     nop,                // 13   time()
     nop,                // 14   mknod()
     nop,                // 15   chmod()

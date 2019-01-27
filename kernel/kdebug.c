@@ -16,15 +16,15 @@ void kdebug_init()
     kdebug_enabled = 1;
 }
 
-void log_puts(int oflags, char *s)
+void log_puts(char *s)
 {
     int l = strlen(s);
     //if (oflags & OUT_TTY)       tty_kernel_write(s, l);
-    if (oflags & OUT_SERIAL)    serial_write(TTYS1, s, l);
+    serial_write(TTYS1, s, l);
 }
 
-void log_putchar(int oflags, char c)
+void log_putchar(char c)
 {
     //if (oflags & OUT_TTY)       tty_kernel_putchar(c);
-    if (oflags & OUT_SERIAL)    serial_putchar(TTYS1, c);
+    serial_putchar(TTYS1, c);
 }

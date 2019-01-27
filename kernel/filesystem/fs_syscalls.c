@@ -90,3 +90,17 @@ int sys_ioctl(int fd, unsigned long request, unsigned long arg)
 
     return fds->fops.ioctl(fds, request, arg);
 }
+
+int sys_chdir(char *wdir)
+{
+    struct direntry_struct *node;
+    int ret;
+    if ((ret = namei(wdir, &node)) < 0)
+        return ret;
+
+    if (node->type != DIRECTORY)
+        return -ENOTDIR;
+
+    current_thread->process->working_dir = node->directory;
+    return SUCCESS;
+}
