@@ -17,6 +17,9 @@ mutex_t *mutex(void)
 
 void mutex_lock(mutex_t *mtx)
 {
+    if (scheduler_state == SCHED_DISABLED)
+        return;
+
     cli();
     if (!mtx->blocked)
     {

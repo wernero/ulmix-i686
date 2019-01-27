@@ -4,6 +4,7 @@
 #include "sched/sync.h"
 
 
+extern mutex_t *log_mutex;
 extern int kdebug_enabled;
 
 extern void log_puts(char *s);
@@ -57,6 +58,7 @@ static void vsprintf(const char *format, va_list ap)
 
 void klog(loglevel_t lvl, const char *format, ...)
 {
+    mutex_lock(log_mutex);
     if (kdebug_enabled)
     {
         if  (lvl == KLOG_PANIC)
@@ -68,6 +70,7 @@ void klog(loglevel_t lvl, const char *format, ...)
         va_end(args);
         log_putchar('\n');
     }
+    mutex_unlock(log_mutex);
 
     if (lvl == KLOG_PANIC || lvl == KLOG_FAILURE)
     {

@@ -7,12 +7,13 @@
 #include <video/tty.h>
 
 int kdebug_enabled = 0;
+mutex_t *log_mutex;
 
 
 void kdebug_init()
 {
     serial_open(TTYS1, 0);
-
+    log_mutex = mutex();
     kdebug_enabled = 1;
 }
 
