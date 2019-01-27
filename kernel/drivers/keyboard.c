@@ -19,7 +19,7 @@ static void kbdbuf_put(unsigned char c);
 static blocklist_t *kbd_block = NULL;
 static struct kbd_file_struct *drvp[MAX_OPENS];
 
-static int open(struct file_struct *fd, int flags, int varg);
+static int open(struct file_struct *fd, int flags, union drv_union drv);
 static int release(struct file_struct *fd);
 static int ioctl(struct file_struct *fd, unsigned long request, unsigned long arg);
 static ssize_t write(struct file_struct *fd, char *buf, size_t len);
@@ -125,7 +125,7 @@ static void kbdbuf_put(unsigned char c)
     blocklist_unblock(kbd_block);
 }
 
-static int open(struct file_struct *fd, int flags, int varg)
+static int open(struct file_struct *fd, int flags, union drv_union drv)
 {
     struct kbd_file_struct *kdesc = kmalloc(sizeof(struct kbd_file_struct), 1, "keyboard descriptor");
     kdesc->mode = KBD_MODE_ASCII;

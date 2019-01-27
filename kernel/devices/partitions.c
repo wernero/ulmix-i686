@@ -1,29 +1,31 @@
 #include "partitions.h"
-#include "log.h"
+#include <kdebug.h>
+#include <filesystem/open.h>
+#include <errno.h>
 
 static void gendisk_add_partition(struct gendisk_struct *bd, struct mbr_entry_struct mbr_entry);
 static int is_mbr(unsigned char *sec1);
 
 int part_scan(struct gendisk_struct *bd)
 {
-    klog(KLOG_DEBUG, "part_scan()");
-
     // load master boot record
+    struct file_struct *fd = kopen_device(BLOCKDEVICE, bd->major, bd->minor, O_RDONLY);
+    if (fd == NULL)
+        return -ENODEV;
+
     unsigned char mbr[512];
-    if (bd->fops.read(bd->drv_struct, (char*)mbr, 1) < 0)
+    if (fd->fops.read(fd, (char *)mbr, 512) < 0)
     {
         return -1;
     }
+    kclose(fd);
 
     // verify master boot record
     if (!is_mbr(mbr))
     {
-        klog(KLOG_DEBUG, "part_scan(): no valid MBR found");
+        klog(KLOG_DEBUG, "part-scan: no valid MBR found");
         return -1;
     }
-
-    // read MBR partition table
-    klog(KLOG_DEBUG, "part_scan(): reading MBR partition table:");
 
     int partitions_count = 0;
     for (int i = 0; i < 4; i++)
@@ -51,6 +53,8 @@ int part_scan(struct gendisk_struct *bd)
 
 static void gendisk_add_partition(struct gendisk_struct *bd, struct mbr_entry_struct mbr_entry)
 {
+    register_bd(bd->major, mbr_entry.id + 1, bd->fops, mbr_entry.sector_count, mbr_entry.start_sector, bd->io_size);
+
     struct hd_struct partition;
     partition.sector_offset = mbr_entry.start_sector;
     partition.sector_count = mbr_entry.sector_count;
@@ -60,7 +64,7 @@ static void gendisk_add_partition(struct gendisk_struct *bd, struct mbr_entry_st
     bd->part_list[mbr_entry.id] = partition;
     bd->part_count++;
 
-    klog(KLOG_DEBUG, "part_scan(): part #%d: size=%S, type=%d", mbr_entry.id, partition.sector_count * 512, partition.fs_type);
+    klog(KLOG_DEBUG, "part-scan: id=%d, size=%S, type=%d", mbr_entry.id, partition.sector_count * 512, partition.fs_type);
 }
 
 static int is_mbr(unsigned char *sec1)

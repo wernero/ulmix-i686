@@ -11,13 +11,13 @@
 #define EXT2_INODE_SIZE         0x80    // defined by a field in the superblock
 #define IO_SIZE                 0x200   // actually defined by the actual gendisk_struct
 
-static int ext2_probe(struct gendisk_struct *bd, int partition);
-static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part);
+static int ext2_probe(struct file_struct *fd, int partition);
+static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
 static int ext2_get_direntry(struct dir_struct *miss);
 static int ext2_get_inode(struct direntry_struct *entry);
 
-static int ext2_read(struct file_struct *fd, char *buf, size_t len);
-static int ext2_write(struct file_struct *fd, char *buf, size_t len);
+static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len);
+static ssize_t ext2_write(struct file_struct *fd, char *buf, size_t len);
 static ssize_t ext2_seek(struct file_struct *fd, size_t offset, int whence);
 
 
@@ -37,37 +37,38 @@ void install_ext2()
     install_fs(ext2fs);
 }
 
-static void get_superblock(struct gendisk_struct *bd, struct hd_struct *partition, superblock_extended_t *buf)
+static void get_superblock(struct file_struct *fd, superblock_extended_t *buf)
 {
     int superblock_offset = 0x400;
     int superblock_size = 0x400;
 
-    bd->fops.seek(bd->drv_struct, partition->sector_offset + (superblock_offset / 512), SEEK_SET);
-    bd->fops.read(bd->drv_struct, (char*)buf, superblock_size / 512);
+    fd->fops.seek(fd, superblock_offset, SEEK_SET);
+    fd->fops.read(fd, (char*)buf, superblock_size);
 }
 
-static int ext2_probe(struct gendisk_struct *bd, int partition)
+static int ext2_probe(struct file_struct *fd, int partition)
 {
     superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
-    get_superblock(bd, &(bd->part_list[partition]), superblock);
+    get_superblock(fd, superblock);
     uint16_t signature = superblock->signature;
     kfree(superblock);
 
-    klog(KLOG_DEBUG, "ext2_probe(): signature=%x", signature);
+    klog(KLOG_DEBUG, "ext2_probe(): signature=0x%x", signature);
 
     if (signature == 0xef53)
         return 0;
     return -1;
 }
 
-static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct gendisk_struct *bd, int part)
+static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd)
 {
+    struct gendisk_struct *bd = fd->drv.bd;
     mountpoint->bd = bd;
-    mountpoint->partition = &(bd->part_list[part]);
+    // mountpoint->part possibly not used
 
     // get superblock from partition
     superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
-    get_superblock(bd, mountpoint->partition, superblock);
+    get_superblock(fd, superblock);
 
     klog(KLOG_DEBUG, "ext2_mount(): signature=%x, total_inodes=%d, total_blocks=%d, unalloc_inodes=%d, unalloc_blocks=%d",
         superblock->signature,
@@ -78,7 +79,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 
     // initalize sb_struct in dir_struct
     mountpoint->sb = kmalloc(sizeof(struct sb_struct), 1 , "sb_struct");
-
+    mountpoint->sb->fd = fd;
     mountpoint->sb->fs = fs;
     mountpoint->sb->s_blocks_total = superblock->total_blocks;
     mountpoint->sb->s_inodes_total = superblock->total_inodes;
@@ -101,9 +102,8 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 
     group_descriptor_buf = kmalloc(group_descriptor_size, 1, "group_descriptor_buf");
 
-    bd->fops.seek(bd->drv_struct, mountpoint->partition->sector_offset + (group_descriptor_offset / 512), SEEK_SET);
-    bd->fops.read(bd->drv_struct, (char*)group_descriptor_buf, group_descriptor_size / 512);
-
+    fd->fops.seek(fd, group_descriptor_offset, SEEK_SET);
+    fd->fops.read(fd, (char*)group_descriptor_buf, group_descriptor_size);
 
     klog(KLOG_DEBUG, "ext2_mount(): gdb=%x, gdc=%x, gds=%x, gdo=%x",
         group_descriptor_buf,
@@ -223,8 +223,9 @@ static int ext2_get_direntry(struct dir_struct *miss)
     inode_group_offset = (((miss->inode_no - 1) % miss->sb->s_inodes_per_group) / 4);
 
     // get inode address table from respective block and jump to it
-    miss->bd->fops.seek(miss->bd->drv_struct, miss->partition->sector_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / 512) + inode_group_offset, SEEK_SET);
-    miss->bd->fops.read(miss->bd->drv_struct, (char*)inode_buf, 0x200 / 512);
+    miss->sb->fd->fops.seek(miss->sb->fd, (gds->bg_inode_table * EXT2_BLOCK_SIZE) + (inode_group_offset * 512), SEEK_SET);
+    miss->sb->fd->fops.read(miss->sb->fd, (char*)inode_buf, 512);
+
 
     // get respective inode data
 
@@ -239,8 +240,8 @@ static int ext2_get_direntry(struct dir_struct *miss)
     //     );
 
     // get directory data0
-    miss->bd->fops.seek(miss->bd->drv_struct, miss->partition->sector_offset + (inode->i_block[0] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-    miss->bd->fops.read(miss->bd->drv_struct, (char*)direntry_buf, 0x400 / 512);
+    miss->sb->fd->fops.seek(miss->sb->fd, inode->i_block[0] * EXT2_BLOCK_SIZE, SEEK_SET);
+    miss->sb->fd->fops.read(miss->sb->fd, (char*)direntry_buf, EXT2_BLOCK_SIZE);
 
     for(i=0; i < 0x400;){
         memcpy(&de->inode, direntry_buf+i, sizeof(uint32_t));
@@ -351,10 +352,10 @@ static int fetch_inode(struct direntry_struct *entry, ext2_inode_t *inode)
     // read inode from disk
     char *inode_buf = kmalloc(IO_SIZE, 1, "ext2 inode_buf");
 
-    entry->parent->bd->fops.seek(entry->parent->bd->drv_struct,
-                                 entry->parent->partition->sector_offset + + inode_group_offset + (gds->bg_inode_table * EXT2_BLOCK_SIZE / IO_SIZE),
-                                 SEEK_SET);
-    entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_buf, 1);
+    entry->parent->sb->fd->fops.seek(entry->parent->sb->fd,
+                                     (inode_group_offset * 512) + (gds->bg_inode_table * EXT2_BLOCK_SIZE),
+                                     SEEK_SET);
+    entry->parent->sb->fd->fops.read(entry->parent->sb->fd, (char*)inode_buf, 512);
 
     memcpy(inode, inode_buf + (((entry->inode_no - 1) % inodes_per_disk_sector) * EXT2_INODE_SIZE), EXT2_INODE_SIZE);
     kfree(inode_buf);
@@ -422,8 +423,8 @@ static int ext2_get_inode(struct direntry_struct *entry)
         inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
 
         // block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks .. 256k filessize
-        entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode->i_block[n] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-        entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_indirect_buf, 0x400 / 512);
+        entry->parent->sb->fd->fops.seek(entry->parent->sb->fd, inode->i_block[n] * EXT2_BLOCK_SIZE, SEEK_SET);
+        entry->parent->sb->fd->fops.read(entry->parent->sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
 
         for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
             if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
@@ -453,8 +454,10 @@ static int ext2_get_inode(struct direntry_struct *entry)
         inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "single inode_indirect_buf");
 
         // block is pointing to 1k data block which holds max 256x256 block pointers  of 1k data blocks .. 65MB filesize
-        entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode->i_block[n] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-        entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_indirect_buf, 0x400 / 512);
+        entry->parent->sb->fd->fops.seek(entry->parent->sb->fd,
+                                         inode->i_block[n] * EXT2_BLOCK_SIZE,
+                                         SEEK_SET);
+        entry->parent->sb->fd->fops.read(entry->parent->sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
 
         for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
             if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
@@ -470,8 +473,10 @@ static int ext2_get_inode(struct direntry_struct *entry)
             current_ibt = current_ibt->next;
             }
 
-            entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + (inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE / 512), SEEK_SET);
-            entry->parent->bd->fops.read(entry->parent->bd->drv_struct, (char*)inode_dindirect_buf, 0x400 / 512);
+            entry->parent->sb->fd->fops.seek(entry->parent->sb->fd,
+                                             inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE,
+                                             SEEK_SET);
+            entry->parent->sb->fd->fops.read(entry->parent->sb->fd, (char*)inode_dindirect_buf, EXT2_BLOCK_SIZE);
 
             for(int dibc = 0; dibc < EXT2_IND_BLOCK_LEN; dibc++) {
 
@@ -515,7 +520,7 @@ static int ext2_get_inode(struct direntry_struct *entry)
 
 
 
-static int ext2_read(struct file_struct *fd, char *buf, size_t len)
+static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len)
 {
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
@@ -563,8 +568,8 @@ static int ext2_read(struct file_struct *fd, char *buf, size_t len)
 
             if (!start_block) // depends on seek_offset
             {
-                entry->parent->bd->fops.seek(entry->parent->bd->drv_struct, entry->parent->partition->sector_offset + lba, SEEK_SET);
-                entry->parent->bd->fops.read(entry->parent->bd->drv_struct, disk_read_buffer, EXT2_BLOCK_SIZE / 512);
+                fd->direntry->parent->sb->fd->fops.seek(fd->direntry->parent->sb->fd, lba * 512, SEEK_SET);
+                fd->direntry->parent->sb->fd->fops.read(fd->direntry->parent->sb->fd, disk_read_buffer, EXT2_BLOCK_SIZE);
 
                 if (bytes_to_copy < EXT2_BLOCK_SIZE)
                 {
@@ -602,7 +607,7 @@ read_done:
     return total_bytes_read;
 }
 
-static int ext2_write(struct file_struct *fd, char *buf, size_t len)
+static ssize_t ext2_write(struct file_struct *fd, char *buf, size_t len)
 {
     // not implemented yet
     return -ENOSYS;

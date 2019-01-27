@@ -41,16 +41,16 @@ static void clear(struct tty_struct *tty)
     set_cursor(tty);
 }
 
-static int tty_open(struct file_struct *fd, int flags, int varg)
+static int tty_open(struct file_struct *fd, int flags, union drv_union drv)
 {
     (void)flags;
 
-    if (varg != 1)
+    if (drv.cd->minor != 1)
     {
         return -ENODEV;
     }
 
-    fd->drv_struct = (void*)varg;
+    fd->drv_struct = (void*)drv.cd->minor;
     return SUCCESS;
 }
 
@@ -183,13 +183,9 @@ void tty_setup(void)
     clear(tty1);
     tty_focus(tty1);
 
-    int kbdfd = open_by_major(MAJOR_KEYBOARD, 0, O_RDONLY, NULL);
-    if (kbdfd < 0)
+    kbd = kopen_device(CHARDEVICE, MAJOR_KEYBOARD, 0, O_RDONLY);
+    if (kbd == NULL)
     {
-        klog(KLOG_WARN, "tty: could not open keyboard (errno %d)", -kbdfd);
-    }
-    else
-    {
-        kbd = get_fd(kbdfd);
+        klog(KLOG_WARN, "tty: could not open keyboard");
     }
 }

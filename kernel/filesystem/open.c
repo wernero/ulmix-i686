@@ -42,37 +42,90 @@ int open_file(struct direntry_struct *node, int flags)
     return insert_fd(fd);
 }
 
-int open_by_major(int major, int minor, int flags, struct direntry_struct *node)
-{
-    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct device");
-    fd->direntry = node;
-    fd->open_mode = flags;
-    fd->seek_offset = 0;
 
+static int open_char(struct file_struct *fd, int major, int minor, int flags)
+{
     struct chardev_struct *cd = find_chardev(major, minor);
     if (cd == NULL)
         return -ENODEV;
 
     fd->fops = cd->fops;
+    fd->drv.cd = cd;
+
+    if (fd->fops.open == NULL)
+        return SUCCESS;
+    return fd->fops.open(fd, flags, fd->drv);
+}
+
+static int open_blk(struct file_struct *fd, int major, int minor, int flags)
+{
+    struct gendisk_struct *bd = find_gendisk(major, minor);
+    if (bd == NULL)
+        return -ENODEV;
+
+    fd->fops = bd->fops;
+    fd->drv.bd = bd;
+
+    fd->lock_offset = bd->offset;
+    if (bd->capacity > 0)
+        fd->lock_size = bd->capacity;
+
+    if (fd->fops.open == NULL)
+        return SUCCESS;
+    return fd->fops.open(fd, flags, fd->drv);
+}
+
+struct file_struct *kopen_device(ftype_t type, int major, int minor, int flags)
+{
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct device");
+    fd->direntry = NULL;
+    fd->open_mode = flags;
+    fd->seek_offset = 0;
 
     int ret;
-    if ((ret = fd->fops.open(fd, flags, minor)) < 0)
+    if (type == CHARDEVICE)
+        ret = open_char(fd, major, minor, flags);
+    else if (type == BLOCKDEVICE)
+        ret = open_blk(fd, major, minor, flags);
+    else
+        ret = -EINVAL;
+
+    if (ret < 0)
     {
         kfree(fd);
-        return ret;
+        return NULL;
     }
+    return fd;
+}
 
-    return insert_fd(fd);
+void kclose(struct file_struct *fd)
+{
+    kfree(fd);
 }
 
 int open_device(struct direntry_struct *node, int flags)
 {
-    if (node->type != CHARDEVICE && node->type != BLOCKDEVICE)
-        return -EIO;
-
     // somehow, major/minor are only 8 bit???
     int major = (node->bptr1 & 0xff00) >> 8;
     int minor = node->bptr1 & 0xff;
 
-    return open_by_major(major, minor, flags, node);
+    struct file_struct *fd = kmalloc(sizeof(struct file_struct), 1, "file_struct device");
+    fd->direntry = node;
+    fd->open_mode = flags;
+    fd->seek_offset = 0;
+
+    int ret;
+    if (node->type == CHARDEVICE)
+        ret = open_char(fd, major, minor, flags);
+    else if (node->type == BLOCKDEVICE)
+        ret = open_blk(fd, major, minor, flags);
+    else
+        ret = -EINVAL;
+
+    if (ret < 0)
+    {
+        kfree(fd);
+        return ret;
+    }
+    return insert_fd(fd);
 }

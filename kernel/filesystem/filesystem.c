@@ -1,5 +1,6 @@
 #include "filesystem.h"
 #include "ext2.h"
+#include "open.h"
 #include <memory/kheap.h>
 #include <devices/devices.h>
 #include <kdebug.h>
@@ -42,29 +43,27 @@ int direntry_get_dir(struct dir_struct *dir)
 
 int kmount(struct dir_struct *mountpoint, int major, int minor)
 {
-    struct gendisk_struct *disk;
-    if ((disk = find_gendisk(major)) == NULL)
-    {
-        return -1;
-    }
-
+    struct file_struct *fd = kopen_device(BLOCKDEVICE, major, minor, O_RDWR);
+    if (fd == NULL)
+        return -ENODEV;
 
     for (int i = 0; i < SUP_FS_COUNT; i++)
     {
         struct filesystem_struct *pfs = supported_filesystems[i];
-        if (pfs != NULL && (pfs->fs_probe(disk, minor) >= 0))
+        if (pfs != NULL && (pfs->fs_probe(fd, minor) >= 0))
         {
             klog(KLOG_INFO, "kmount(): major=%d, start=0x%x, size=%S, type=%s",
                  major,
-                 disk->part_list[minor].sector_offset * 512,
-                 disk->part_list[minor].sector_count * 512,
+                 fd->drv.bd->part_list[minor].sector_offset * 512,
+                 fd->drv.bd->part_list[minor].sector_count * 512,
                  pfs->name);
 
-            return pfs->fs_mount(pfs, mountpoint, disk, minor);
+            return pfs->fs_mount(pfs, mountpoint, fd);
         }
     }
 
     klog(KLOG_WARN, "kmount(): filesystem not supported");
+    // kclose(fd);
     return -1;
 }
 

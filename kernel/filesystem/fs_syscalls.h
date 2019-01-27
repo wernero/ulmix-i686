@@ -21,10 +21,15 @@ enum _whence
 };
 
 struct file_struct;
+union drv_union
+{
+    struct gendisk_struct *bd;      // block device
+    struct chardev_struct *cd;      // character device
+};
 
 struct fd_fops_struct
 {
-    int     (*open) (struct file_struct *fd, int flags, int varg);
+    int     (*open) (struct file_struct *fd, int flags, union drv_union drv);
     ssize_t (*read) (struct file_struct *fd, char *buf, size_t len);
     ssize_t (*write)(struct file_struct *fd, char *buf, size_t len);
     ssize_t (*seek) (struct file_struct *fd, size_t offset, int whence);
@@ -32,11 +37,19 @@ struct fd_fops_struct
     int     (*close)(struct file_struct *fd);
 };
 
+
 struct file_struct // file descriptor
 {
     struct direntry_struct *direntry;
     openflags_t open_mode;
+
+    union drv_union drv;
+
     size_t seek_offset;
+
+    // used to define block device partitions
+    size_t lock_offset;     // sector offset of partition
+    size_t lock_size;       // size of partition in sectors
 
     void *drv_struct;
 

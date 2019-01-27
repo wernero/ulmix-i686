@@ -8,6 +8,9 @@
 #include "sched/block.h"
 #include "filesystem/fs_syscalls.h"
 
+#include <devices/partitions.h>
+#include <errno.h>
+
 #define SECTOR_SIZE         512
 
 #define PRIMARY_ATA         0x1f0
@@ -25,20 +28,21 @@ typedef struct
     int id;
     int io_base;
     int drive_select;
-    size_t seek_offset;
     uint16_t data[256];
     int irq;
 } ata_drive_t;
 
 static int get_drive_addr(int drive, ata_drive_t *ata_drive);
-static void get_name(ata_drive_t *drive, char *buf);
 static int identify(ata_drive_t *ata_drive);
 static void waitBSY(ata_drive_t *drive);
 static void waitDRQ(ata_drive_t *drive);
 
-static ssize_t ata_read(void *dev_struct, char *buf, size_t count);
-static ssize_t ata_write(void *dev_struct, char *buf, size_t count);
-static ssize_t ata_seek(void *dev_struct, size_t offset, int whence);
+static int ata_open(struct file_struct *fd, int flags, union drv_union drv);
+static ssize_t ata_read(struct file_struct *fd, char *buf, size_t count);
+static ssize_t ata_write(struct file_struct *fd, char *buf, size_t count);
+static ssize_t ata_seek(struct file_struct *fd, size_t offset, int whence);
+
+ata_drive_t *drives[4];
 
 void ata_init()
 {
@@ -51,22 +55,20 @@ void ata_init()
 
         if (status == ATA_FOUND)
         {
-            ata_drive_t *drive = kmalloc(sizeof(ata_drive_t), 1, "ata_drive_t");
-            *drive = ata_drive;
+            drives[i] = kmalloc(sizeof(ata_drive_t), 1, "ata_drive_t");
+            *(drives[i]) = ata_drive;
 
-            char drive_name[16];
-            get_name(&ata_drive, drive_name);
-
-            struct fops_struct fops =
+            struct fd_fops_struct fops =
             {
-                .open = NULL,       // not implemented yet
-                .release = NULL,    //      -"-
+                .open = ata_open,       // not implemented yet
+                .close = NULL,      //      -"-
                 .read = ata_read,
                 .write = ata_write,
-                .seek = ata_seek
+                .seek = ata_seek,
+                .ioctl = NULL
             };
 
-            register_bd(MAJOR_ATA0 + i, drive_name, (void*)drive, fops, 0);
+            part_scan(register_bd(MAJOR_ATA0 + i, 0, fops, 0, 0, SECTOR_SIZE));
         }
     }
 }
@@ -103,14 +105,27 @@ static int identify(ata_drive_t *ata_drive)
     }
 
     repinsw(ata_drive->io_base, ata_drive->data, 256);
-    ata_drive->seek_offset = 0;
     return ATA_FOUND;
 }
 
-static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
+static int ata_open(struct file_struct *fd, int flags, union drv_union drv)
 {
-    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
-    klog(KLOG_DEBUG, "ata_read(): read count=%d offset=%d from ATA #%d", count, drive->seek_offset, drive->id);
+    if (drv.bd->major < MAJOR_ATA0 || drv.bd->major > MAJOR_ATA3)
+        return -EINVAL;
+
+    fd->drv_struct = drives[drv.bd->major - MAJOR_ATA0];
+    return SUCCESS;
+}
+
+static ssize_t ata_read(struct file_struct *fd, char *buf, size_t count)
+{
+    ata_drive_t *drive = ((ata_drive_t*)fd->drv_struct);
+
+    count /= SECTOR_SIZE;
+    size_t offset = fd->lock_offset + fd->seek_offset;
+    fd->seek_offset += count;
+
+    klog(KLOG_DEBUG, "ata%d: read: count=%d offset=%d", drive->id, count, fd->seek_offset);
 
     // https://wiki.osdev.org/ATA_PIO_Mode
     // +2 R/W - Sector Counter Register
@@ -121,13 +136,13 @@ static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
 
     outb(drive->io_base + 6, drive->drive_select);                      // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high      // TODO >> 24??
-    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);        // byte 4
+    outb(drive->io_base + 3, (offset >> 24) & 0xff);        // byte 4
     outb(drive->io_base + 4, 0x00);
     outb(drive->io_base + 5, 0x00);
     outb(drive->io_base + 2, count & 0xff);                             // count low
-    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);              // byte 1
-    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);         // byte 2
-    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);        // byte 3
+    outb(drive->io_base + 3, offset & 0xff);              // byte 1
+    outb(drive->io_base + 4, (offset >> 8) & 0xff);         // byte 2
+    outb(drive->io_base + 5, (offset >> 16) & 0xff);        // byte 3
 
     waitBSY(drive);
     outb(drive->io_base + 7, 0x24);                                     // READ SECTORS EXT
@@ -141,20 +156,23 @@ static ssize_t ata_read(void *dev_struct, char *buf, size_t count)
     return count;
 }
 
-static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
+static ssize_t ata_write(struct file_struct *fd, char *buf, size_t count)
 {
-    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
+    ata_drive_t *drive = ((ata_drive_t*)fd->drv_struct);
     klog(KLOG_DEBUG, "ata_write(): PIO mode: writing %d sectors to ATA #%d", count, drive->id);
+
+    size_t offset = fd->lock_offset + fd->seek_offset;
+    fd->seek_offset += count;
 
     outb(drive->io_base + 6, drive->drive_select);                      // drive select
     outb(drive->io_base + 2, (count >> 8) & 0xff);                      // count high     // >> 24 ???
-    outb(drive->io_base + 3, (drive->seek_offset >> 24) & 0xff);        // byte 4
+    outb(drive->io_base + 3, (offset >> 24) & 0xff);        // byte 4
     outb(drive->io_base + 4, 0x00);
     outb(drive->io_base + 5, 0x00);
     outb(drive->io_base + 2, count & 0xff);                             // count low
-    outb(drive->io_base + 3, (drive->seek_offset) & 0xff);              // byte 1
-    outb(drive->io_base + 4, (drive->seek_offset >> 8) & 0xff);         // byte 2
-    outb(drive->io_base + 5, (drive->seek_offset >> 16) & 0xff);        // byte 3
+    outb(drive->io_base + 3, (offset) & 0xff);              // byte 1
+    outb(drive->io_base + 4, (offset >> 8) & 0xff);         // byte 2
+    outb(drive->io_base + 5, (offset >> 16) & 0xff);        // byte 3
 
     waitBSY(drive);
     outb(drive->io_base + 7, 0x34);                                     // WRITE SECTORS EXT
@@ -171,23 +189,24 @@ static ssize_t ata_write(void *dev_struct, char *buf, size_t count)
     return count;
 }
 
-static ssize_t ata_seek(void *dev_struct, size_t offset, int whence)
+static ssize_t ata_seek(struct file_struct *fd, size_t offset, int whence)
 {
-    ata_drive_t *drive = ((ata_drive_t*)dev_struct);
+    if (offset % SECTOR_SIZE != 0)
+        return -EINVAL;
 
     switch(whence)
     {
     case SEEK_SET:
-        drive->seek_offset = offset;
+        fd->seek_offset = offset / SECTOR_SIZE;
         break;
     case SEEK_CUR:
-        drive->seek_offset += offset;
+        fd->seek_offset += offset / SECTOR_SIZE;
         break;
     default:
         return -1;
     }
 
-    return drive->seek_offset;
+    return fd->seek_offset * SECTOR_SIZE;
 }
 
 /*static void waitRDY(ata_drive_t *drive)
@@ -203,14 +222,6 @@ static void waitBSY(ata_drive_t *drive)
 static void waitDRQ(ata_drive_t *drive)
 {
     while(!(inb(drive->io_base + 7) & 0x08));
-}
-
-static void get_name(ata_drive_t *drive, char *buf)
-{
-    strcpy(buf, "ata");
-    int len = strlen(buf);
-    buf[len] = '0' + drive->id;
-    buf[len + 1] = 0;
 }
 
 static int get_drive_addr(int drive, ata_drive_t *ata_drive)

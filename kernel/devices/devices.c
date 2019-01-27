@@ -23,24 +23,19 @@ void scan_devices()
     tty_setup();
 }
 
-int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity)
+struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops, size_t capacity, size_t sector_offset, size_t io_size)
 {
     struct gendisk_struct *bd = kmalloc(sizeof(struct gendisk_struct), 1, "gendisk_struct");
-    strcpy(bd->name, name);
     bd->fops = fops;
-    bd->lock = mutex();
     bd->major = major;
+    bd->minor = minor;
     bd->capacity = capacity;
-    bd->part_count = 0;
-    bd->drv_struct = drv_struct;
-
-    if (part_scan(bd) < 0)
-    {
-        klog(KLOG_DEBUG, "register_bd(): %s: partition scan failed", name);
-    }
+    bd->offset = sector_offset;
+    bd->io_size = io_size;
 
     insert_gendisk(bd);
-    return 0;
+    klog(KLOG_DEBUG, "new blk device: %d/%d, offset=%d", major, minor, sector_offset);
+    return bd;
 }
 
 int register_cd(int major, int minor, struct fd_fops_struct fops)
@@ -78,13 +73,14 @@ static void insert_chardev(struct chardev_struct *cd)
     }
 }
 
-struct gendisk_struct *find_gendisk(int major)
+struct gendisk_struct *find_gendisk(int major, int minor)
 {
     for (int i = 0; i < MAX_DEVICES; i++)
     {
         if (blk_devices[i] == NULL)
             continue;
-        if (major == blk_devices[i]->major)
+        if (major == blk_devices[i]->major &&
+                minor == blk_devices[i]->minor)
         {
             return blk_devices[i];
         }

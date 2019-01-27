@@ -24,28 +24,18 @@ struct hd_struct
     uint8_t fs_type;    // 0x83 -> linux native: ext2, ext3, ext4, ReiserFS
 };
 
-struct fops_struct
-{
-    int (*open)(void **drv_struct, int flags); // probably add access modes (readonly, writeonly, readwrite)
-    int (*release)(void *drv_struct);
-
-    ssize_t (*write)(void *drv_struct, char *buf, size_t count);
-    ssize_t (*read)(void *drv_struct, char *buf, size_t count);
-    ssize_t (*seek)(void *drv_struct, size_t offset, int whence);
-
-    int (*ioctl)(void *drv_struct, unsigned long request);
-};
-
 struct gendisk_struct
 {
     int major;
-    mutex_t *lock;
-    char name[16];
+    int minor;
+    size_t io_size;     // Block size
     size_t capacity;
+    size_t offset;
+    struct fd_fops_struct fops;
+
     int part_count;
     void *drv_struct;
     struct hd_struct part_list[4]; // 4 partitions
-    struct fops_struct fops;
 };
 
 struct chardev_struct
@@ -56,9 +46,9 @@ struct chardev_struct
 };
 
 void scan_devices(void);
-struct gendisk_struct *find_gendisk(int major);
+struct gendisk_struct *find_gendisk(int major, int minor);
 struct chardev_struct *find_chardev(int major, int minor);
-int register_bd(int major, char *name, void *drv_struct, struct fops_struct fops, size_t capacity);
+struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops, size_t capacity, size_t sector_offset, size_t io_size);
 int register_cd(int major, int minor, struct fd_fops_struct fops);
 
 #endif // DEVICES_H

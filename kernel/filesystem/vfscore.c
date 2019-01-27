@@ -13,7 +13,7 @@ void vfs_init()
 
     init_filesystems();
 
-    if (kmount(&root, MAJOR_ATA0, 0) < 0) // -> ata0, partition 0
+    if (kmount(&root, MAJOR_ATA0, 1) < 0) // -> ata0, partition 1 -> this is temporary
     {
         klog(KLOG_PANIC, "unable to mount root fs");
     }
