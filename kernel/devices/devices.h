@@ -28,13 +28,13 @@ struct gendisk_struct
 {
     int major;
     int minor;
-    size_t io_size;     // Block size
-    size_t capacity;
-    size_t offset;
     struct fd_fops_struct fops;
 
+    size_t io_size;
+    size_t capacity;
+    size_t offset;
+
     int part_count;
-    void *drv_struct;
     struct hd_struct part_list[4]; // 4 partitions
 };
 
@@ -46,9 +46,11 @@ struct chardev_struct
 };
 
 void scan_devices(void);
+
 struct gendisk_struct *find_gendisk(int major, int minor);
 struct chardev_struct *find_chardev(int major, int minor);
-struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops, size_t capacity, size_t sector_offset, size_t io_size);
-int register_cd(int major, int minor, struct fd_fops_struct fops);
+struct chardev_struct *register_cd(int major, int minor, struct fd_fops_struct fops);
+struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops,
+                                   size_t capacity, size_t sector_offset, size_t io_size);
 
 #endif // DEVICES_H
