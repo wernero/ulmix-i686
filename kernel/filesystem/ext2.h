@@ -20,19 +20,6 @@
 #define EXT2_IND_BLOCK_LEN      256
 #define VFS_INODE_BLOCK_TABLE_LEN 128
 
-struct gd_struct // group descriptor in memory
-{
-    unsigned long  bg_block_bitmap;         /* Blocks bitmap block */
-    unsigned long  bg_inode_bitmap;         /* Inodes bitmap block */
-    unsigned long  bg_inode_table;          /* Inodes table block */
-    unsigned long  bg_free_blocks_count;    /* Free blocks count */
-    unsigned long  bg_free_inodes_count;    /* Free inodes count */
-    unsigned long  bg_used_dirs_count;      /* Directories count */
-    unsigned long  bg_pad;
-
-    struct gd_struct *bg_next;
-};
-
 struct inode_block_table
 {
     // add flags for caching of this information
@@ -46,10 +33,25 @@ struct inode_block_table
     struct inode_block_table *next;                 // next block
 };
 
+struct gd_struct // block group descriptor struct
+{
+    uint32_t bg_block_bitmap;         /* Blocks bitmap block */
+    uint32_t bg_inode_bitmap;         /* Inodes bitmap block */
+    uint32_t bg_inode_table;          /* Inodes table block */
+    uint16_t bg_free_blocks_count;    /* Free blocks count */
+    uint16_t bg_free_inodes_count;    /* Free inodes count */
+    uint16_t bg_used_dirs_count;      /* Directories count */
+} __attribute__((aligned(32)));
+
 struct sb_struct
 {
     struct file_struct *fd;             // used to access the block device
     struct filesystem_struct *fs;       // file system file operations
+
+    unsigned long block_size;
+
+    struct gd_struct *group_descriptors;    // array of group descriptors
+    unsigned long s_groups_count;           // Number of groups in the fs
 
     unsigned long s_inodes_total;
     unsigned long s_blocks_total;
@@ -63,11 +65,8 @@ struct sb_struct
     unsigned long s_itb_per_group;      /* Number of inode table blocks per group */
     unsigned long s_gdb_count;          /* Number of group descriptor blocks */
     unsigned long s_desc_per_block;     /* Number of group descriptors per block */
-    unsigned long s_groups_count;       /* Number of groups in the fs */
     unsigned long s_overhead_last;      /* Last calculated overhead */
     unsigned long s_blocks_last;        /* Last seen block count */
-
-    struct gd_struct *s_group_desc;
 
     void * s_es; /* Pointer to the super block in the buffer */
 };
@@ -210,16 +209,6 @@ typedef struct
 {
     uint32_t i_indirect_ptr[EXT2_IND_BLOCK_LEN];
 } ext2_inode_blk_table_t;
-
-typedef struct
-{
-    uint32_t block_bitmap_addr;
-    uint32_t inode_bitmap_addr;
-    uint32_t inode_table_addr;
-    uint16_t unalloc_blocks;
-    uint16_t unalloc_inodes;
-    uint16_t dir_count;
-} __attribute__((aligned(32))) blockgroup_descriptor_t;
 
 typedef struct  {
     uint32_t  inode;          /* Inode number */

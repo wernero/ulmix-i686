@@ -75,25 +75,26 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     sb->fs = fs;    // ext2 calls to be called by the user
     sb->s_blocks_total = superblock->total_blocks;
     sb->s_inodes_total = superblock->total_inodes;
+    sb->block_size = 0x400 << superblock->block_size_log;
     sb->s_blocks_per_group = superblock->blocks_per_group;
     sb->s_inodes_per_group = superblock->inodes_per_group;
     sb->s_gdb_count = superblock->total_blocks / superblock->blocks_per_group + 1; // **TODO** correct round up
     kfree(superblock);
 
     // obtain the group descriptor table
-    int group_descriptor_offset = 0x800;
-    struct gd_struct * current_gds;
+    size_t bgroup_table_offset = 2 * sb->block_size;
+    if (sb->block_size != 0x400)
+        bgroup_table_offset = 1 * sb->block_size;
+    size_t bgroup_table_size = (((sb->s_gdb_count * sizeof(struct gd_struct)) / 0x200) + 1) * IO_SIZE;
 
-    size_t group_descriptor_size = (((sb->s_gdb_count * sizeof(blockgroup_descriptor_t)) / 0x200) + 1) * IO_SIZE;
+    struct gd_struct *descriptors = kmalloc(bgroup_table_size, 1, "bgroup descriptors");
+    fd->fops.seek(fd, bgroup_table_offset, SEEK_SET);
+    fd->fops.read(fd, (char*)descriptors, bgroup_table_size);
+    sb->group_descriptors = descriptors;
 
-    char *group_descriptor_buf = kmalloc(group_descriptor_size, 1, "group_descriptor_buf");
-
-    fd->fops.seek(fd, group_descriptor_offset, SEEK_SET);
-    fd->fops.read(fd, (char*)group_descriptor_buf, group_descriptor_size);
-
+    /*struct gd_struct *current_gds;
     sb->s_group_desc = kmalloc(sizeof(struct gd_struct),1,"gd_struct");
     current_gds = sb->s_group_desc;
-
 
     // iterate through the group descriptor table
     blockgroup_descriptor_t group_descriptor;
@@ -103,12 +104,12 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
                group_descriptor_buf + i * sizeof(blockgroup_descriptor_t),
                sizeof(blockgroup_descriptor_t));
 
-        current_gds->bg_block_bitmap = group_descriptor.block_bitmap_addr;          /* Blocks bitmap block */
-        current_gds->bg_inode_bitmap = group_descriptor.inode_bitmap_addr;          /* Inodes bitmap block */
-        current_gds->bg_inode_table = group_descriptor.inode_table_addr;            /* Inodes table block */
-        current_gds->bg_free_blocks_count = group_descriptor.unalloc_blocks;        /* Free blocks count */
-        current_gds->bg_free_inodes_count = group_descriptor.unalloc_inodes;        /* Free inodes count */
-        current_gds->bg_used_dirs_count = group_descriptor.dir_count;               /* Directories count */
+        current_gds->bg_block_bitmap = group_descriptor.block_bitmap_addr;          // Blocks bitmap block
+        current_gds->bg_inode_bitmap = group_descriptor.inode_bitmap_addr;          // Inodes bitmap block
+        current_gds->bg_inode_table = group_descriptor.inode_table_addr;            // Inodes table block
+        current_gds->bg_free_blocks_count = group_descriptor.unalloc_blocks;        // Free blocks count
+        current_gds->bg_free_inodes_count = group_descriptor.unalloc_inodes;        // Free inodes count
+        current_gds->bg_used_dirs_count = group_descriptor.dir_count;               // Directories count
         current_gds->bg_next = 0x0;
 
         if(i < (sb->s_gdb_count-1))
@@ -117,7 +118,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
             current_gds->bg_next = kmalloc(sizeof(struct gd_struct),1,"gd_struct");
             current_gds = current_gds->bg_next;
         }
-    }
+    }*/
 
     mountpoint->inode_no = 2;       // has to be set for ext2_get_direntry() to work
     ext2_get_direntry(mountpoint);  // cache root directory
@@ -133,10 +134,8 @@ static int fetch_inode(struct direntry_struct *entry, ext2_inode_t *inode)
         return -ENOENT;
 
     // get group descriptor for the block group that contains the inode
-    struct gd_struct *gds = entry_sb->s_group_desc;
     int block_group = (entry->inode_no - 1) / entry_sb->s_inodes_per_group;
-    for(int i = 0; i < block_group; i++)
-        gds = gds->bg_next;
+    struct gd_struct *gds = &(entry_sb->group_descriptors[block_group]);
 
     // calculate inode offset inside the group
     int inodes_per_disk_sector = IO_SIZE / EXT2_INODE_SIZE;
@@ -361,16 +360,10 @@ static int ext2_get_direntry(struct dir_struct *miss)
 
     // which inode do we want to read
     // which block group is required - inode / inode per block
-    block_group =  miss->inode_no / sb->s_inodes_per_group;
+    block_group = (miss->inode_no - 1) / sb->s_inodes_per_group;
+    gds = &(sb->group_descriptors[block_group]);
 
-    gds = sb->s_group_desc; // this is group descriptor 0;
-
-    for(i=1; i <= block_group; i++){
-        gds = gds->bg_next;
-    }
-
-    klog(KLOG_DEBUG, "ext2_get_direntry(): gds0=%x, gds=%x, blkgrp=%x, ita=%x, ita_off=%x",
-        sb->s_group_desc,
+    klog(KLOG_DEBUG, "ext2_get_direntry(): gds=%x, blkgrp=%x, ita=%x, ita_off=%x",
         gds,
         block_group,
         gds->bg_inode_table,
