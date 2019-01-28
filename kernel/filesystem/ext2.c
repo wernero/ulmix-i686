@@ -87,38 +87,9 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
         bgroup_table_offset = 1 * sb->block_size;
     size_t bgroup_table_size = (((sb->s_gdb_count * sizeof(struct gd_struct)) / 0x200) + 1) * IO_SIZE;
 
-    struct gd_struct *descriptors = kmalloc(bgroup_table_size, 1, "bgroup descriptors");
+    sb->group_descriptors = kmalloc(bgroup_table_size, 1, "bgroup descriptors");
     fd->fops.seek(fd, bgroup_table_offset, SEEK_SET);
-    fd->fops.read(fd, (char*)descriptors, bgroup_table_size);
-    sb->group_descriptors = descriptors;
-
-    /*struct gd_struct *current_gds;
-    sb->s_group_desc = kmalloc(sizeof(struct gd_struct),1,"gd_struct");
-    current_gds = sb->s_group_desc;
-
-    // iterate through the group descriptor table
-    blockgroup_descriptor_t group_descriptor;
-    for(int i = 0; i < sb->s_gdb_count; i++)
-    {
-        memcpy(&group_descriptor,
-               group_descriptor_buf + i * sizeof(blockgroup_descriptor_t),
-               sizeof(blockgroup_descriptor_t));
-
-        current_gds->bg_block_bitmap = group_descriptor.block_bitmap_addr;          // Blocks bitmap block
-        current_gds->bg_inode_bitmap = group_descriptor.inode_bitmap_addr;          // Inodes bitmap block
-        current_gds->bg_inode_table = group_descriptor.inode_table_addr;            // Inodes table block
-        current_gds->bg_free_blocks_count = group_descriptor.unalloc_blocks;        // Free blocks count
-        current_gds->bg_free_inodes_count = group_descriptor.unalloc_inodes;        // Free inodes count
-        current_gds->bg_used_dirs_count = group_descriptor.dir_count;               // Directories count
-        current_gds->bg_next = 0x0;
-
-        if(i < (sb->s_gdb_count-1))
-        {
-
-            current_gds->bg_next = kmalloc(sizeof(struct gd_struct),1,"gd_struct");
-            current_gds = current_gds->bg_next;
-        }
-    }*/
+    fd->fops.read(fd, (char*)sb->group_descriptors, bgroup_table_size);
 
     mountpoint->inode_no = 2;       // has to be set for ext2_get_direntry() to work
     ext2_get_direntry(mountpoint);  // cache root directory
