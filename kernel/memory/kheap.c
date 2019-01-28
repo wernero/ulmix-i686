@@ -1,5 +1,6 @@
 #include "kheap.h"
 #include <util/util.h>
+#include <sched/sync.h>
 #include <log.h>
 
 extern int paging_enabled;
@@ -23,6 +24,8 @@ static kheap_entry_t *  find_free_block (size_t *alignment_offset, size_t size, 
 static kheap_entry_t *  mkblock         (kheap_entry_t *previous, kheap_entry_t *next,
                                             int available, size_t size, void *start, void *description);
 
+mutex_t *heap_mtx = NULL;
+
 /*
  * kmalloc(): allocate a block of memory on the kernel heap
  * the block of memory can be aligned to start at an address divisable by 'alignment'.
@@ -42,6 +45,7 @@ void *kmalloc(size_t size, int alignment, char *description)
             setup_heap((uint32_t)KHEAP_STATIC_LOCATION);
     }
 
+    mutex_lock(heap_mtx);
     size_t alignment_offset;
     kheap_entry_t *block;
     block = find_free_block(&alignment_offset, size, alignment);
@@ -49,6 +53,7 @@ void *kmalloc(size_t size, int alignment, char *description)
     {
         heap_dump();
         klog(KLOG_PANIC, "kmalloc(): no free block on the kernel heap");
+        mutex_unlock(heap_mtx);
         return NULL;
     }
 
@@ -108,7 +113,8 @@ void *kmalloc(size_t size, int alignment, char *description)
 
     memset(new_block->start, 0, new_block->size);
 
-    klog(KLOG_DEBUG, "kmalloc(): %S starting at 0x%x (%s)", size, new_block->start, description);
+    //klog(KLOG_DEBUG, "kmalloc(): %S starting at 0x%x (%s)", size, new_block->start, description);
+    mutex_unlock(heap_mtx);
     return new_block->start;
 }
 
@@ -164,17 +170,21 @@ int pheap_valid_addr(unsigned long fault_addr)
  */
 void kfree(void *mem)
 {
+    mutex_lock(heap_mtx);
     kheap_entry_t *entry = (kheap_entry_t*)(mem - sizeof(kheap_entry_t));
 
     if (entry->start != mem || entry->available != 0)
     {
         klog(KLOG_WARN, "kheap: kfree(): possible memory leak due to corrupt pointer");
+        mutex_unlock(heap_mtx);
         return;
     }
 
     klog(KLOG_DEBUG, "kfree(): size=%S, start=%x, purpose=%s", entry->size, entry->start, entry->description);
     entry->description[0] = '*';
-    return;
+
+    mutex_unlock(heap_mtx); // temp
+    return; // temp
 
     int merged = 0;
     entry->available = 1;
@@ -208,6 +218,7 @@ void kfree(void *mem)
         entry->available = 1;
         entry->description[0] = 0;
     }
+    mutex_unlock(heap_mtx);
 }
 
 
@@ -252,6 +263,9 @@ static void setup_pheap()
 
     heap_status = HEAP_PAGED;
     klog(KLOG_INFO, "setup_pheap(): starting at 0x%x of size %S", (uint32_t)heap, kheap_size);
+
+
+    heap_mtx = mutex();
 }
 
 

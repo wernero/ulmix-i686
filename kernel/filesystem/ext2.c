@@ -1,17 +1,17 @@
 #include "ext2.h"
-#include "errno.h"
-#include "memory/kheap.h"
-#include "log.h"
+#include "filesystem.h"
+#include "fs_syscalls.h"
+#include "vfscore.h"
+#include <errno.h>
+#include <kdebug.h>
+#include <memory/kheap.h>
 #include <devices/devices.h>
-#include "filesystem/filesystem.h"
-#include "filesystem/fs_syscalls.h"
-#include "filesystem/vfscore.h"
 
 #define EXT2_BLOCK_SIZE         0x400   // defined by a field in the superblock
 #define EXT2_INODE_SIZE         0x80    // defined by a field in the superblock
 #define IO_SIZE                 0x200   // actually defined by the actual gendisk_struct
 
-static int ext2_probe(struct file_struct *fd, int partition);
+static int ext2_probe(struct file_struct *fd);
 static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
 static int ext2_get_direntry(struct dir_struct *miss);
 static int ext2_get_inode(struct direntry_struct *entry);
@@ -46,7 +46,7 @@ static void get_superblock(struct file_struct *fd, superblock_extended_t *buf)
     fd->fops.read(fd, (char*)buf, superblock_size);
 }
 
-static int ext2_probe(struct file_struct *fd, int partition)
+static int ext2_probe(struct file_struct *fd)
 {
     superblock_extended_t *superblock = kmalloc(sizeof(superblock_extended_t), 1, "superblock_extended_t");
     get_superblock(fd, superblock);

@@ -1,7 +1,7 @@
 #include "sync.h"
-#include "util/util.h"
-#include "memory/kheap.h"
-#include "sched/scheduler.h"
+#include "scheduler.h"
+#include <util/util.h>
+#include <memory/kheap.h>
 
 extern thread_t *current_thread;
 extern volatile scheduler_state_t scheduler_state;
@@ -17,6 +17,8 @@ mutex_t *mutex(void)
 
 void mutex_lock(mutex_t *mtx)
 {
+    if (mtx == NULL)
+        return;
     if (scheduler_state == SCHED_DISABLED)
         return;
 
@@ -37,6 +39,9 @@ void mutex_lock(mutex_t *mtx)
 
 void mutex_unlock(mutex_t *mtx)
 {
+    if (mtx == NULL)
+        return;
+
     if (mtx->blocked && mtx->blocker == current_thread)
     {
         mtx->blocked = 0;

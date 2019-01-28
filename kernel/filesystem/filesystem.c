@@ -50,7 +50,7 @@ int kmount(struct dir_struct *mountpoint, int major, int minor)
     for (int i = 0; i < SUP_FS_COUNT; i++)
     {
         struct filesystem_struct *pfs = supported_filesystems[i];
-        if (pfs != NULL && (pfs->fs_probe(fd, minor) >= 0))
+        if (pfs != NULL && (pfs->fs_probe(fd) >= 0))
         {
             klog(KLOG_INFO, "kmount(): major=%d, start=0x%x, size=%S, type=%s",
                  major,

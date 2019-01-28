@@ -86,7 +86,7 @@ struct file_struct;
 struct filesystem_struct // filesystem interface
 {
     char *name;
-    int (*fs_probe)(struct file_struct *fd, int part);
+    int (*fs_probe)(struct file_struct *fd);
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
     int (*fs_get_direntry)(struct dir_struct *miss);
     int (*fs_get_inode)(struct direntry_struct *entry);
