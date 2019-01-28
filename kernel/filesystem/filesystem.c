@@ -33,7 +33,7 @@ int install_fs(struct filesystem_struct *fs)
 
 int direntry_get_dir(struct dir_struct *dir)
 {
-    return dir->mnt_info->fs->fs_get_direntry(dir);
+    return dir->mnt_info->fs->fs_get_direntries(dir);
 }
 
 int kmount(struct dir_struct *mountpoint, int major, int minor)

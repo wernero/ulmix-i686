@@ -68,7 +68,7 @@ struct filesystem_struct // filesystem interface
     char *name;
     int (*fs_probe)(struct file_struct *fd);
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
-    int (*fs_get_direntry)(struct dir_struct *miss);
+    int (*fs_get_direntries)(struct dir_struct *miss);
 
     // standard file system calls:
     int (*fs_read)(struct file_struct *fd, char *buf, size_t len);

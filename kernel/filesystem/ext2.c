@@ -14,7 +14,7 @@
 /* ext2 file operations: */
 static int ext2_probe(struct file_struct *fd);
 static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
-static int ext2_get_direntry(struct dir_struct *miss);
+static int ext2_get_direntries(struct dir_struct *miss);
 static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len);
 static ssize_t ext2_write(struct file_struct *fd, char *buf, size_t len);
 static ssize_t ext2_seek(struct file_struct *fd, size_t offset, int whence);
@@ -25,7 +25,7 @@ void install_ext2()
 
     ext2fs->fs_probe = ext2_probe;
     ext2fs->fs_mount = ext2_mount;
-    ext2fs->fs_get_direntry = ext2_get_direntry;
+    ext2fs->fs_get_direntries = ext2_get_direntries;
     ext2fs->fs_read = ext2_read;
     ext2fs->fs_write = ext2_write;
     ext2fs->fs_seek = ext2_seek;
@@ -92,36 +92,37 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     fd->fops.read(fd, (char*)sb->group_descriptors, bgroup_table_size);
 
     mountpoint->inode_no = 2;       // has to be set for ext2_get_direntry() to work
-    ext2_get_direntry(mountpoint);  // cache root directory
+    ext2_get_direntries(mountpoint);  // cache root directory
 
     klog(KLOG_INFO, "ext2: mounted file system (%d/%d)", mnt_info->bd->major, mnt_info->bd->minor);
     return SUCCESS;
 }
 
-static int fetch_inode(struct direntry_struct *entry, ext2_inode_t *inode)
+static int fetch_inode(unsigned int inode_no, struct mntp_struct *mnt_info, ext2_inode_t *inode)
 {
-    struct sb_struct *entry_sb = entry->parent->mnt_info->sb;
-    if (entry->inode_no > entry_sb->s_inodes_total)
+    struct sb_struct *entry_sb = mnt_info->sb;
+    if (inode_no > entry_sb->s_inodes_total)
         return -ENOENT;
 
     // get group descriptor for the block group that contains the inode
-    int block_group = (entry->inode_no - 1) / entry_sb->s_inodes_per_group;
-    struct gd_struct *gds = &(entry_sb->group_descriptors[block_group]);
+    int block_group_no = (inode_no - 1) / entry_sb->s_inodes_per_group;
+    struct gd_struct *block_group = &(entry_sb->group_descriptors[block_group_no]);
 
     // calculate inode offset inside the group
     int inodes_per_disk_sector = IO_SIZE / EXT2_INODE_SIZE;
-    int inode_group_offset = ((entry->inode_no - 1) % entry_sb->s_inodes_per_group) / inodes_per_disk_sector;
+    int inode_group_offset = ((inode_no - 1) % entry_sb->s_inodes_per_group) / inodes_per_disk_sector;
 
     // read inode from disk
     char *inode_buf = kmalloc(IO_SIZE, 1, "ext2 inode_buf");
 
     entry_sb->fd->fops.seek(entry_sb->fd,
-                                     (inode_group_offset * 512) + (gds->bg_inode_table * EXT2_BLOCK_SIZE),
+                                     (block_group->bg_inode_table * EXT2_BLOCK_SIZE) + (inode_group_offset * IO_SIZE),
                                      SEEK_SET);
-    entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_buf, 512);
+    entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_buf, IO_SIZE);
 
-    memcpy(inode, inode_buf + (((entry->inode_no - 1) % inodes_per_disk_sector) * EXT2_INODE_SIZE), EXT2_INODE_SIZE);
+    memcpy(inode, inode_buf + (((inode_no - 1) % inodes_per_disk_sector) * EXT2_INODE_SIZE), EXT2_INODE_SIZE);
     kfree(inode_buf);
+    klog(KLOG_DEBUG, "fetching inode #%d, size=0x%x (~%S)", inode_no, inode->i_size, inode->i_size);
     return SUCCESS;
 }
 
@@ -131,7 +132,7 @@ static int ext2_get_inode(struct direntry_struct *entry)
 
     int ret;
     ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
-    if ((ret = fetch_inode(entry, inode)) < 0)
+    if ((ret = fetch_inode(entry->inode_no, entry->parent->mnt_info, inode)) < 0)
     {
         kfree(inode);
         return -ret;
@@ -283,174 +284,72 @@ static int ext2_get_inode(struct direntry_struct *entry)
     return 0;
 }
 
-static int ext2_get_direntry(struct dir_struct *miss)
+static int ext2_get_direntries(struct dir_struct *miss)
 {
     struct sb_struct *sb = miss->mnt_info->sb;
-    // TODO
 
-    klog(KLOG_DEBUG, "ext2_get_direntry(): miss=%x",
-        miss
-        );
-
-
-    int block_group = 0;
-    struct gd_struct * gds;
-    int i;
-
-    int inode_group_offset = 0;
-
-    char *inode_buf = kmalloc(0x200, 1, "inode_buf");
-    char *direntry_buf = kmalloc(0x400, 1, "direntry_buf");
-    ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2_inode_t");
-
-    ext2_direntry2_t *de = kmalloc(sizeof(ext2_direntry2_t), 1, "ext2_direntry2_t");
-
-    struct direntry_struct *current_des;
-
-    if(miss->entries == NULL) {
-        // dir_struct has no entries; create a first new one
-        miss->entries = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
-        current_des = miss->entries;
-
-        klog(KLOG_DEBUG, "ext2_get_direntry(): new dirstruct current_des=%x",
-            current_des
-            );
-
-    //TODO
-
-    } else {
-        // there are entries present_find the last one and update list
-        while(miss->entries != NULL) {
-            // no entries for direntry_struct in dir_struct
-
-        //TODO
-
-        }
+    if (miss->entries != NULL)
+    {
+        // maybe update the files? for now, not supported
+        klog(KLOG_WARN, "ext2: warn: fetching directory that already contains files");
+        return -ENOTSUP;
     }
 
+    ext2_inode_t *inode = kmalloc(sizeof(ext2_inode_t), 1, "ext2 inode buf");
+    int ret = fetch_inode(miss->inode_no, miss->mnt_info, inode);
+    if (ret < 0)
+        return ret;
 
-    // which inode do we want to read
-    // which block group is required - inode / inode per block
-    block_group = (miss->inode_no - 1) / sb->s_inodes_per_group;
-    gds = &(sb->group_descriptors[block_group]);
-
-    klog(KLOG_DEBUG, "ext2_get_direntry(): gds=%x, blkgrp=%x, ita=%x, ita_off=%x",
-        gds,
-        block_group,
-        gds->bg_inode_table,
-        gds->bg_inode_table * EXT2_BLOCK_SIZE
-        );
-
-    // there are 4 inodes structs (0x80) (inode_groups) per disk block (0x200) - calculate the offset of the inode address table beginning
-
-    inode_group_offset = (((miss->inode_no - 1) % sb->s_inodes_per_group) / 4);
-
-    // get inode address table from respective block and jump to it
-    sb->fd->fops.seek(sb->fd, (gds->bg_inode_table * EXT2_BLOCK_SIZE) + (inode_group_offset * 512), SEEK_SET);
-    sb->fd->fops.read(sb->fd, (char*)inode_buf, 512);
-
-
-    // get respective inode data
-
-    memcpy(inode,(inode_buf + (((miss->inode_no - 1) % 4) * 0x80)), 0x80);
-
-    // check if directory 0x4000
-    // klog(KLOG_DEBUG, "ext2_get_direntry(): mode=%x, size=%x, data0=%x, data1=%x",
-    //     inode->i_mode,
-    //     inode->i_size,
-    //     inode->i_block[0] * EXT2_BLOCK_SIZE,
-    //     inode->i_block[1] * EXT2_BLOCK_SIZE
-    //     );
-
-    // get directory data0
+    // get block containing the file list
+    char *direntry_buf = kmalloc(EXT2_BLOCK_SIZE, 1, "ext2 direntry buf");
     sb->fd->fops.seek(sb->fd, inode->i_block[0] * EXT2_BLOCK_SIZE, SEEK_SET);
     sb->fd->fops.read(sb->fd, (char*)direntry_buf, EXT2_BLOCK_SIZE);
 
-    for(i=0; i < 0x400;){
-        memcpy(&de->inode, direntry_buf+i, sizeof(uint32_t));
-        i += sizeof(uint32_t);
-        memcpy(&de->rec_len, direntry_buf+i, sizeof(uint16_t));
-        i += sizeof(uint16_t);
-        memcpy(&de->name_len, direntry_buf+i, sizeof(uint8_t));
-        i += sizeof(uint8_t);
-        memcpy(&de->file_type, direntry_buf+i, sizeof(uint8_t));
-        i += sizeof(uint8_t);
+    struct ext2_direntry_struct raw_entry;
+    struct direntry_struct *current_entry = kmalloc(sizeof(struct direntry_struct), 1, "direntry_struct");
+    miss->entries = current_entry;
 
-        memset(&de->name ,0, EXT2_NAME_LEN);
-//        memcpy(de->name, miss->name, strlen(miss->name));
-//        memcpy(de->name + strlen(miss->name), direntry_buf+i, de->name_len);
-        memcpy(de->name, direntry_buf+i, de->name_len);
-        i += (de->rec_len - 8);
+    for (int i = 0; i < inode->i_size; ) // TODO: read more blocks!!!
+    {
+        // get entry
+        memcpy(&raw_entry, direntry_buf + i, sizeof(struct ext2_direntry_struct));
+        memcpy(current_entry->name, direntry_buf + sizeof(struct ext2_direntry_struct) + i, raw_entry.name_len);
+        i += raw_entry.rec_len;
+        i += (i % 4) ? 4 - (i % 4) : 0;
 
-        klog(KLOG_DEBUG, "ext2_get_direntry(): i=%d, inode=%d, rec_len=%x, name_len=%x, file_type=%x, name=%s",
-            i,
-            de->inode,
-            de->rec_len,
-            de->name_len,
-            de->file_type,
-            de->name
-            );
+        current_entry->name[raw_entry.name_len] = 0;
+        current_entry->inode_no = raw_entry.inode;
+        current_entry->parent = miss;
+        current_entry->directory = NULL;
 
-        memcpy(current_des->name, de->name, de->name_len);
-        current_des->inode_no = de->inode;
+        klog(KLOG_DEBUG, "direntry: inode=%d, fil_type=%d, name='%s'",
+             current_entry->inode_no,
+             raw_entry.file_type,
+             current_entry->name);
 
-        current_des->parent = miss;
-        current_des->directory = NULL;
-        current_des->next = kmalloc(sizeof(struct direntry_struct),1,"direntry_struct");
+        ext2_get_inode(current_entry);
 
-        ext2_get_inode(current_des);
-
-        if(current_des->mode & DIRECTORY) {   // inode is a directory entry
-            //current_des->type = DIRECTORY;
-
-            current_des->directory->parent = miss;
-
-            current_des->read_opens = 0;
-            current_des->write_opens = 0;
-
-            //current_des->fd = NULL;
-
-            if(current_des->inode_no == miss->inode_no) {
-                current_des->directory = miss;
-            } else {
-
-                current_des->directory = kmalloc(sizeof(struct dir_struct),1,"dir_struct");
-
-                current_des->directory->mountpoint = miss->mountpoint;
-                current_des->directory->mnt_info = miss->mnt_info;
-
-                // adding parent name is probably not a good idea ..
-//                memcpy(current_des->directory->name, miss->name, strlen(miss->name));
-//                memcpy(current_des->directory->name + strlen(miss->name), current_des->name, strlen(current_des->name));
-                memcpy(current_des->directory->name, current_des->name, strlen(current_des->name));
-
-                 // needs to be changed sprintf("%s%s/",miss->name, current_des->name);
-                current_des->directory->inode_no = current_des->inode_no;
-
-                current_des->directory->entries = NULL;
-
-                klog(KLOG_DEBUG, "ext2_get_direntry(): new dir_struct added %x, name=%s",
-                    current_des->directory,
-                    current_des->directory->name
-                    );
-
+        if (current_entry->mode & DIRECTORY)
+        {
+            if (current_entry->inode_no == miss->inode_no)
+            {
+                current_entry->directory = miss;
             }
-
-        } else if(current_des->mode & REGULAR) {   // inode is a file entry
-            //current_des->type = REGULAR;
-            current_des->read_opens = 0;
-            current_des->write_opens = 0;
-
-            current_des->directory = NULL;
-        } else {
-            //current_des->type = UNKOWN;
-            current_des->read_opens = 1;
-            current_des->write_opens = 1;
+            else
+            {
+                current_entry->directory = kmalloc(sizeof(struct dir_struct), 1, "dir_struct");
+                current_entry->directory->parent = miss;
+                current_entry->directory->mountpoint = miss->mountpoint;
+                current_entry->directory->mnt_info = miss->mnt_info;
+                current_entry->directory->entries = NULL;
+                current_entry->directory->inode_no = current_entry->inode_no;
+                // name?
+            }
         }
 
-        current_des = current_des->next;
+        current_entry->next = kmalloc(sizeof(struct direntry_struct), 1, "direntry_struct");
+        current_entry = current_entry->next;
     }
-
 
     return 0;
 }

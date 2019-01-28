@@ -10,7 +10,9 @@ static void start_program(char *filename);
 
 int main(void)
 {
-    puts("ULMIX initd\n");
+    printf("ULMIX Operating System init\n"
+           "Copyright (C) 2018-2019\n"
+           "Written by Alexander Ulmer\n\n");
 
     start_program(SHELL);
 

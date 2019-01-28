@@ -2,7 +2,6 @@
  * ULMIX ext2 filesystem driver
  * Copyright (C) 2018-2019 The Ulmix Operating System
  * Written by Rainer Rudigier
- * Interface by Alexander Ulmer
  */
 
 #ifndef EXT2_H
@@ -210,13 +209,12 @@ typedef struct
     uint32_t i_indirect_ptr[EXT2_IND_BLOCK_LEN];
 } ext2_inode_blk_table_t;
 
-typedef struct  {
-    uint32_t  inode;          /* Inode number */
-    uint16_t  rec_len;        /* Directory entry length */
-    uint8_t   name_len;       /* Name length */
-    uint8_t   file_type;
-    char      name[EXT2_NAME_LEN];         /* File name, up to EXT2_NAME_LEN */
-} ext2_direntry2_t;
+struct ext2_direntry_struct {
+    uint32_t  inode;          // inode number
+    uint16_t  rec_len;        // directory entry length
+    uint8_t   name_len;       // name length
+    uint8_t   file_type;      // type or MSB of name length
+} __attribute__((packed));
 
 void install_ext2(void);
 
