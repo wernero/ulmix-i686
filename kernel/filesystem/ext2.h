@@ -20,7 +20,7 @@
 #define EXT2_IND_BLOCK_LEN      256
 #define VFS_INODE_BLOCK_TABLE_LEN 128
 
-struct gd_struct // group descriptor -> ext2 specific
+struct gd_struct // group descriptor in memory
 {
     unsigned long  bg_block_bitmap;         /* Blocks bitmap block */
     unsigned long  bg_inode_bitmap;         /* Inodes bitmap block */
@@ -33,7 +33,7 @@ struct gd_struct // group descriptor -> ext2 specific
     struct gd_struct *bg_next;
 };
 
-struct inode_block_table /*** should be moved to ext2.c (filesystem specific) */
+struct inode_block_table
 {
     // add flags for caching of this information
 
@@ -46,10 +46,10 @@ struct inode_block_table /*** should be moved to ext2.c (filesystem specific) */
     struct inode_block_table *next;                 // next block
 };
 
-struct sb_struct /*** should be moved into ext2.c */
+struct sb_struct
 {
-    struct file_struct *fd;
-    struct filesystem_struct *fs;
+    struct file_struct *fd;             // used to access the block device
+    struct filesystem_struct *fs;       // file system file operations
 
     unsigned long s_inodes_total;
     unsigned long s_blocks_total;
@@ -220,12 +220,6 @@ typedef struct
     uint16_t unalloc_inodes;
     uint16_t dir_count;
 } __attribute__((aligned(32))) blockgroup_descriptor_t;
-
-typedef struct
-{
-    superblock_extended_t superblock;
-    uint32_t block_size;
-} ext2fd_t;
 
 typedef struct  {
     uint32_t  inode;          /* Inode number */

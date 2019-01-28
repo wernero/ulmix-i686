@@ -31,11 +31,6 @@ int install_fs(struct filesystem_struct *fs)
     return -1;
 }
 
-int direntry_get_inode(struct direntry_struct *file)
-{
-    return file->parent->mnt_info->fs->fs_get_inode(file);  /// get_inode function changed !!!!
-}
-
 int direntry_get_dir(struct dir_struct *dir)
 {
     return dir->mnt_info->fs->fs_get_direntry(dir);
@@ -54,8 +49,8 @@ int kmount(struct dir_struct *mountpoint, int major, int minor)
         {
             klog(KLOG_INFO, "kmount(): major=%d, start=0x%x, size=%S, type=%s",
                  major,
-                 fd->drv.bd->part_list[minor].sector_offset * 512,
-                 fd->drv.bd->part_list[minor].sector_count * 512,
+                 fd->lock_offset * fd->drv.bd->io_size,
+                 fd->lock_size * fd->drv.bd->io_size,
                  pfs->name);
 
             return pfs->fs_mount(pfs, mountpoint, fd);
