@@ -1,5 +1,4 @@
 #include "exec.h"
-#include "memory/userheap.h"
 #include <sched/task.h>
 #include <sched/process.h>
 #include <kdebug.h>

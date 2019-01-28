@@ -17,9 +17,7 @@ mutex_t *mutex(void)
 
 void mutex_lock(mutex_t *mtx)
 {
-    if (mtx == NULL)
-        return;
-    if (scheduler_state == SCHED_DISABLED)
+    if (mtx == NULL || scheduler_state == SCHED_DISABLED)
         return;
 
     cli();
