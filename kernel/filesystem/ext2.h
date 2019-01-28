@@ -18,6 +18,59 @@
 
 #define EXT2_NAME_LEN           255
 #define EXT2_IND_BLOCK_LEN      256
+#define VFS_INODE_BLOCK_TABLE_LEN 128
+
+struct gd_struct // group descriptor -> ext2 specific
+{
+    unsigned long  bg_block_bitmap;         /* Blocks bitmap block */
+    unsigned long  bg_inode_bitmap;         /* Inodes bitmap block */
+    unsigned long  bg_inode_table;          /* Inodes table block */
+    unsigned long  bg_free_blocks_count;    /* Free blocks count */
+    unsigned long  bg_free_inodes_count;    /* Free inodes count */
+    unsigned long  bg_used_dirs_count;      /* Directories count */
+    unsigned long  bg_pad;
+
+    struct gd_struct *bg_next;
+};
+
+struct inode_block_table /*** should be moved to ext2.c (filesystem specific) */
+{
+    // add flags for caching of this information
+
+    struct direntry_struct  *file;                  // which file does the table belong to
+
+    uint32_t block_count_total;                     // blocks total of file
+    uint32_t block_count;                           // blocks in current struct
+    uint32_t blocks[VFS_INODE_BLOCK_TABLE_LEN];     // inode blocks
+
+    struct inode_block_table *next;                 // next block
+};
+
+struct sb_struct /*** should be moved into ext2.c */
+{
+    struct file_struct *fd;
+    struct filesystem_struct *fs;
+
+    unsigned long s_inodes_total;
+    unsigned long s_blocks_total;
+
+    unsigned long s_frag_size;          /* Size of a fragment in bytes */
+    unsigned long s_frags_per_block;    /* Number of fragments per block */
+    unsigned long s_inodes_per_block;   /* Number of inodes per block */
+    unsigned long s_frags_per_group;    /* Number of fragments in a group */
+    unsigned long s_blocks_per_group;   /* Number of blocks in a group */
+    unsigned long s_inodes_per_group;   /* Number of inodes in a group */
+    unsigned long s_itb_per_group;      /* Number of inode table blocks per group */
+    unsigned long s_gdb_count;          /* Number of group descriptor blocks */
+    unsigned long s_desc_per_block;     /* Number of group descriptors per block */
+    unsigned long s_groups_count;       /* Number of groups in the fs */
+    unsigned long s_overhead_last;      /* Last calculated overhead */
+    unsigned long s_blocks_last;        /* Last seen block count */
+
+    struct gd_struct *s_group_desc;
+
+    void * s_es; /* Pointer to the super block in the buffer */
+};
 
 typedef struct
 {

@@ -33,9 +33,9 @@ int open_file(struct direntry_struct *node, int flags)
 
     struct fd_fops_struct fops;
     fops.close = NULL;
-    fops.read = fd->direntry->parent->sb->fs->fs_read;
-    fops.write = fd->direntry->parent->sb->fs->fs_write;
-    fops.seek = fd->direntry->parent->sb->fs->fs_seek;
+    fops.read = fd->direntry->parent->mnt_info->fs->fs_read;
+    fops.write = fd->direntry->parent->mnt_info->fs->fs_write;
+    fops.seek = fd->direntry->parent->mnt_info->fs->fs_seek;
 
     fd->fops = fops;
 

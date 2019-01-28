@@ -33,12 +33,12 @@ int install_fs(struct filesystem_struct *fs)
 
 int direntry_get_inode(struct direntry_struct *file)
 {
-    return file->parent->sb->fs->fs_get_inode(file);  /// get_inode function changed !!!!
+    return file->parent->mnt_info->fs->fs_get_inode(file);  /// get_inode function changed !!!!
 }
 
 int direntry_get_dir(struct dir_struct *dir)
 {
-    return dir->sb->fs->fs_get_direntry(dir);
+    return dir->mnt_info->fs->fs_get_direntry(dir);
 }
 
 int kmount(struct dir_struct *mountpoint, int major, int minor)
