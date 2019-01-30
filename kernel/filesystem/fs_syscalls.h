@@ -10,8 +10,14 @@ typedef enum
     O_APPEND    =0x01,
     O_CREAT     =0x02,
     O_RDWR      =0x04,
-    O_WRONLY    =0x08
+    O_WRONLY    =0x08,
+    O_TRUNC     =0x10
 } openflags_t;
+
+typedef enum
+{
+    MODE_DEFAULT
+} mode_t;
 
 enum _whence
 {
@@ -60,8 +66,8 @@ struct file_struct *get_fd(int fd);
 
 /* file system related system calls */
 
-int     sys_open     (char *pathname, int flags);
-int     sys_creat    (const char *pathname, int mode);
+int     sys_open     (char *pathname, int flags, mode_t mode);
+int     sys_creat    (char *pathname, mode_t mode);
 ssize_t sys_write    (int fd, void *buf, size_t count);
 ssize_t sys_read     (int fd, void *buf, size_t count);
 int     sys_close    (int fd);

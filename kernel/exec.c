@@ -16,7 +16,7 @@ int kfexec(char *img_path, char *description)
 {
     klog(KLOG_INFO, "kfexec(): loading elf binary");
     int fd;
-    if ((fd = sys_open(img_path, O_RDONLY)) < 0) // on error, fd = error code
+    if ((fd = sys_open(img_path, O_RDONLY, MODE_DEFAULT)) < 0) // on error, fd = error code
         return fd;
 
     klog(KLOG_DEBUG, "kfexec(): creating address space");
@@ -50,7 +50,7 @@ int sys_execve(char *filename, char *argv[], char *envp[])
 
     // 1. check wheter the binary image exists and can be read
     int fd;
-    if ((fd = sys_open(filename, O_RDONLY)) < 0) // on error, fd = error code
+    if ((fd = sys_open(filename, O_RDONLY, MODE_DEFAULT)) < 0) // on error, fd = error code
         return fd;
 
     // 2. create virtual address space

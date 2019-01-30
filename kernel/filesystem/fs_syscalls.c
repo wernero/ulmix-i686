@@ -15,9 +15,9 @@ struct file_struct *get_fd(int fd)
     return current_thread->process->files[fd];
 }
 
-int sys_creat(const char *pathname, int mode)
+int sys_creat(char *pathname, mode_t mode)
 {
-    return -1;
+    return sys_open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
 int sys_link(const char *oldpath, const char *newpath)
@@ -30,7 +30,7 @@ int sys_unlink(const char *pathname)
     return -1;
 }
 
-int sys_open(char *pathname, int flags)
+int sys_open(char *pathname, int flags, mode_t mode)
 {
     struct direntry_struct *node;
     if (namei(pathname, &node) < 0)
