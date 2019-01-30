@@ -7,6 +7,7 @@
 #define UNISTD_H
 
 #include <sys/types.h>
+#define PATH_MAX  1024
 
 // syscalls
 ssize_t     read    (int fd, void *buf, size_t len);
@@ -15,6 +16,14 @@ int         close   (int fd);
 
 pid_t       fork    (void);
 int         execve  (const char *filename, char *const argv[], char *const envp[]);
+
+char *      getcwd  (char *buf, size_t size);
+int         chdir   (const char *path);
+
+// library functions
+char *      getwd   (char *buf);
+char *      get_current_dir_name(void);
+
 
 
 #endif // UNISTD_H

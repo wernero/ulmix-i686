@@ -93,7 +93,7 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
     fd->fops.seek(fd, bgroup_table_offset, SEEK_SET);
     fd->fops.read(fd, (char*)sb->group_descriptors, bgroup_table_size);
 
-    mountpoint->inode_no = 2;       // has to be set for ext2_get_direntry() to work
+    mountpoint->inode_no = 2;
     ext2_get_direntries(mountpoint);  // cache root directory
 
     klog(KLOG_INFO, "ext2: mounted file system (%d/%d)", mnt_info->bd->major, mnt_info->bd->minor);
@@ -346,6 +346,10 @@ static int ext2_get_direntries(struct dir_struct *miss)
             {
                 current_entry->directory = miss;
             }
+            else if (current_entry->inode_no == miss->parent->inode_no)
+            {
+                current_entry->directory = miss->parent;
+            }
             else
             {
                 current_entry->directory = kmalloc(sizeof(struct dir_struct), 1, "dir_struct");
@@ -354,7 +358,7 @@ static int ext2_get_direntries(struct dir_struct *miss)
                 current_entry->directory->mnt_info = miss->mnt_info;
                 current_entry->directory->entries = NULL;
                 current_entry->directory->inode_no = current_entry->inode_no;
-                // name?
+                current_entry->directory->entry = current_entry;
             }
         }
 

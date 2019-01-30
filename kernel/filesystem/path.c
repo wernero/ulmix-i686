@@ -8,14 +8,41 @@
 extern struct dir_struct root;
 extern thread_t *current_thread;
 
-static char *strccpy(char *dest, char *src, char terminator);
+int get_pathname(struct direntry_struct *node, char *buf)
+{
+    // not yet finished, returns the reversed path
 
+    if (node == NULL)
+        return -ENOENT;
+
+    *buf = 0;
+    strcat(buf, node->name);
+    strcat(buf, "/");
+
+    struct dir_struct *parent = node->parent;
+    while (1)
+    {
+       if (parent == &root)
+           break;
+
+       strcat(buf, parent->entry->name);
+       strcat(buf, "/");
+
+       parent = parent->parent;
+    }
+
+    return SUCCESS;
+}
+
+static char *strccpy(char *dest, char *src, char terminator);
 static int namei_recursive(char *path, struct dir_struct *working_dir, struct direntry_struct **node)
 {
     char cname[20];
-    char *rem = strccpy(cname, path, '/');  // buffer overflow??
+    char *rem = strccpy(cname, path, '/');
     if (strlen(cname) == 0)
-        return -ENOENT;
+    {
+        strcpy(cname, ".");
+    }
 
     if (working_dir->entries == NULL)
         return -ENOENT;

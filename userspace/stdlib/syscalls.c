@@ -50,6 +50,18 @@ int close(int fd) // 6
 // link() // 9
 // unlink() // 10
 
+int chdir(const char *path) // 12
+{
+    return __syscall(12, (unsigned long)path, 0, 0, 0);
+}
+
+char *getcwd(char *buf, size_t size) // 183
+{
+    if (__syscall(183, (unsigned long)buf, size, 0, 0) == 0)
+        return buf;
+    return NULL;
+}
+
 int execve(const char *filename,
            char *const argv[],
            char *const envp[]) // 11

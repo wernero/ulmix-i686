@@ -54,7 +54,7 @@ struct dir_struct
 {
     struct mntp_struct *mnt_info;       // mount information for the file system
     struct dir_struct *mountpoint;      // pointer to the mountpoint directory
-    char name[VFS_NAME_LEN];            // directory name
+    struct direntry_struct *entry;      // the directory as direntry
     unsigned long inode_no;             // disk filesystem inode id
 
     struct dir_struct *parent;          // parent directory
