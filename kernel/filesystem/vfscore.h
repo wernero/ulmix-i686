@@ -70,6 +70,9 @@ struct filesystem_struct // filesystem interface
     int (*fs_mount)(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
     int (*fs_get_direntries)(struct dir_struct *miss);
 
+    // file handling
+    int (*fs_unlink)(struct direntry_struct *file);
+
     // standard file system calls:
     int (*fs_read)(struct file_struct *fd, char *buf, size_t len);
     int (*fs_write)(struct file_struct *fd, char *buf, size_t len);

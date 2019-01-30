@@ -25,9 +25,13 @@ int sys_link(const char *oldpath, const char *newpath)
     return -1;
 }
 
-int sys_unlink(const char *pathname)
+int sys_unlink(char *pathname)
 {
-    return -1;
+    struct direntry_struct *node;
+    if (namei(pathname, &node) < 0)
+        return -ENOENT;
+
+    return node->parent->mnt_info->fs->fs_unlink(node);
 }
 
 int sys_open(char *pathname, int flags, mode_t mode)

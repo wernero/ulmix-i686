@@ -15,6 +15,7 @@
 static int ext2_probe(struct file_struct *fd);
 static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoint, struct file_struct *fd);
 static int ext2_get_direntries(struct dir_struct *miss);
+static int ext2_unlink(struct direntry_struct *file);
 static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len);
 static ssize_t ext2_write(struct file_struct *fd, char *buf, size_t len);
 static ssize_t ext2_seek(struct file_struct *fd, size_t offset, int whence);
@@ -26,6 +27,7 @@ void install_ext2()
     ext2fs->fs_probe = ext2_probe;
     ext2fs->fs_mount = ext2_mount;
     ext2fs->fs_get_direntries = ext2_get_direntries;
+    ext2fs->fs_unlink = ext2_unlink;
     ext2fs->fs_read = ext2_read;
     ext2fs->fs_write = ext2_write;
     ext2fs->fs_seek = ext2_seek;
@@ -96,6 +98,15 @@ static int ext2_mount(struct filesystem_struct *fs, struct dir_struct *mountpoin
 
     klog(KLOG_INFO, "ext2: mounted file system (%d/%d)", mnt_info->bd->major, mnt_info->bd->minor);
     return SUCCESS;
+}
+
+static int ext2_unlink(struct direntry_struct *file)
+{
+    // unlink todo list:
+    // * modify inode bitmap (deallocates the inode)
+    // * remove parent directory entry (removes the reference)
+
+    return -ENOSYS;
 }
 
 static int fetch_inode(unsigned int inode_no, struct mntp_struct *mnt_info, ext2_inode_t *inode)
