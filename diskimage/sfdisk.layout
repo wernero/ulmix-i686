@@ -1,7 +1,0 @@
-# partition table of test.img
-unit: sectors
-
-test.img1 : start=        1, size=    48194, Id=83
-test.img2 : start=        0, size=        0, Id= 0
-test.img3 : start=        0, size=        0, Id= 0
-test.img4 : start=        0, size=        0, Id= 0
