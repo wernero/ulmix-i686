@@ -111,14 +111,3 @@ int sys_chdir(char *wdir)
     current_thread->process->working_dir = node->directory;
     return SUCCESS;
 }
-
-extern struct dir_struct root;
-int sys_getcwd(char *buf, size_t size)
-{
-    if (current_thread->process->working_dir == &root)
-    {
-        strcpy(buf, "/");
-        return SUCCESS;
-    }
-    return get_pathname(current_thread->process->working_dir->entry, buf);
-}

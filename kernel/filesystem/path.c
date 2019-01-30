@@ -8,10 +8,41 @@
 extern struct dir_struct root;
 extern thread_t *current_thread;
 
-int get_pathname(struct direntry_struct *node, char *buf)
+static void reverse_path(char *buf, size_t size)
 {
-    // not yet finished, returns the reversed path
+    char tmp[size];
+    strcpy(tmp, buf);
+    *buf = 0;
 
+    for (int i = strlen(tmp) - 1;; i--)
+    {
+        if (i == 0)
+        {
+            strcat(buf, tmp);
+            break;
+        }
+
+        if (tmp[i] == '/')
+        {
+            strcat(buf, tmp + i + 1);
+            strcat(buf, "/");
+            tmp[i] = 0;
+        }
+    }
+}
+
+int sys_getcwd(char *buf, size_t size)
+{
+    if (size < 1)
+        return -EINVAL;
+
+    if (current_thread->process->working_dir == &root)
+    {
+        strcpy(buf, "/");
+        return SUCCESS;
+    }
+
+    struct direntry_struct *node = current_thread->process->working_dir->entry;
     if (node == NULL)
         return -ENOENT;
 
@@ -31,13 +62,14 @@ int get_pathname(struct direntry_struct *node, char *buf)
        parent = parent->parent;
     }
 
+    reverse_path(buf, size);
     return SUCCESS;
 }
 
 static char *strccpy(char *dest, char *src, char terminator);
 static int namei_recursive(char *path, struct dir_struct *working_dir, struct direntry_struct **node)
 {
-    char cname[20];
+    char cname[256];
     char *rem = strccpy(cname, path, '/');
     if (strlen(cname) == 0)
     {

@@ -1,5 +1,6 @@
 #include "syscall.h"
 #include <util/util.h>
+#include <filesystem/path.h>
 #include <filesystem/fs_syscalls.h>
 #include <exec.h>
 #include <sched/process.h>
