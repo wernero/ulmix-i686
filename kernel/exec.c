@@ -68,8 +68,8 @@ int sys_execve(char *filename, char *argv[], char *envp[])
 
     // 5. setup stack
     unsigned long ebp, esp = GB3;
-    ebp = GB3 - 4096;
-    memset((void*)ebp, 0, 4096);
+    ebp = GB3 - 8192*2;
+    memset((void*)ebp, 0, 8192*2);
 
     /*int argc;
     void *argvp;

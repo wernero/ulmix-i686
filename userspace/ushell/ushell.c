@@ -2,39 +2,80 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
-void getline(char *buf)
+#define ARG_LENGTH  64
+#define ARG_MAX     16
+char argvp[ARG_LENGTH][ARG_MAX];
+
+int getline(char argv[ARG_LENGTH][ARG_MAX])
 {
+    int argc = 0;
+    int argc_ind = 0;
+
     char c;
-    while ((c = getchar()) != '\n')
+    while ((c = getchar()) != EOF)
     {
-        if (c == EOF)
-            break;
-        *buf++ = c;
         putchar(c);
+
+        if (c == ' ' || c == '\n')
+        {
+            argv[argc][argc_ind] = 0;
+            if (argc_ind != 0)
+                argc++;
+            argc_ind = 0;
+
+            if (c == '\n')
+                break;
+            continue;
+        }
+
+        argv[argc][argc_ind++] = c;
     }
-    putchar('\n');
-    *buf = 0;
+    return argc;
 }
 
 int main(void)
 {
     printf("ULMIX shell\n\n");
 
-    char buf[PATH_MAX];
+    int argc;
+    char buf[64];
+    //char *execve_param[ARG_MAX];
+
     while (1)
     {
         if (getwd(buf) == NULL)
-            printf("cannot obtain pathname\n");
+            printf("$");
+        else
+            printf("%s$ ", buf);
 
-        printf("%s$ ", buf);
+        argc = getline(argvp);
 
-        getline(buf);
-        //if (strcmp(buf, "exit") == 0)
-        //    break;
+        if (argc == 0)
+            continue;
 
-        if (chdir(buf) < 0)
-            printf("path not found\n");
+        char *command = argvp[0];
+
+        /*if (strcmp(argvp[0], "exit") == 0)
+            return 0;*/
+
+        /*if (strcmp(argvp[0], "cd") == 0)
+        {
+
+            continue;
+        }*/
+
+        if (strcmp(command, "pwd") == 0)
+        {
+            if (getwd(buf) != NULL)
+                printf("%s\n", buf);
+            else
+                printf("error: %s\n", strerror(errno));
+            continue;
+        }
+
+        printf("error: %s: command not found\n", command);
     }
 
     printf("\n\nexit\n");
