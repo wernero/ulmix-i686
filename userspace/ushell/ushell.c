@@ -57,14 +57,22 @@ int main(void)
 
         char *command = argvp[0];
 
-        /*if (strcmp(argvp[0], "exit") == 0)
-            return 0;*/
+        if (strcmp(argvp[0], "exit") == 0)
+            return 0;
 
-        /*if (strcmp(argvp[0], "cd") == 0)
+        if (strcmp(argvp[0], "cd") == 0)
         {
-
+            if (argc < 2)
+            {
+                printf("syntax error: expected path\n");
+            }
+            else
+            {
+                if (chdir(argvp[1]) < 0)
+                    printf("error: %s\n", strerror(errno));
+            }
             continue;
-        }*/
+        }
 
         if (strcmp(command, "pwd") == 0)
         {
