@@ -160,25 +160,25 @@ static int ext2_get_inode(struct direntry_struct *entry)
     entry->bptr1 = inode->i_block[0];
 
 
-    if(inode->i_block[0] != NULL) {
-
+    if (inode->i_block[0] != NULL)
+    {
         entry->blocks = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
 
         current_ibt = entry->blocks;                	// used as rolling pointer to current struct
         current_ibt->file = entry;                  	// this is the file we are workig on
         current_ibt->next = NULL;
 
-    for(n=0; n < VFS_INODE_BLOCK_TABLE_LEN; n++)	// init all blocks to zero
-        current_ibt->blocks[n] = 0;
+        for (n = 0; n < VFS_INODE_BLOCK_TABLE_LEN; n++)	// init all blocks to zero
+            current_ibt->blocks[n] = 0;
 
-    ext2_inode_blk_table_t *inode_indirect_buf;
-
-        for(n=0; n < EXT2_N_BLOCKS; n++) {
-
+        ext2_inode_blk_table_t *inode_indirect_buf;
+        for (n = 0; n < EXT2_N_BLOCKS; n++)
+        {
             if (inode->i_block[n] == 0)
-          break;  					// not an block (or pointer to block)
+                break;  					// not an block (or pointer to block)
 
-            if (n < EXT2_NDIR_BLOCKS) {         	// handling of direct blocks
+            if (n < EXT2_NDIR_BLOCKS)
+            {         	// handling of direct blocks
 
                 klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, blocks=%x",
                     entry->inode_no,
@@ -186,97 +186,103 @@ static int ext2_get_inode(struct direntry_struct *entry)
                     );
 
                 current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode->i_block[n];
-        block_counter += 1;
-
+                block_counter += 1;
             }
-            switch(n){
 
-          case EXT2_IND_BLOCK:
+            switch(n)
+            {
+            case EXT2_IND_BLOCK:
                 klog(KLOG_DEBUG, "ext2_get_inode(): indirect inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
 
-        inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
+                inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "inode_indirect_buf");
 
-        // block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks .. 256k filessize
-        entry_sb->fd->fops.seek(entry_sb->fd, inode->i_block[n] * EXT2_BLOCK_SIZE, SEEK_SET);
-        entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
+                // block is pointing to 1k data block which holds max 256 block pointers to 1k data blocks .. 256k filessize
+                entry_sb->fd->fops.seek(entry_sb->fd, inode->i_block[n] * EXT2_BLOCK_SIZE, SEEK_SET);
+                entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
 
-        for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
-            if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
-              break;
+                for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++)
+                {
+                    if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
+                        break;
 
-            // check if new ibt needs to be created
-            if(block_counter == VFS_INODE_BLOCK_TABLE_LEN) {
-            // create new block
-            current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
-            current_ibt->next->file = current_ibt->file;
-            current_ibt = current_ibt->next;
-            }
+                    // check if new ibt needs to be created
+                    if(block_counter == VFS_INODE_BLOCK_TABLE_LEN)
+                    {
+                        // create new block
+                        current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+                        current_ibt->next->file = current_ibt->file;
+                        current_ibt = current_ibt->next;
+                    }
 
-            // store block pointer
-            current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_indirect_buf->i_indirect_ptr[ibc];
-            block_counter += 1;
-        } // for ibc
+                    // store block pointer
+                    current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_indirect_buf->i_indirect_ptr[ibc];
+                    block_counter += 1;
+                } // for ibc
 
-        kfree(inode_indirect_buf); // be nice and free up space
-        break;
-          case EXT2_DIND_BLOCK:
+                kfree(inode_indirect_buf); // be nice and free up space
+                break;
+
+            case EXT2_DIND_BLOCK:
                 klog(KLOG_DEBUG, "ext2_get_inode(): double inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
 
-        inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "single inode_indirect_buf");
+                inode_indirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "single inode_indirect_buf");
 
-        // block is pointing to 1k data block which holds max 256x256 block pointers  of 1k data blocks .. 65MB filesize
-        entry_sb->fd->fops.seek(entry_sb->fd,
-                                         inode->i_block[n] * EXT2_BLOCK_SIZE,
-                                         SEEK_SET);
-        entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
+                // block is pointing to 1k data block which holds max 256x256 block pointers  of 1k data blocks .. 65MB filesize
+                entry_sb->fd->fops.seek(entry_sb->fd,
+                                                 inode->i_block[n] * EXT2_BLOCK_SIZE,
+                                                 SEEK_SET);
+                entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_indirect_buf, EXT2_BLOCK_SIZE);
 
-        for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++) {
-            if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
-              break;
+                for(int ibc = 0; ibc < EXT2_IND_BLOCK_LEN; ibc++)
+                {
+                    if(inode_indirect_buf->i_indirect_ptr[ibc] == 0)
+                        break;
 
-            ext2_inode_blk_table_t *inode_dindirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "double inode_indirect_buf");
+                    ext2_inode_blk_table_t *inode_dindirect_buf = kmalloc(sizeof(ext2_inode_blk_table_t), 1, "double inode_indirect_buf");
 
-            // check if new ibt needs to be created
-            if(block_counter == VFS_INODE_BLOCK_TABLE_LEN) {
-            // create new block
-            current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
-            current_ibt->next->file = current_ibt->file;
-            current_ibt = current_ibt->next;
-            }
+                    // check if new ibt needs to be created
+                    if (block_counter == VFS_INODE_BLOCK_TABLE_LEN)
+                    {
+                        // create new block
+                        current_ibt->next = kmalloc(sizeof(struct inode_block_table), 1, "inode_block_table");
+                        current_ibt->next->file = current_ibt->file;
+                        current_ibt = current_ibt->next;
+                    }
 
-            entry_sb->fd->fops.seek(entry_sb->fd,
-                                             inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE,
-                                             SEEK_SET);
-            entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_dindirect_buf, EXT2_BLOCK_SIZE);
+                    entry_sb->fd->fops.seek(entry_sb->fd,
+                                                     inode_indirect_buf->i_indirect_ptr[ibc] * EXT2_BLOCK_SIZE,
+                                                     SEEK_SET);
+                    entry_sb->fd->fops.read(entry_sb->fd, (char*)inode_dindirect_buf, EXT2_BLOCK_SIZE);
 
-            for(int dibc = 0; dibc < EXT2_IND_BLOCK_LEN; dibc++) {
+                    for(int dibc = 0; dibc < EXT2_IND_BLOCK_LEN; dibc++)
+                    {
+                        if (inode_dindirect_buf->i_indirect_ptr[dibc] == 0)
+                          break;
 
-            if(inode_dindirect_buf->i_indirect_ptr[dibc] == 0)
-              break;
+                        // store block pointer
+                        current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_dindirect_buf->i_indirect_ptr[dibc];
+                        block_counter += 1;
 
-            // store block pointer
-            current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode_dindirect_buf->i_indirect_ptr[dibc];
-            block_counter += 1;
+                    } // for dibc
+                    kfree(inode_dindirect_buf); // be nice and free up space
+                } // for ibc
 
-            } // for dibc
-            kfree(inode_dindirect_buf); // be nice and free up space
-        } // for ibc
+                kfree(inode_indirect_buf); // be nice and free up space
+                break;
 
-        kfree(inode_indirect_buf); // be nice and free up space
-        break;
           case EXT2_TIND_BLOCK:
                 klog(KLOG_DEBUG, "ext2_get_inode(): triple inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
                     );
 
-          //TODO -- handling of triple indirect files ..  15GB filesize ...
+            //TODO -- handling of triple indirect files ..  15GB filesize ...
 
         break;
           default:
@@ -384,7 +390,7 @@ static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len)
     // do not overrun file length
     size_t bytes_to_copy;
     size_t seek_offset = fd->seek_offset;
-    if(len > (entry->size - seek_offset))
+    if (len > (entry->size - seek_offset))
         bytes_to_copy = entry->size - seek_offset;
     else
         bytes_to_copy = len;
@@ -415,7 +421,7 @@ static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len)
             lba_fac = EXT2_BLOCK_SIZE / 512;
             lba = current_ibt->blocks[i] * lba_fac;
 
-            if (!start_block) // depends on seek_offset
+            if (start_block == 0) // depends on seek_offset
             {
                 struct sb_struct *sb = fd->direntry->parent->mnt_info->sb;
                 sb->fd->fops.seek(sb->fd, lba * 512, SEEK_SET);
@@ -431,7 +437,7 @@ static ssize_t ext2_read(struct file_struct *fd, char *buf, size_t len)
                 else
                 {
                     memcpy(buf + bytes_read, disk_read_buffer + start_block_offset, EXT2_BLOCK_SIZE);
-                    bytes_to_copy -= EXT2_BLOCK_SIZE;
+                    bytes_to_copy -= EXT2_BLOCK_SIZE - start_block_offset;
                     total_bytes_read += EXT2_BLOCK_SIZE;
                 }
 
