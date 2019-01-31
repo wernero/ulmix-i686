@@ -3,10 +3,13 @@
 
 #include "util/types.h"
 #include "util/string.h"
+#include <errno.h>
 
 #define _KERNEL_STACK_BASE_ 1024*1024*6
 
 #define NULL 0
+
+#define USERPTR(a) if (((void*)a) < 0x100000 || ((void*)a) >= 0xc0000000) return -EFAULT;
 
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }

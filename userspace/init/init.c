@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/utsname.h>
 
 #define SHELL "/bin/ush" // ulmix shell
 
@@ -10,9 +11,13 @@ static void start_program(char *filename);
 
 int main(void)
 {
-    printf("ULMIX Operating System init\n"
+    struct utsname uts;
+    uname(&uts);
+
+    printf("%s %s %s    \n"
            "Copyright (C) 2018-2019\n"
-           "Written by Alexander Ulmer\n\n");
+           "Written by Alexander Ulmer\n\n",
+           uts.sysname, uts.version, uts.machine);
 
     start_program(SHELL);
 

@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/utsname.h>
 
 static unsigned long
 __attribute__((optimize("O0")))
@@ -53,6 +54,11 @@ int close(int fd) // 6
 int chdir(const char *path) // 12
 {
     return __syscall(12, (unsigned long)path, 0, 0, 0);
+}
+
+int uname(struct utsname *buf) // 109
+{
+    return __syscall(109, (unsigned long)buf, 0, 0, 0);
 }
 
 char *getcwd(char *buf, size_t size) // 183

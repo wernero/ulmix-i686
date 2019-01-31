@@ -6,6 +6,7 @@
 #include <sched/process.h>
 #include <errno.h>
 #include <kdebug.h>
+#include <uname.h>
 
 #define nop 0
 
@@ -73,7 +74,7 @@ void *syscalls[] =
     nop,                // 56
     nop,                // 57
     nop,                // 58
-    nop,                // 59
+    sys_uname,          // 59 = 109 = 122 for compatibility
     nop,                // 60
     nop,                // 61
     nop,                // 62
@@ -123,7 +124,7 @@ void *syscalls[] =
     nop,                // 106
     nop,                // 107
     nop,                // 108
-    nop,                // 109
+    sys_uname,          // 109 = 59 = 122 for compatibility
     nop,                // 110
     nop,                // 111
     nop,                // 112
@@ -136,7 +137,7 @@ void *syscalls[] =
     nop,                // 119
     nop,                // 120
     nop,                // 121
-    nop,                // 122
+    sys_uname,          // 122 = 109 = 59 for compatibility
     nop,                // 123
     nop,                // 124
     nop,                // 125
