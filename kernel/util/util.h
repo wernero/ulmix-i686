@@ -9,7 +9,8 @@
 
 #define NULL 0
 
-#define USERPTR(a) if (((void*)a) < 0x100000 || ((void*)a) >= 0xc0000000) return -EFAULT;
+#define KERNEL_MODE 1 // TODO: determine if we are in kernel mode or not
+#define USERPTR(a) if (!KERNEL_MODE && a != NULL && (((void*)a) < (void*)0x100000 || ((void*)a) >= (void*)0xc0000000)) return -EFAULT
 
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }
