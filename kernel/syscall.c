@@ -35,7 +35,7 @@ void *syscalls[] =
     nop,                // 17
     nop,                // 18   stat()              *required
     sys_lseek,          // 19   lseek()             *required
-    nop,                // 20   getpid()            *required
+    sys_getpid,         // 20   getpid()            *required
     nop,                // 21   mount()
     nop,                // 22   oldumount()
     nop,                // 23   setuid16()

@@ -74,3 +74,8 @@ static pid_t new_pid()
 {
     return pid_counter++;
 }
+
+pid_t sys_getpid(void)
+{
+    return current_thread->process->pid;
+}

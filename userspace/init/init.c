@@ -11,6 +11,12 @@ static void start_program(char *filename);
 
 int main(void)
 {
+    if (getpid() != 1)
+    {
+        printf("init should only be run by the kernel\n");
+        return 1;
+    }
+
     struct utsname uts;
     uname(&uts);
 
@@ -18,7 +24,6 @@ int main(void)
            "Copyright (C) 2018-2019\n"
            "Written by Alexander Ulmer\n\n",
            uts.sysname, uts.version, uts.machine);
-
     start_program(SHELL);
 
     return 0;

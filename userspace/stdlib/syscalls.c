@@ -60,6 +60,11 @@ int chdir(const char *path) // 12
     return __syscall(12, (unsigned long)path, 0, 0, 0);
 }
 
+pid_t getpid(void) // 20
+{
+    return __syscall(20, 0, 0, 0, 0);
+}
+
 int uname(struct utsname *buf) // 109
 {
     return __syscall(109, (unsigned long)buf, 0, 0, 0);

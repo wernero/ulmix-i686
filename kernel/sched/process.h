@@ -29,5 +29,7 @@ process_t * mk_process_struct(pagedir_t *pagedir,
 
 void kill_process(process_t *process);
 
+pid_t sys_getpid(void);
+
 
 #endif // PROCESS_H
