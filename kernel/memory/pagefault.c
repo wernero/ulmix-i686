@@ -42,7 +42,7 @@ int page_fault_handler(unsigned long error, unsigned long fault_addr)
         }
 
         klog(KLOG_INFO, "kill [%d]: uncorrectable page fault. addr=0x%x",
-             current_thread->process->pid,
+             current_thread->process->tgid,
              fault_addr);
 
         kill_process(current_thread->process);

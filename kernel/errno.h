@@ -13,6 +13,7 @@
 #define ENOEXEC 8
 
 #define EBADF   9
+#define ECHILD  10
 #define EAGAIN  11
 #define ENOMEM  12
 #define EFAULT  14

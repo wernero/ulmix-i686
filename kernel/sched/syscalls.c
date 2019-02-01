@@ -9,12 +9,13 @@ extern thread_t *current_thread;
 
 pid_t sys_fork_c(struct syscall_context_struct *context)
 {
-    klog(KLOG_INFO, "[%d] fork()", current_thread->process->pid);
+    klog(KLOG_INFO, "[%d] fork()", current_thread->process->tgid);
     process_t *pold = current_thread->process;
 
     // create new process image
     pagedir_t *pd_new = pagedir_copy_current();
     process_t *pnew = mk_process_struct(pd_new, TYPE_USER, "forked process");
+    process_add_child(pold, pnew);
 
     // apply file descriptors and working directory of the old process
     pnew->working_dir = pold->working_dir;
@@ -35,21 +36,33 @@ pid_t sys_fork_c(struct syscall_context_struct *context)
                               mk_kstack(TYPE_USER, (void*)context->eip, PAGESIZE, context->user_esp, get_eflags(), rcontext),
                               pnew->description);
 
-    return pnew->pid; // old process gets the pid of the new one
+    return pnew->tgid; // old process gets the pid of the new one
 }
 
 void sys_exit(int status)
 {
-    klog(KLOG_INFO, "[%d] exit() with code %d", current_thread->process->pid, status);
+    klog(KLOG_INFO, "[%d] exit() with code %d", current_thread->process->tgid, status);
     kill_process(current_thread->process);
-}
-
-pid_t sys_wait(int *wstatus)
-{
-    return -1;
 }
 
 pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
 {
-    return -1;
+    if (pid <= 0)
+        return -ENOSYS;
+
+    process_t *wproc;
+    for (wproc = current_thread->process->children; wproc != NULL; wproc = wproc->next_child)
+    {
+        if (wproc->tgid == pid)
+        {
+            if (wproc->state == P_RUNNING)
+            {
+                wproc->wait_thread = current_thread;
+                scheduler_block(current_thread);
+            }
+
+            return wproc->tgid;
+        }
+    }
+    return -ECHILD;
 }

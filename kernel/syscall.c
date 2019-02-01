@@ -207,7 +207,7 @@ int syscall_handler(struct syscall_context_struct *context)
     if (syscalls[context->eax] == NULL)
     {
         klog(KLOG_DEBUG, "pid %d: called unimplemented system call (%d)",
-             current_thread->process->pid, context->eax);
+             current_thread->process->tgid, context->eax);
         return -ENOSYS;
     }
 

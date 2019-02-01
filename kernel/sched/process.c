@@ -31,7 +31,7 @@ process_t *mk_process_struct(pagedir_t *pagedir,
     process_t *process = kmalloc(sizeof(process_t), 1, "process_t");
     strcpy(process->description, description);
     process->description[DESC_LENGTH - 1] = 0;
-    process->pid = new_pid();
+    process->tgid = new_pid();
     process->type = type;
     process->thread_count = 0;
     process->threads = NULL;
@@ -39,14 +39,32 @@ process_t *mk_process_struct(pagedir_t *pagedir,
     process->files[0] = NULL;
     process->working_dir = &root;
     process->parent = NULL;
-
+    process->children = NULL;
+    process->next_child = NULL;
+    process->state = P_RUNNING;
+    process->wait_thread = NULL;
     return process;
+}
+
+void process_add_child(process_t *proc, process_t *child)
+{
+    if (proc->children != NULL)
+    {
+        child->next_child = proc->children;
+    }
+
+    proc->children = child;
 }
 
 
 void kill_process(process_t *process)
 {
-    klog(KLOG_DEBUG, "killing pid %d", process->pid);
+    if (process->wait_thread != NULL)
+    {
+        scheduler_unblock(process->wait_thread);
+        process->wait_thread = NULL;
+    }
+
     scheduler_disable();
 
     thread_t *thr;
@@ -78,12 +96,12 @@ static pid_t new_pid()
 
 pid_t sys_getpid(void)
 {
-    return current_thread->process->pid;
+    return current_thread->process->tgid;
 }
 
 pid_t sys_getppid(void)
 {
     if (current_thread->process->parent == NULL)
         return 0;
-    return current_thread->process->parent->pid;
+    return current_thread->process->parent->tgid;
 }

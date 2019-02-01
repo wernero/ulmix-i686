@@ -46,7 +46,7 @@ int kfexec(char *img_path, char *description)
 
 int sys_execve(char *filename, char *argv[], char *envp[])
 {
-    klog(KLOG_INFO, "[%d] execve(): file=%s", current_thread->process->pid, filename);
+    klog(KLOG_INFO, "[%d] execve(): file=%s", current_thread->process->tgid, filename);
 
     // 1. check wheter the binary image exists and can be read
     int fd;
