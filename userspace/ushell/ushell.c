@@ -41,6 +41,7 @@ int main(void)
 
     int argc;
     char buf[64];
+    char *homedir = "/";
     //char *execve_param[ARG_MAX];
 
     while (1)
@@ -64,7 +65,8 @@ int main(void)
         {
             if (argc < 2)
             {
-                printf("syntax error: expected path\n");
+                if (chdir(homedir) < 0)
+                    printf("error: %s\n", strerror(errno));
             }
             else
             {
