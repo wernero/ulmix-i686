@@ -1,4 +1,4 @@
-SUBDIRS := stdlib init hexdump ushell
+SUBDIRS := stdlib init hexdump ushell coreutils
 
 all: $(SUBDIRS)
 	$(MAKE) -C ../diskimage

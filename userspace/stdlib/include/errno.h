@@ -32,9 +32,6 @@
 
 #define ENOBUFS 105
 
-#define errno _errno()
-
-int  _errno(void);
-void _set_errno(int err);
+extern int errno;
 
 #endif // ERRNO_H

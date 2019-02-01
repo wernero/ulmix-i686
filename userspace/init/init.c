@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/utsname.h>
 
 #define SHELL "/bin/ush" // ulmix shell
@@ -16,6 +17,10 @@ int main(void)
         printf("init should only be run by the kernel\n");
         return 1;
     }
+
+    int fd = open("/dev/tty1", O_RDWR);
+    if (fd < 0)
+        exit(-fd);
 
     struct utsname uts;
     uname(&uts);

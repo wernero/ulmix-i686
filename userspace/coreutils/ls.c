@@ -51,4 +51,5 @@ int ls(int argc, char *argv[])
     }
 
     closedir(directory);
+    return 0;
 }

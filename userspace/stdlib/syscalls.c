@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
+int errno;
+
 static unsigned long
 __attribute__((optimize("O0")))
 __syscall(unsigned long id,
@@ -116,7 +118,7 @@ __syscall(unsigned long id,
 
     if (ret < 0)
     {
-        _set_errno(-ret);
+        errno = -ret;
         return -1;
     }
     return ret;

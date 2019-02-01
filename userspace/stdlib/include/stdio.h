@@ -7,9 +7,16 @@
 #define STDIO_H
 
 
-#define EOF -1
+#define BUFSIZ          4096
+#define EOF             -1
+#define FILENAME_MAX    256             /* = maximum file name length allowed by ext2 */
+#define FOPEN_MAX       32              /* = MAX_FILES in the kernel (kernel/sched/process.h) */
+#define TMP_MAX         0               /* not yet implemented */
+#define L_tmpnam        FILENAME_MAX
 
-typedef struct file_struct
+typedef unsigned long int size_t;
+
+typedef struct _file_struct
 {
     int fileno;
 } FILE;

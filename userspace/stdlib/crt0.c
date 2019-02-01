@@ -16,12 +16,8 @@ FILE *stderr;
 
 void _start(void)
 {
-    int fd = open("/dev/tty1", O_RDWR);
-    if (fd < 0)
-        exit(-fd);
-
     FILE std;
-    std.fileno = fd;
+    std.fileno = 0;
     stdin = stdout = stderr = &std;
 
     int ret = main(0, NULL);
