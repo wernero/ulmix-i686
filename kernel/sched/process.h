@@ -5,12 +5,12 @@
 
 struct _process_t
 {
+    process_t *         parent;
     pid_t               pid;
     thread_type_t       type;
     pagedir_t*          pagedir;
     thread_t*           threads;
     int                 thread_count;
-    int                 nofault;
     struct dir_struct   *working_dir;
     struct file_struct  *files[MAX_FILES];
     char                description[DESC_LENGTH];
@@ -30,6 +30,7 @@ process_t * mk_process_struct(pagedir_t *pagedir,
 void kill_process(process_t *process);
 
 pid_t sys_getpid(void);
+pid_t sys_getppid(void);
 
 
 #endif // PROCESS_H

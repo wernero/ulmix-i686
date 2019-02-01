@@ -38,6 +38,7 @@ process_t *mk_process_struct(pagedir_t *pagedir,
     process->pagedir = pagedir;
     process->files[0] = NULL;
     process->working_dir = &root;
+    process->parent = NULL;
 
     return process;
 }
@@ -78,4 +79,11 @@ static pid_t new_pid()
 pid_t sys_getpid(void)
 {
     return current_thread->process->pid;
+}
+
+pid_t sys_getppid(void)
+{
+    if (current_thread->process->parent == NULL)
+        return 0;
+    return current_thread->process->parent->pid;
 }

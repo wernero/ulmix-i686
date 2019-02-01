@@ -16,26 +16,26 @@
 void *syscalls[] =
 {
     nop,                // 0
-    sys_exit,           // 1    exit()              *required
-    sys_fork,           // 2    fork()              *required
-    sys_read,           // 3    read()              *required
-    sys_write,          // 4    write()             *required
-    sys_open,           // 5    open()              *required
-    sys_close,          // 6    close()             *required
-    sys_waitpid,        // 7    waitpid()           *required
-    sys_creat,          // 8    creat()
-    sys_link,           // 9    link()              *required
-    sys_unlink,         // 10   unlink()            *required
-    sys_execve,         // 11   execve()            *required
-    sys_chdir,          // 12   chdir()
+    sys_exit,           // 1    terminate program
+    sys_fork,           // 2    copy current process
+    sys_read,           // 3    read from file descriptor
+    sys_write,          // 4    write into file descriptor
+    sys_open,           // 5    open file or device
+    sys_close,          // 6    close file descriptor
+    sys_waitpid,        // 7    wait for an event to happen
+    sys_creat,          // 8    = open(path, O_WRONLY, O_TRUNC)
+    sys_link,           // 9    make a hard link to a file
+    sys_unlink,         // 10   delete a file
+    sys_execve,         // 11   replace process with a new one
+    sys_chdir,          // 12   change working directory
     nop,                // 13   time()
     nop,                // 14   mknod()
     nop,                // 15   chmod()
     nop,                // 16   lchown16()
-    sys_kdebug,         // 17   kdebug()
+    sys_kdebug,         // 17   kernel debugging features
     nop,                // 18   stat()              *required
-    sys_lseek,          // 19   lseek()             *required
-    sys_getpid,         // 20   getpid()            *required
+    sys_lseek,          // 19   set seek offset in a file
+    sys_getpid,         // 20   get process id
     nop,                // 21   mount()
     nop,                // 22   oldumount()
     nop,                // 23   setuid16()
@@ -69,17 +69,17 @@ void *syscalls[] =
     nop,                // 51
     nop,                // 52
     nop,                // 53
-    sys_ioctl,          // 54   sys_ioctl()
+    sys_ioctl,          // 54   send I/O command
     nop,                // 55
     nop,                // 56
     nop,                // 57
     nop,                // 58
-    sys_uname,          // 59 = 109 = 122 for compatibility
+    sys_uname,          // 59   get kernel info     = 109 = 122
     nop,                // 60
     nop,                // 61
     nop,                // 62
     nop,                // 63
-    nop,                // 64
+    sys_getppid,        // 64   get parent process id
     nop,                // 65
     nop,                // 66
     nop,                // 67

@@ -18,6 +18,7 @@ pid_t sys_fork_c(struct syscall_context_struct *context)
 
     // apply file descriptors and working directory of the old process
     pnew->working_dir = pold->working_dir;
+    pnew->parent = pold;
     for (int i = 0; i < MAX_FILES; i++)
     {
         if (pold->files[i] != NULL)
