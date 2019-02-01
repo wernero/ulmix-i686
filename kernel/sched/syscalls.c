@@ -18,7 +18,11 @@ pid_t sys_fork_c(struct syscall_context_struct *context)
 
     // apply file descriptors and working directory of the old process
     pnew->working_dir = pold->working_dir;
-    // pnew->files = pold->files
+    for (int i = 0; i < MAX_FILES; i++)
+    {
+        if (pold->files[i] != NULL)
+            pnew->files[i] = pold->files[i];
+    }
 
     // new process: 'esp' is the stack pointer and also points to
     // the return address on the stack.
