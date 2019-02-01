@@ -60,6 +60,11 @@ int chdir(const char *path) // 12
     return __syscall(12, (unsigned long)path, 0, 0, 0);
 }
 
+int kdebug(unsigned long request, unsigned long arg1, unsigned long arg2) // 17
+{
+    return __syscall(17, request, arg1, arg2, 0);
+}
+
 pid_t getpid(void) // 20
 {
     return __syscall(20, 0, 0, 0, 0);

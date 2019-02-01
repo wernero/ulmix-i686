@@ -32,7 +32,7 @@ void *syscalls[] =
     nop,                // 14   mknod()
     nop,                // 15   chmod()
     nop,                // 16   lchown16()
-    nop,                // 17
+    sys_kdebug,         // 17   kdebug()
     nop,                // 18   stat()              *required
     sys_lseek,          // 19   lseek()             *required
     sys_getpid,         // 20   getpid()            *required

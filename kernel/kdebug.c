@@ -29,3 +29,17 @@ void log_putchar(char c)
     //if (oflags & OUT_TTY)       tty_kernel_putchar(c);
     serial_putchar(TTYS1, c);
 }
+
+void sys_kdebug(unsigned long request, unsigned long arg1, unsigned long arg2)
+{
+    switch (request)
+    {
+    case KDEBUG_KLOG:
+        klog(KLOG_DEBUG, (char*)arg1);
+        break;
+    default:
+        return -ENOSYS;
+    }
+
+    return SUCCESS;
+}
