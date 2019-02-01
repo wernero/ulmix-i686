@@ -46,7 +46,11 @@ int close(int fd) // 6
     return __syscall(6, fd, 0, 0, 0);
 }
 
-// waitpid() // 7
+pid_t waitpid(pid_t pid, int *wstatus, int options) // 7
+{
+    return __syscall(7, pid, (unsigned long)wstatus, (unsigned long)options, 0);
+}
+
 // creat() // 8
 // link() // 9
 // unlink() // 10

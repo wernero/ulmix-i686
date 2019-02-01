@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 #define ARG_LENGTH  64
 #define ARG_MAX     16
@@ -42,7 +43,8 @@ int main(void)
     int argc;
     char buf[64];
     char *homedir = "/";
-    //char *execve_param[ARG_MAX];
+    //char *path = "/bin/";
+    char *execve_argv[ARG_MAX];
 
     while (1)
     {
@@ -85,7 +87,17 @@ int main(void)
             continue;
         }
 
-        printf("error: %s: command not found\n", command);
+        pid_t child;
+        if ((child = fork()) == 0)
+        {
+            if (execve(command, execve_argv, NULL) < 0)
+            {
+                printf("error: %s: %s\n", command, strerror(errno));
+                exit(1);
+            }
+        }
+
+        waitpid(child, NULL, 0);
     }
 
     printf("\n\nexit\n");
