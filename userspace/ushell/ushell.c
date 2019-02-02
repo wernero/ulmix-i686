@@ -88,6 +88,11 @@ int main(void)
         }
 
         pid_t child;
+        for (int i = 0; i < argc; i++)
+        {
+            execve_argv[i] = argvp[i];
+        }
+
         if ((child = fork()) == 0)
         {
             if (execve(command, execve_argv, NULL) < 0)
