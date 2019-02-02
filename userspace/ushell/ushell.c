@@ -87,9 +87,14 @@ int main(void)
             continue;
         }
 
-        int i;
+        int i, detached = 0;
         for (i = 0; i < argc; i++)
         {
+            if (i == argc - 1 && strcmp(argvp[i], "&") == 0)
+            {
+                detached = 1;
+                continue;
+            }
             execve_argv[i] = argvp[i];
         }
         execve_argv[i] = NULL;
@@ -104,7 +109,8 @@ int main(void)
             }
         }
 
-        waitpid(child, NULL, 0);
+        if (!detached)
+            waitpid(child, NULL, 0);
     }
 
     printf("\n\nexit\n");
