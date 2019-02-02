@@ -10,7 +10,7 @@
 
 static void start_program(char *filename);
 
-int main(void)
+int main(int argc, char *argv[])
 {
     if (getpid() != 1)
     {
@@ -21,6 +21,8 @@ int main(void)
     int fd = open("/dev/tty1", O_RDWR);
     if (fd < 0)
         exit(-fd);
+
+    printf("init argc=%d\n", argc);
 
     struct utsname uts;
     uname(&uts);

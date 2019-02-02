@@ -14,13 +14,13 @@ FILE *stdin;
 FILE *stdout;
 FILE *stderr;
 
-void _start(void)
+void _start(int argc, char *argv[])
 {
     FILE std;
     std.fileno = 0;
     stdin = stdout = stderr = &std;
 
-    int ret = main(0, NULL);
+    int ret = main(argc, argv);
     // setup standard I/O  -- temporary, the
     //stdout = fopen("/dev/tty", "rw");
     //stdin = stderr = stdout;

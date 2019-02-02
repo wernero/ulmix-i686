@@ -87,12 +87,14 @@ int main(void)
             continue;
         }
 
-        pid_t child;
-        for (int i = 0; i < argc; i++)
+        int i;
+        for (i = 0; i < argc; i++)
         {
             execve_argv[i] = argvp[i];
         }
+        execve_argv[i] = NULL;
 
+        pid_t child;
         if ((child = fork()) == 0)
         {
             if (execve(command, execve_argv, NULL) < 0)

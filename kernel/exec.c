@@ -9,7 +9,6 @@
 extern thread_t *current_thread;
 extern void irq_syscall_return(void);
 
-//static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv);
 static int  loadelf(int fd, void **entry);
 
 int kfexec(char *img_path, char *description)
@@ -33,12 +32,14 @@ int kfexec(char *img_path, char *description)
         return error;
 
     // 3. setup stack
-    unsigned long ebp, esp = GB3;
-    ebp = GB3 - 4096;
-    memset((void*)ebp, 0, 4096);
+    unsigned long *esp = (unsigned long*)GB3;
+    memset(((void*)esp) - 8192*2, 0, 8192*2);
+    *(--esp) = 0;
+    *(--esp) = 0;
+    --esp; // Weirdly, this is necessary. Why??
 
     // 3. setup process structure and run
-    process_t *pnew = mk_process(userpd, TYPE_USER, entry, PAGESIZE, esp, description);
+    process_t *pnew = mk_process(userpd, TYPE_USER, entry, PAGESIZE, (unsigned long)esp, description);
     if (pnew == NULL)
         return -EAGAIN;
     return SUCCESS;
@@ -67,19 +68,25 @@ int sys_execve(char *filename, char *argv[], char *envp[])
         return error;
 
     // 5. setup stack
-    unsigned long ebp, esp = GB3;
-    ebp = GB3 - 8192*2;
-    memset((void*)ebp, 0, 8192*2);
-
-    /*int argc;
+    int argc = 0;
     void *argvp;
+    unsigned long *esp = (unsigned long*)GB3;
+    memset(((void*)esp) - 8192*2, 0, 8192*2);
+
+    // Copy argv into the address space
+
+    *(--esp) = (unsigned long)argvp;
+    *(--esp) = argc;
+    esp--; // Necessary, but why?
+
+    /*
     unsigned long esp = (unsigned long)cpy_argv_env(argv, envp, &argc, &argvp);
     *((uint32_t*)(--esp)) = (uint32_t)argv;
     *((uint32_t*)(--esp)) = (uint32_t)argc;*/
 
     // 6. create new kernel stack
     current_thread->kstack.esp = current_thread->kstack.ebp;
-    current_thread->kstack = kstack_init(current_thread->kstack, TYPE_USER, entry, esp, get_eflags(), NULL);
+    current_thread->kstack = kstack_init(current_thread->kstack, TYPE_USER, entry, (unsigned long)esp, get_eflags(), NULL);
 
     // 7. Return from System call handler
     __asm__("mov %0, %%esp;"
@@ -130,49 +137,3 @@ static int loadelf(int fd, void **entry)
     *entry = (void*)elf_header.entry_point;
     return SUCCESS;
 }
-
-/*static void *cpy_argv_env(char *argv[], char *envp[], int *_argc, void **_argv)
-{
-    int i;
-    void *esp = (void*)GB3;
-
-    // copy argv strings
-    for (i = 0; argv[i] != NULL; i++)
-    {
-        esp -= strlen(argv[i]) + 1;
-        memcpy(esp, argv[i], strlen(argv[i]) + 1);
-        argv[i] = esp;
-    }
-
-    // create argv pointersys_execve( array
-    esp -= i;
-    *_argc = i;
-    *_argv = esp;
-    char **ptrs = (char**)esp;
-    for (i = 0; ; i++)
-    {
-        ptrs[i] = argv[i];
-        if (argv[i] == NULL)
-            break;
-    }
-
-    // copy environment strings
-    for (i = 0; envp[i] != NULL; i++)
-    {
-        esp -= strlen(envp[i]) + 1;
-        memcpy(esp, envp[i], strlen(envp[i]) + 1);
-        envp[i] = esp;
-    }
-
-    // create envp pointer array
-    esp -= i;
-    ptrs = (char**)esp;
-    for (i = 0; ; i++)
-    {
-        ptrs[i] = argv[i];
-        if (argv[i] == NULL)
-            break;
-    }
-
-    return esp;
-}*/
