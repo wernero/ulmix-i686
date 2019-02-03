@@ -50,7 +50,7 @@ int kfexec(char *img_path, char *description)
     return SUCCESS;
 }
 
-static void cpy_argv(unsigned long *esp, int argc, char *argv[], void **argvp)
+static unsigned long *cpy_argv(unsigned long *esp, int argc, char *argv[], void **argvp)
 {
     // copy argument strings onto the stack
     int i, len;
@@ -75,6 +75,7 @@ static void cpy_argv(unsigned long *esp, int argc, char *argv[], void **argvp)
     }
 
     *argvp = (void*)esp;
+    return esp;
 }
 
 int sys_execve(char *filename, char *argv[], char *envp[])
@@ -110,7 +111,7 @@ int sys_execve(char *filename, char *argv[], char *envp[])
     void *argvp;
     unsigned long *esp = (unsigned long*)GB3;
     memset(((void*)esp) - 8192*2, 0, 8192*2);
-    cpy_argv(esp, argc, argv, &argvp);
+    esp = cpy_argv(esp, argc, argv, &argvp);
     *(--esp) = (unsigned long)argvp;
     *(--esp) = argc;
     esp--; // Necessary, but why?

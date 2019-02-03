@@ -4,7 +4,7 @@
 char *basename(char *pathname)
 {
     unsigned long ind = strlen(pathname);
-    while (--pathname[ind])
+    while (pathname[--ind])
     {
         if (pathname[ind] == '/')
             return pathname + ind + 1;
