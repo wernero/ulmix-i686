@@ -1,10 +1,8 @@
-		*** ULMIX Operating System ***
-
 The ULMIX Operating System wants to be a Unix-like operating system with
 advanced memory management features and preemtive multitasking. It's currently
 under heavy development but getting more stable very fast.
 
-Userspace and Kernel currently have to be compiled seperatly. To build everything, run 'make' both in the tree root directory and in the userspace directory.
+Userspace and Kernel currently have to be compiled seperatly. To build everything, run 'make' both in the tree root directory and in the userspace directory. You should do this under a Unix-like environment (nasm, binutils, ... installed).
 
 kernel/		contains kernel sources
 userspace/	contains C library and a few userspace tools
@@ -24,6 +22,14 @@ $ qemu-system-i386 -kernel vmulmix.elf -drive format=raw,file=diskimage/hdd.img 
 
 To boot via grub:
 $ qemu-system-i386 -drive format=raw,file=diskimage/hdd.img
+
+To run Ulmix on real hardware perform the following steps:
+* create MBR partition table on the hard drive
+* create an ext2 partition on that hard drive
+* install grub with i386-pc target
+* mount the partiton and copy diskimage/grub.cfg into /boot/grub/grub.cfg
+* copy vmulmix.elf into the root directory
+* copy binaries to /bin/ and device files into /dev/
 
 It currently supports the i386 architecture (32bit x86) and has the following
 features:
