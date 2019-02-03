@@ -6,6 +6,20 @@
 
 #include <kdebug.h>
 #include <devices/pci.h>
+#include <memory/kheap.h>
+
+#define DRVNAME "rtl8139"
+
+enum rtl8139_registers
+{
+    chip_cmd        = 0x37,
+    config1         = 0x52
+};
+
+struct rtl8139dev
+{
+    uint32_t iobase;
+};
 
 static pci_device_id_t idtable[] =
 {
@@ -34,9 +48,21 @@ static pci_device_id_t idtable[] =
 
 static int rtl8139_probe(pci_device_t *dev)
 {
-    klog(KLOG_INFO, "RTL8139 Fast Ethernet driver");
+    klog(KLOG_INFO, "RTL8139 Fast Ethernet Controller");
+    dev->drv_struct = kmalloc(sizeof(struct rtl8139dev), 1, "rtl8139 drv");
+    struct rtl8139dev *info = (struct rtl8139dev*)dev->drv_struct;
+    info->iobase = pci_read32(dev, PCI_BAR0);
 
-    klog(KLOG_DEBUG, "probing %d:%d:%d", dev->bus, dev->device, dev->function);
+    klog(KLOG_DEBUG, DRVNAME ": DMA: enable PCI bus mastering");
+    uint16_t pci_command = pci_read16(dev, PCI_COMMAND);
+    pci_command |= 0x04;
+    pci_write16(dev, PCI_COMMAND, pci_command);
+
+    klog(KLOG_DEBUG, DRVNAME ": power on, sw reset");
+    outb(info->iobase + config1, 0x00);
+    outb(info->iobase + chip_cmd, 0x10);
+    while (inb(info->iobase + chip_cmd) & 0x10);
+    klog(KLOG_DEBUG, DRVNAME ": reset successful");
 
     return 0;
 }

@@ -44,6 +44,54 @@ int pci_register(pci_device_id_t *idlist, struct pci_ops_struct pci_ops)
     return SUCCESS;
 }
 
+static uint32_t pci_cfg_addr(pci_device_t *dev, int offset)
+{
+    uint32_t lbus  = (uint32_t)dev->bus;
+    uint32_t lslot = (uint32_t)dev->device;
+    uint32_t lfunc = (uint32_t)dev->function;
+
+    return (uint32_t)((lbus << 16) | (lslot << 11) |
+              (lfunc << 8) | (offset & 0xfc) | ((uint32_t)0x80000000));
+}
+
+uint32_t pci_read32(pci_device_t *dev, int offset)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    return inl(0xcfc);
+}
+
+void pci_write32(pci_device_t *dev, int offset, uint32_t val)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    outl(0xcfc, val);
+}
+
+uint16_t pci_read16(pci_device_t *dev, int offset)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    return (uint16_t)((inl(0xcfc) >> ((offset & 2) * 8)) & 0xffff);
+}
+
+void pci_write16(pci_device_t *dev, int offset, uint16_t val)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    outl(0xcfc, val << ((offset & 2) * 8));
+}
+
+uint8_t pci_read8(pci_device_t *dev, int offset)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    return (uint8_t)((inl(0xcfc) >> ((offset & 3) * 8)) & 0xff);
+}
+
+void pci_write8(pci_device_t *dev, int offset, uint8_t val)
+{
+    outl(0xcf8, pci_cfg_addr(dev, offset));
+    outl(0xcfc, val << ((offset & 3) * 8));
+}
+
+
+
 static uint16_t pci_read(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
     uint32_t address;
