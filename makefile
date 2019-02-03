@@ -15,7 +15,9 @@ LFLAGS	= -T $(LDSCRIPT) -nostdlib --warn-common -nmagic -gc-sections -s \
 
 KIMG = vmulmix
 
-KOBJ := $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c)) $(patsubst %.s, %.o, $(wildcard kernel/*.s kernel/*/*.s))
+KOBJ := $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c)) \
+		$(patsubst %.s, %.o, $(wildcard kernel/*.s kernel/*/*.s)) \
+		$(patsubst %.c, %.o, $(wildcard drivers/*.c drivers/*/*.c))
 
 all: $(KIMG)
 

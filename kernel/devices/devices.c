@@ -15,6 +15,8 @@ static void insert_chardev(struct chardev_struct *cd);
 struct gendisk_struct *blk_devices[MAX_DEVICES];
 struct chardev_struct *char_devices[MAX_DEVICES];
 
+extern int setup_rtl8139(void);
+
 void scan_devices()
 {
     klog(KLOG_DEBUG, "scanning devices");
@@ -25,6 +27,10 @@ void scan_devices()
     ata_init();
     keyboard_setup();
     tty_setup();
+
+
+    // Attach PCI devices
+    setup_rtl8139();
 }
 
 struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops, size_t capacity, size_t sector_offset, size_t io_size)
