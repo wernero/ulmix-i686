@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <sys/kdebug.h>
 
 #define ARG_LENGTH  64
 #define ARG_MAX     16
@@ -62,6 +63,12 @@ int main(void)
 
         if (strcmp(argvp[0], "exit") == 0)
             return 0;
+
+        if (strcmp(argvp[0], "kheap") == 0)
+        {
+            kheapdump();
+            continue;
+        }
 
         if (strcmp(argvp[0], "cd") == 0)
         {

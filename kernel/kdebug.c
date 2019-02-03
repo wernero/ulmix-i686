@@ -38,5 +38,17 @@ int sys_kdebug(unsigned long request, unsigned long arg1, unsigned long arg2)
         return SUCCESS;
     }
 
+    if (request == KDEBUG_HEXDUMP)
+    {
+        hexdump(KLOG_DEBUG, (void*)arg1, arg2);
+        return SUCCESS;
+    }
+
+    if (request == KDEBUG_HEAPDUMP)
+    {
+        heap_dump();
+        return SUCCESS;
+    }
+
     return -ENOSYS;
 }

@@ -24,7 +24,7 @@ sudo cp grub.cfg /mnt/boot/grub/grub.cfg
 sudo cp ../vmulmix.elf /mnt/vmulmix.elf
 
 sudo cp ../userspace/coreutils/coreutils.elf /mnt/bin/coreutils
-sudo ln -s /mnt/bin/coreutils /mnt/bin/ls
+sudo ln -s /bin/coreutils /mnt/bin/ls
 sudo cp ../userspace/init/init.elf /mnt/bin/init
 sudo cp ../userspace/hexdump/hexdump.elf /mnt/bin/hexdump
 sudo cp ../userspace/ushell/ushell.elf /mnt/bin/ush

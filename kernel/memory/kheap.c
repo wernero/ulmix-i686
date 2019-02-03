@@ -180,7 +180,7 @@ void kfree(void *mem)
         return;
     }
 
-    klog(KLOG_DEBUG, "kfree(): size=%S, start=%x, purpose=%s", entry->size, entry->start, entry->description);
+    //klog(KLOG_DEBUG, "kfree(): size=%S, start=%x, purpose=%s", entry->size, entry->start, entry->description);
     entry->description[0] = '*';
 
     mutex_unlock(heap_mtx); // temp

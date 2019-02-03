@@ -35,8 +35,6 @@ static void kmainthread(void)
     vfs_init();
 
     exec_init();
-    heap_dump();
-    klog(KLOG_DEBUG, "goodbye from the kernel thread");
     for (;;) hlt();
 }
 

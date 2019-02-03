@@ -102,8 +102,8 @@ static int alloc_page(unsigned long fault_addr, pagedir_t *pagedir, int flags)
 
     // change page table
     info.pagetable->pages[info.pagetable_offset] = entry;
-    klog(KLOG_DEBUG, "pagetables changed: virt(0x%x) -> phys(0x%x)",
+    /*klog(KLOG_DEBUG, "pagetables changed: virt(0x%x) -> phys(0x%x)",
          fault_addr & 0xfffff000,
-         entry & 0xfffff000);
+         entry & 0xfffff000);*/
     return 0;
 }

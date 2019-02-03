@@ -157,7 +157,19 @@ static int ext2_get_inode(struct direntry_struct *entry)
     entry->type = entry->mode & 0xf000;
     entry->size = inode->i_size;
     entry->size_blocks = inode->i_blocks;
-    entry->bptr1 = inode->i_block[0];
+
+    if (entry->type == SYMLINK)
+    {
+        char *symbuf = kmalloc(256, 1, "symlink buf");
+        symbuf[0] = 0;
+        for (int i = 0; inode->i_block[i]; i ++)
+            memcpy(symbuf + 4*i, &(inode->i_block[i]), 4);
+        entry->bptr1 = (uint32_t)symbuf;
+    }
+    else
+    {
+        entry->bptr1 = inode->i_block[0];
+    }
 
 
     if (inode->i_block[0] != NULL)
@@ -180,10 +192,10 @@ static int ext2_get_inode(struct direntry_struct *entry)
             if (n < EXT2_NDIR_BLOCKS)
             {         	// handling of direct blocks
 
-                klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, blocks=%x",
+                /*klog(KLOG_DEBUG, "ext2_get_inode(): inode=%d, blocks=%x",
                     entry->inode_no,
                     inode->i_block[n]
-                    );
+                    );*/
 
                 current_ibt->blocks[block_counter % VFS_INODE_BLOCK_TABLE_LEN] = inode->i_block[n];
                 block_counter += 1;
@@ -291,10 +303,10 @@ static int ext2_get_inode(struct direntry_struct *entry)
         }
     }
 
-    klog(KLOG_DEBUG, "ext2_get_inode(): **total** inode=%d, block_counter=%d",
+    /*klog(KLOG_DEBUG, "ext2_get_inode(): **total** inode=%d, block_counter=%d",
       entry->inode_no,
       block_counter
-      );
+      );*/
 
     entry->payload = (void *) inode;
 
@@ -339,10 +351,10 @@ static int ext2_get_direntries(struct dir_struct *miss)
         current_entry->parent = miss;
         current_entry->directory = NULL;
 
-        klog(KLOG_DEBUG, "direntry: inode=%d, fil_type=%d, name='%s'",
+        /*klog(KLOG_DEBUG, "direntry: inode=%d, fil_type=%d, name='%s'",
              current_entry->inode_no,
              raw_entry.file_type,
-             current_entry->name);
+             current_entry->name);*/
 
         ext2_get_inode(current_entry);
 

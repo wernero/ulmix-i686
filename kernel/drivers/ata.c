@@ -52,10 +52,11 @@ void ata_init()
     {
         get_drive_addr(i, &ata_drive);
         int status = identify(&ata_drive);
-        klog(KLOG_DEBUG, "ATA identify #%d: status = %s", i, errors[status]);
 
         if (status == ATA_FOUND)
         {
+            klog(KLOG_DEBUG, "ata%d: found device", i);
+
             drives[i] = kmalloc(sizeof(ata_drive_t), 1, "ata_drive_t");
             *(drives[i]) = ata_drive;
             (drives[i])->mtx = mutex();
@@ -127,7 +128,7 @@ static ssize_t ata_read(struct file_struct *fd, char *buf, size_t count)
     size_t offset = fd->lock_offset + fd->seek_offset;
     fd->seek_offset += count;
 
-    klog(KLOG_DEBUG, "ata%d: read: count=%d offset=%d", drive->id, count, fd->seek_offset);
+    //klog(KLOG_DEBUG, "ata%d: read: count=%d offset=%d", drive->id, count, fd->seek_offset);
 
     // https://wiki.osdev.org/ATA_PIO_Mode
     // +2 R/W - Sector Counter Register

@@ -46,6 +46,11 @@ int sys_open(char *pathname, int flags, mode_t mode)
     if (node->type == CHARDEVICE)
         return open_device(node, flags);
 
+    if (node->type == SYMLINK)
+    {
+        return sys_open((char*)node->bptr1, flags, mode);
+    }
+
     // path is not a regular file
     return -EIO;
 }
