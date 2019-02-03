@@ -9,6 +9,11 @@
 extern thread_t *current_thread;
 extern void irq_syscall_return(void);
 
+#define ARG_MAX 16
+#define ARG_LEN 64
+
+char argv_buf[ARG_LEN][ARG_MAX];
+
 static int  loadelf(int fd, void **entry);
 
 int kfexec(char *img_path, char *description)
@@ -45,9 +50,43 @@ int kfexec(char *img_path, char *description)
     return SUCCESS;
 }
 
+static void cpy_argv(unsigned long *esp, int argc, char *argv[], void **argvp)
+{
+    // copy argument strings onto the stack
+    int i, len;
+    char *esp_str = (char*)esp;
+    for (i = 0; i < argc; i++)
+    {
+        len = strlen(argv_buf[i]) + 1;
+        esp_str -= len;
+        memcpy(esp_str, argv_buf[i], len);
+        argv[i] = esp_str;
+    }
+
+    // align the stack
+    if ((unsigned long)esp_str % sizeof(unsigned long) != 0)
+        esp_str -= ((unsigned long)esp_str % sizeof(unsigned long));
+    esp = (unsigned long *)esp_str;
+
+    // copy pointer array into the stack
+    for (i = argc - 1; i >= 0; i--)
+    {
+        *(--esp) = (unsigned long)argv[i];
+    }
+
+    *argvp = (void*)esp;
+}
+
 int sys_execve(char *filename, char *argv[], char *envp[])
 {
     klog(KLOG_INFO, "[%d] execve(): file=%s", current_thread->process->tgid, filename);
+
+    int argc = 0;
+    if (argv != NULL)
+    {
+        for (argc = 0; argv[argc] != NULL && argc < ARG_MAX; argc++)
+            strcpy(argv_buf[argc], argv[argc]);
+    }
 
     // 1. check wheter the binary image exists and can be read
     int fd;
@@ -68,13 +107,10 @@ int sys_execve(char *filename, char *argv[], char *envp[])
         return error;
 
     // 5. setup stack
-    int argc = 0;
     void *argvp;
     unsigned long *esp = (unsigned long*)GB3;
     memset(((void*)esp) - 8192*2, 0, 8192*2);
-
-    // Copy argv into the address space
-
+    cpy_argv(esp, argc, argv, &argvp);
     *(--esp) = (unsigned long)argvp;
     *(--esp) = argc;
     esp--; // Necessary, but why?
