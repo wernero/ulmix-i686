@@ -25,6 +25,8 @@ enum rtl8139_registers
     intr_mask       = 0x3c,
     intr_status     = 0x3e,
     chip_cmd        = 0x37,
+    packet_addr     = 0x38,
+    buf_addr        = 0x3a,
     config1         = 0x52,
     rx_config       = 0x44
 };
@@ -33,6 +35,7 @@ struct rtl8139dev
 {
     uint32_t iobase;
     int interrupt;
+    uint16_t packet_addr;
     unsigned char mac[6];
 };
 
@@ -80,8 +83,14 @@ static void rtl8139_intr(void)
     klog(KLOG_INFO, "dest=%x, src=%x, type=%x",
          *((unsigned long*)pkg->dest_mac), *((unsigned long*)pkg->src_mac), pkg->type);
     */
+    uint16_t new_buf_addr = inw(info->iobase + buf_addr);
 
-    klog(KLOG_INFO, DRVNAME ": received packet");
+    klog(KLOG_INFO, DRVNAME ": cbr=%x, dest=%M, src=%M",
+         new_buf_addr,
+         (unsigned long)(rx_buffer + info->packet_addr),
+         (unsigned long)(rx_buffer + info->packet_addr + 6));
+
+    info->packet_addr = new_buf_addr;
     outw(info->iobase + intr_status, 0x01);
 }
 
@@ -90,6 +99,7 @@ static int rtl8139_probe(pci_device_t *dev)
     klog(KLOG_INFO, "RTL8139 Fast Ethernet Controller");
     dev->drv_struct = kmalloc(sizeof(struct rtl8139dev), 1, "rtl8139 drv");
     info = (struct rtl8139dev*)dev->drv_struct;
+    info->packet_addr = 0;
     info->iobase = pci_read32(dev, PCI_BAR0) & 0xfffffffe;
     info->interrupt = pci_read8(dev, PCI_INTR_LINE) + 32;
     for (int i = 0; i < 6; i++)
@@ -100,12 +110,12 @@ static int rtl8139_probe(pci_device_t *dev)
     pci_command |= 0x04;
     pci_write16(dev, PCI_COMMAND, pci_command);
 
-    klog(KLOG_DEBUG, DRVNAME ": power on, sw reset");
+    klog(KLOG_DEBUG, DRVNAME ": power on, sw reset, hw_addr=%M", info->mac);
     outb(info->iobase + config1, 0x00);
     outb(info->iobase + chip_cmd, 0x10);
     while (inb(info->iobase + chip_cmd) & 0x10);
 
-    klog(KLOG_DEBUG, DRVNAME ": init RX buffer (0x%x)", (unsigned long)rx_buffer);
+    klog(KLOG_DEBUG, DRVNAME ": RX DMA buffer is at 0x%x", (unsigned long)rx_buffer);
     outl(info->iobase + rx_buf, (uint32_t)rx_buffer);
 
     klog(KLOG_DEBUG, DRVNAME ": enable interrupt for TX_OK, RX_OK");

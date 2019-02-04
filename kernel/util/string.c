@@ -141,3 +141,18 @@ void itoxa8(uint32_t n, char *str)
 
     reverse(str);
 }
+
+char *atomac(char *dest, unsigned char *mac)
+{
+    char *dest_tmp = dest;
+    for (int i = 0; i < 6; i++)
+    {
+        *dest++ = get_letter(mac[i] >> 4);
+        *dest++ = get_letter(mac[i] & 0xf);
+
+        if (i != 5)
+            *dest++ = ':';
+    }
+    *dest++ = 0;
+    return dest_tmp;
+}

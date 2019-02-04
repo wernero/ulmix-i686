@@ -41,6 +41,10 @@ static void vsprintf(const char *format, va_list ap)
                 bsize(n, strbuf);
                 log_puts(strbuf);
                 break;
+            case 'M':
+                str = va_arg(ap, char*);
+                log_puts(atomac(strbuf, (unsigned char *)str));
+                break;
             case '%':
                 log_putchar('%');
                 break;
