@@ -92,9 +92,8 @@ static int rtl8139_probe(pci_device_t *dev)
     info = (struct rtl8139dev*)dev->drv_struct;
     info->iobase = pci_read32(dev, PCI_BAR0) & 0xfffffffe;
     info->interrupt = pci_read8(dev, PCI_INTR_LINE) + 32;
-
-    klog(KLOG_DEBUG, DRVNAME ": intr-pin=%d, intr-line=%d",
-         pci_read8(dev, PCI_INTR_PIN), pci_read8(dev, PCI_INTR_LINE));
+    for (int i = 0; i < 6; i++)
+        info->mac[i] = inb(info->iobase + i);
 
     klog(KLOG_DEBUG, DRVNAME ": DMA: enable PCI bus mastering");
     uint16_t pci_command = pci_read16(dev, PCI_COMMAND);
