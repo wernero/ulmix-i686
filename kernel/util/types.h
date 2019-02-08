@@ -18,6 +18,13 @@ typedef unsigned long int       gid_t;
 typedef uint32_t size_t;
 typedef int32_t ssize_t;
 
+typedef struct
+{
+    unsigned char addr[6];
+} __attribute__((packed)) mac_t;
+
+typedef uint32_t ipaddr_t;
+
 
 typedef __builtin_va_list va_list;
 #define va_start(v,l)	__builtin_va_start(v,l)

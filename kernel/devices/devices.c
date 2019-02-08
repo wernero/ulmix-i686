@@ -6,6 +6,7 @@
 #include <memory/kheap.h>
 #include <kdebug.h>
 #include <video/tty.h>
+#include <inet/netdev.h>
 
 mutex_t *gendisk_insert_mtx;
 mutex_t *chardev_insert_mtx;
@@ -31,6 +32,9 @@ void scan_devices()
 
     // Attach PCI devices
     setup_rtl8139();
+
+    // Init subsystems
+    setup_inet();
 }
 
 struct gendisk_struct *register_bd(int major, int minor, struct fd_fops_struct fops, size_t capacity, size_t sector_offset, size_t io_size)

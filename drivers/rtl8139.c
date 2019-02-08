@@ -109,6 +109,11 @@ static void rtl8139_intr(void)
 ssize_t rtl8139_transmit(unsigned char *mesg, size_t count)
 {
     hexdump(KLOG_INFO, mesg, count);
+
+    cli();
+    hlt();
+
+    return -ENOSYS;
 }
 
 static int rtl8139_probe(pci_device_t *dev)
@@ -151,6 +156,7 @@ static int rtl8139_probe(pci_device_t *dev)
     netdev.name = "rtl8139";
     memcpy(&netdev.hw_addr, info->mac, 6);
     netdev.send = rtl8139_transmit;
+    netdev.ip_addr = 0;
 
     netdev_register(netdev);
     return 0;

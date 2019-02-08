@@ -26,6 +26,8 @@
 #define EMFILE  24			// Too many open files
 
 #define ENOSYS  38			// Invalid system call number
+#define ECOMM   70
+#define EMSGSIZE    90
 #define ENOTSUP 95
 
 #define ENOBUFS 105
