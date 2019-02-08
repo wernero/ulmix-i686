@@ -74,6 +74,7 @@ struct eth_pkg
 };
 
 struct rtl8139dev *info;
+unsigned char tx_buffer[1600];
 unsigned char rx_buffer[8192 + 16]; // receive buffer
 
 static void rtl8139_intr(void)
@@ -81,38 +82,49 @@ static void rtl8139_intr(void)
     if (info == NULL)
         return;
 
-    uint16_t read_end = inw(info->iobase + buf_addr);
-
-    uint16_t packet_length;
-    while (info->packet_addr < read_end)
+    int istatus = inw(info->iobase + intr_status);
+    if (istatus & 0x01)
     {
-        packet_length = *((uint16_t*)(rx_buffer + info->packet_addr + 2));
+        uint16_t read_end = inw(info->iobase + buf_addr);
 
-        klog(KLOG_INFO, DRVNAME ": size=%d, dest=%M, src=%M",
-             packet_length,
-             (unsigned long)(rx_buffer + info->packet_addr + 4),
-             (unsigned long)(rx_buffer + info->packet_addr + 10)
-             );
+        uint16_t packet_length;
+        while (info->packet_addr < read_end)
+        {
+            packet_length = *((uint16_t*)(rx_buffer + info->packet_addr + 2));
 
-        info->packet_addr += packet_length + 4;
-        if (info->packet_addr % 4)
-            info->packet_addr += 4 - (info->packet_addr % 4);
+            klog(KLOG_INFO, DRVNAME ": size=%d, dest=%M, src=%M",
+                 packet_length,
+                 (unsigned long)(rx_buffer + info->packet_addr + 4),
+                 (unsigned long)(rx_buffer + info->packet_addr + 10)
+                 );
 
-        //outw(info->iobase + packet_addr, info->packet_addr - 0x10);
+            info->packet_addr += packet_length + 4;
+            if (info->packet_addr % 4)
+                info->packet_addr += 4 - (info->packet_addr % 4);
 
+            //outw(info->iobase + packet_addr, info->packet_addr - 0x10);
+
+        }
+
+        outw(info->iobase + intr_status, 0x01);
     }
-
-    outw(info->iobase + intr_status, 0x01);
+    else if (istatus & 0x04)
+    {
+        klog(KLOG_INFO, "TX ok");
+        outw(info->iobase + intr_status, 0x04);
+    }
 }
 
 
 ssize_t rtl8139_transmit(unsigned char *mesg, size_t count)
 {
-    hexdump(KLOG_INFO, mesg, count);
+    if (count < 60 || count > 1500)
+        return -EMSGSIZE;
 
-    cli();
-    hlt();
+    memcpy(tx_buffer, mesg, count);
 
+    outl(info->iobase + tx_buf0, (uint32_t)tx_buffer);
+    outl(info->iobase + tx_cmd0, count);
     return -ENOSYS;
 }
 

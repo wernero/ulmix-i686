@@ -22,7 +22,7 @@ struct arp_request
 ipaddr_t IPADDR(uint8_t ip0, uint8_t ip1, uint8_t ip2, uint8_t ip3)
 {
     ipaddr_t ip;
-    ip = ip3 | (ip2 << 8) | (ip1 << 16) | (ip0 << 24);
+    ip = ip0 | (ip1 << 8) | (ip2 << 16) | (ip3 << 24);
     return ip;
 }
 
