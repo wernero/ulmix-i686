@@ -74,7 +74,8 @@ struct eth_pkg
 };
 
 struct rtl8139dev *info;
-unsigned char tx_buffer[1600];
+#define TX_BUF_SIZE 1600
+unsigned char tx_buffer[TX_BUF_SIZE * 4];
 unsigned char rx_buffer[8192 + 16]; // receive buffer
 
 static void rtl8139_intr(void)
@@ -116,16 +117,23 @@ static void rtl8139_intr(void)
 }
 
 
+static int current_tx_buffer = 0;
 ssize_t rtl8139_transmit(unsigned char *mesg, size_t count)
 {
     if (count < 60 || count > 1500)
         return -EMSGSIZE;
 
-    memcpy(tx_buffer, mesg, count);
+    int tx_buffer_offset = current_tx_buffer * TX_BUF_SIZE;
+    memcpy(tx_buffer + tx_buffer_offset, mesg, count);
 
-    outl(info->iobase + tx_buf0, (uint32_t)tx_buffer);
-    outl(info->iobase + tx_cmd0, count);
-    return -ENOSYS;
+    int offset = current_tx_buffer * 4;
+
+    outl(info->iobase + tx_buf0 + offset, (uint32_t)(tx_buffer + tx_buffer_offset));
+    outl(info->iobase + tx_cmd0 + offset, count);
+
+    if (++current_tx_buffer == 4)
+        current_tx_buffer = 0;
+    return count;
 }
 
 static int rtl8139_probe(pci_device_t *dev)
