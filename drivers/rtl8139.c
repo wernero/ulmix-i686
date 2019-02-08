@@ -8,6 +8,7 @@
 #include <devices/pci.h>
 #include <memory/kheap.h>
 #include <interrupts.h>
+#include <inet/netdev.h>
 
 #define DRVNAME "rtl8139"
 
@@ -37,6 +38,7 @@ struct rtl8139dev
     int interrupt;
     uint16_t packet_addr;
     unsigned char mac[6];
+    unsigned long rx_bytes;
 };
 
 static pci_device_id_t idtable[] =
@@ -79,19 +81,34 @@ static void rtl8139_intr(void)
     if (info == NULL)
         return;
 
-    /*struct eth_pkg *pkg = (struct eth_pkg*)rx_buffer;
-    klog(KLOG_INFO, "dest=%x, src=%x, type=%x",
-         *((unsigned long*)pkg->dest_mac), *((unsigned long*)pkg->src_mac), pkg->type);
-    */
-    uint16_t new_buf_addr = inw(info->iobase + buf_addr);
+    uint16_t read_end = inw(info->iobase + buf_addr);
 
-    klog(KLOG_INFO, DRVNAME ": cbr=%x, dest=%M, src=%M",
-         new_buf_addr,
-         (unsigned long)(rx_buffer + info->packet_addr),
-         (unsigned long)(rx_buffer + info->packet_addr + 6));
+    uint16_t packet_length;
+    while (info->packet_addr < read_end)
+    {
+        packet_length = *((uint16_t*)(rx_buffer + info->packet_addr + 2));
 
-    info->packet_addr = new_buf_addr;
+        klog(KLOG_INFO, DRVNAME ": size=%d, dest=%M, src=%M",
+             packet_length,
+             (unsigned long)(rx_buffer + info->packet_addr + 4),
+             (unsigned long)(rx_buffer + info->packet_addr + 10)
+             );
+
+        info->packet_addr += packet_length + 4;
+        if (info->packet_addr % 4)
+            info->packet_addr += 4 - (info->packet_addr % 4);
+
+        //outw(info->iobase + packet_addr, info->packet_addr - 0x10);
+
+    }
+
     outw(info->iobase + intr_status, 0x01);
+}
+
+
+ssize_t rtl8139_transmit(unsigned char *mesg, size_t count)
+{
+    hexdump(KLOG_INFO, mesg, count);
 }
 
 static int rtl8139_probe(pci_device_t *dev)
@@ -102,6 +119,7 @@ static int rtl8139_probe(pci_device_t *dev)
     info->packet_addr = 0;
     info->iobase = pci_read32(dev, PCI_BAR0) & 0xfffffffe;
     info->interrupt = pci_read8(dev, PCI_INTR_LINE) + 32;
+    info->rx_bytes = 0;
     for (int i = 0; i < 6; i++)
         info->mac[i] = inb(info->iobase + i);
 
@@ -128,8 +146,13 @@ static int rtl8139_probe(pci_device_t *dev)
     klog(KLOG_DEBUG, DRVNAME ": Enable RX and TX");
     outb(info->iobase + chip_cmd, 0x0c);
 
-    //rtl8139_write(info);
+    // make the services available to the kernel
+    struct netdev_struct netdev;
+    netdev.name = "rtl8139";
+    memcpy(&netdev.hw_addr, info->mac, 6);
+    netdev.send = rtl8139_transmit;
 
+    netdev_register(netdev);
     return 0;
 }
 
