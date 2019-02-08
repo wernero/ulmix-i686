@@ -14,5 +14,6 @@ struct eth_header
 } __attribute((packed));
 
 ssize_t ethernet_send(struct netdev_struct *netdev, mac_t dest, uint16_t proto, unsigned char *payload, size_t count);
+void ethernet_recv(struct netdev_struct *netdev, unsigned char *packet, size_t size);
 
 #endif // ETHERNET_H

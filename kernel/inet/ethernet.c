@@ -31,3 +31,13 @@ ssize_t ethernet_send(struct netdev_struct *netdev, mac_t dest, uint16_t proto, 
 
     return netdev->send(buffer, sizeof(struct eth_header) + count + padding);
 }
+
+void ethernet_recv(struct netdev_struct *netdev, unsigned char *packet, size_t size)
+{
+    klog(KLOG_INFO, "%s: size=%d, dest=%M, src=%M",
+         netdev->name,
+         size,
+         (unsigned long)(packet),
+         (unsigned long)(packet + 6)
+         );
+}

@@ -6,7 +6,8 @@
 #include <fcntl.h>
 #include <sys/utsname.h>
 
-#define SHELL "/bin/ush" // ulmix shell
+#define SHELL "/bin/ush"    // ulmix shell
+#define DHCPD "/bin/dhcpd"  // dhcp daemon
 
 static void start_program(char *filename);
 
@@ -31,6 +32,8 @@ int main(int argc, char *argv[])
            "Copyright (C) 2018-2019\n"
            "Written by Alexander Ulmer\n\n",
            uts.sysname, uts.version, uts.machine);
+
+    start_program(DHCPD);
     start_program(SHELL);
 
     return 0;
@@ -38,11 +41,15 @@ int main(int argc, char *argv[])
 
 static void start_program(char *filename)
 {
+    char *args[2];
+    args[0] = filename;
+    args[1] = NULL;
+
     pid_t pid = fork();
     if (pid == 0)
     {
         // start shell
-        if (execve(filename, NULL, NULL) < 0)
+        if (execve(filename, args, NULL) < 0)
         {
             puts("error: execve() returned an error");
             //printf("init: cannot start %s: %s", filename, strerror(errno));

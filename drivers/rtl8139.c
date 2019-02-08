@@ -9,6 +9,7 @@
 #include <memory/kheap.h>
 #include <interrupts.h>
 #include <inet/netdev.h>
+#include <inet/ethernet.h>
 
 #define DRVNAME "rtl8139"
 
@@ -39,6 +40,7 @@ struct rtl8139dev
     uint16_t packet_addr;
     unsigned char mac[6];
     unsigned long rx_bytes;
+    struct netdev_struct *netdev;
 };
 
 static pci_device_id_t idtable[] =
@@ -92,17 +94,13 @@ static void rtl8139_intr(void)
         while (info->packet_addr < read_end)
         {
             packet_length = *((uint16_t*)(rx_buffer + info->packet_addr + 2));
-
-            klog(KLOG_INFO, DRVNAME ": size=%d, dest=%M, src=%M",
-                 packet_length,
-                 (unsigned long)(rx_buffer + info->packet_addr + 4),
-                 (unsigned long)(rx_buffer + info->packet_addr + 10)
-                 );
+            ethernet_recv(info->netdev, (unsigned char *)(rx_buffer + info->packet_addr + 4), packet_length - 4);
 
             info->packet_addr += packet_length + 4;
             if (info->packet_addr % 4)
                 info->packet_addr += 4 - (info->packet_addr % 4);
 
+            info->packet_addr %= 0x2000;
             //outw(info->iobase + packet_addr, info->packet_addr - 0x10);
 
         }
@@ -178,7 +176,7 @@ static int rtl8139_probe(pci_device_t *dev)
     netdev.send = rtl8139_transmit;
     netdev.ip_addr = 0;
 
-    netdev_register(netdev);
+    info->netdev = netdev_register(netdev);
     return 0;
 }
 

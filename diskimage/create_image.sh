@@ -26,6 +26,8 @@ sudo cp ../vmulmix.elf /mnt/vmulmix.elf
 sudo cp ../userspace/coreutils/coreutils.elf /mnt/bin/coreutils
 sudo ln -s /bin/coreutils /mnt/bin/ls
 sudo cp ../userspace/init/init.elf /mnt/bin/init
+sudo cp ../userspace/netutils/netutils.elf /mnt/bin/netutils
+sudo ln -s /bin/netutils /mnt/bin/dhcpd
 sudo cp ../userspace/hexdump/hexdump.elf /mnt/bin/hexdump
 sudo cp ../userspace/ushell/ushell.elf /mnt/bin/ush
 

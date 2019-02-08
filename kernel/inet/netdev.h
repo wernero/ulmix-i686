@@ -18,6 +18,6 @@ struct netdev_struct
 };
 
 void setup_inet(void);
-void netdev_register(struct netdev_struct netdev);
+struct netdev_struct *netdev_register(struct netdev_struct netdev);
 
 #endif // NETDEV_H
