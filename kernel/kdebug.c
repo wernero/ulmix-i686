@@ -12,7 +12,7 @@ mutex_t *log_mutex;
 
 void kdebug_init()
 {
-    serial_open(TTYS1, 0);
+    serial_open(TTYS1, BAUD_9600);
     log_mutex = mutex();
     kdebug_enabled = 1;
 }
