@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
-int errno;
+extern int actual_errno;
 
 static unsigned long
 __attribute__((optimize("O0")))
@@ -103,7 +103,7 @@ __syscall(unsigned long id,
           unsigned long arg3,
           unsigned long arg4)
 {
-    unsigned long ret;
+    int ret;
     __asm__(
         "int $0x80;"
         :
@@ -118,7 +118,7 @@ __syscall(unsigned long id,
 
     if (ret < 0)
     {
-        errno = -ret;
+        actual_errno = -ret;
         return -1;
     }
     return ret;
