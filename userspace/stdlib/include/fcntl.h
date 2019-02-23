@@ -12,7 +12,9 @@ typedef enum
     O_APPEND    =0x01,
     O_CREAT     =0x02,
     O_RDWR      =0x04,
-    O_WRONLY    =0x08
+    O_WRONLY    =0x08,
+    O_TRUNC     =0x10,
+    O_DIRECTORY =0x20
 } openflags_t;
 
 int open(char *path, int flags);

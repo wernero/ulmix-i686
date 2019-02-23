@@ -51,6 +51,13 @@ int sys_open(char *pathname, int flags, mode_t mode)
         return sys_open((char*)node->bptr1, flags, mode);
     }
 
+    if (node->type == DIRECTORY)
+    {
+        if (flags & O_DIRECTORY)
+            return open_file(node, flags);
+        return -EISDIR;
+    }
+
     // path is not a regular file
     return -EIO;
 }

@@ -1,13 +1,19 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 extern int actual_errno;
 
 DIR *opendir(char *name)
 {
-    actual_errno = ENOSYS;
-    return NULL;
+    int fd = open(name, O_RDONLY | O_DIRECTORY);
+    if (fd < 0)
+        return NULL;
+
+    DIR *dirp = malloc(sizeof(DIR));
+    dirp->fileno = fd;
+    return dirp;
 }
 
 int closedir(DIR *dirp)
