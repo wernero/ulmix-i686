@@ -1,8 +1,10 @@
+#include <ulmix.h>
+#include <debug.h>
+#include <string.h>
+
 #include "mem.h"
 #include "multiboot.h"
 #include "idt.h"
-#include <debug.h>
-#include <string.h>
 
 // linker defined:
 extern char _bss_start;
@@ -17,7 +19,7 @@ extern unsigned long __bss_start;
 extern unsigned long __bss_end;
 extern unsigned long __ram_size;
 
-void _ksetup(struct mb_struct *mb)
+void __init _ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));

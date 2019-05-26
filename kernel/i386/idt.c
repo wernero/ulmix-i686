@@ -1,4 +1,5 @@
 #include <asm.h>
+#include <ulmix.h>
 
 #include "idt.h"
 #include "exc.h"
@@ -9,7 +10,7 @@ extern void idt_write(struct idt_desc_struct *desc);
 extern void irq_asm_handler(void);
 extern char irq_asm_handler_end;
 
-static void pic_init(void)
+static void __init pic_init(void)
 {
     outb(0x20, 0x11);   // init PIC1
     outb(0xA0, 0x11);   // init PIC2
@@ -36,7 +37,7 @@ void set_idt_entry(int id, void (*handler)(void), int flags)
     idt[id].selector     = 0x0008;
 }
 
-void setup_idt(void)
+void __init setup_idt(void)
 {
     struct idt_desc_struct idt_desc;
     idt_desc.size = 8 * IDT_ENTRIES - 1;

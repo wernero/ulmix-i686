@@ -1,4 +1,5 @@
 #include <asm.h>
+#include <ulmix.h>
 #include <types.h>
 #include <debug.h>
 
@@ -73,7 +74,7 @@ extern void exc19(void);
 extern void exc20(void);
 extern void exc30(void);
 
-void setup_exc(void)
+void __init setup_exc(void)
 {
     set_idt_entry(0, exc0, INT_PRESENT | INT_TRAP | INT_SUPV);
     set_idt_entry(1, exc1, INT_PRESENT | INT_TRAP | INT_SUPV);
