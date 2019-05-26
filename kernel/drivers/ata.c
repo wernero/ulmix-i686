@@ -3,7 +3,6 @@
 #include "log.h"
 #include "memory/kheap.h"
 #include "devices/devices.h"
-#include "interrupts.h"
 #include "sched/task.h"
 #include "sched/block.h"
 #include "filesystem/fs_syscalls.h"

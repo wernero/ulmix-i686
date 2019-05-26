@@ -3,4 +3,6 @@
 
 #include <ulmix/init.h>
 
+#define LOG_LEVEL L_DEBUG
+
 #endif // ULMIX_H

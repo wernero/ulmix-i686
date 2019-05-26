@@ -1,0 +1,85 @@
+#include <asm.h>
+
+#include "idt.h"
+#include "exc.h"
+
+static struct idt_entry_struct idt[IDT_ENTRIES];
+
+extern void idt_write(struct idt_desc_struct *desc);
+extern void irq_asm_handler(void);
+extern char irq_asm_handler_end;
+
+static void pic_init(void)
+{
+    outb(0x20, 0x11);   // init PIC1
+    outb(0xA0, 0x11);   // init PIC2
+
+    outb(0x21, 0x20);   // start interrupts at 0x20 on PIC1
+    outb(0xA1, 0x28);   // start interrupts at 0x28 on PIC2
+
+    outb(0x21, 0x04);   // PIC1 -> master
+    outb(0xA1, 0x02);   // PIC2 -> slave
+
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+
+    outb(0x21, 0x00);   // unmask all interrupts PIC1
+    outb(0xA1, 0x00);   // unmask all interrupts PIC2
+}
+
+void set_idt_entry(int id, void (*handler)(void), int flags)
+{
+    idt[id].offset_low   = (uint32_t)handler & 0x0000ffff;
+    idt[id].offset_high  = ((uint32_t)handler & 0xffff0000) >> 16;
+    idt[id].zero         = 0x00;
+    idt[id].type         = flags;
+    idt[id].selector     = 0x0008;
+}
+
+void setup_idt(void)
+{
+    struct idt_desc_struct idt_desc;
+    idt_desc.size = 8 * IDT_ENTRIES - 1;
+    idt_desc.addr = (uint32_t)idt;
+
+    uint32_t handler_size =
+    (uint32_t)&irq_asm_handler_end -
+    (uint32_t)&irq_asm_handler;
+
+    int i;
+
+    // CPU exception handlers
+    for (i = 0; i < 32; i++)
+        set_idt_entry(i, NULL, 0);
+    setup_exc();
+
+    // IO interrupts
+    for (i = 0; i < 16; i++) {
+        set_idt_entry(i + 32,
+                    irq_asm_handler + handler_size * i,
+                    INT_GATE | INT_PRESENT | INT_SUPV);
+    }
+
+
+    // don't set handlers for the other one's
+    for (i = 32+16; i < IDT_ENTRIES; i++)
+        set_idt_entry(i, NULL, 0);
+
+    // System call interrupt
+    //set_idt_entry(0x80, irq_syscall, INT_TRAP | INT_PRESENT | INT_USER);
+
+    pic_init();
+    idt_write(&idt_desc);
+}
+
+void irq_handler(uint32_t irq)
+{
+    // Do stuff
+
+    /* end of interrupt -> notify PIC */
+    if (irq >= 32 && irq < 32+16) {
+        if (irq >= 32+8)
+            outb(0xa0, 0x20);
+        outb(0x20, 0x20);
+    }
+}

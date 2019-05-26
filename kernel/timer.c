@@ -1,5 +1,4 @@
 #include "timer.h"
-#include "interrupts.h"
 #include "util/util.h"
 #include "util/types.h"
 #include "sched/scheduler.h"
@@ -35,7 +34,7 @@ unsigned long irq_timer(uint32_t esp)
 
 void setup_timer()
 {
-    klog(KLOG_INFO, "IRQ0 Timer @ %dHz", TIMER_FREQ);
+    /*klog(KLOG_INFO, "IRQ0 Timer @ %dHz", TIMER_FREQ);
     irq_install_raw_handler(IRQ_TIMER,
                             irq_asm_timer,
                             INT_GATE | INT_SUPV);
@@ -44,5 +43,5 @@ void setup_timer()
     uint16_t pit = OSCILLATOR / TIMER_FREQ;
     outb(PIT_CMD, PIT_CMD_CH0 | PIT_ACCESS | PIT_RATEGEN);
     outb(PIT_CH0, pit & 0xff);
-    outb(PIT_CH0, (pit >> 8) & 0xff);
+    outb(PIT_CH0, (pit >> 8) & 0xff);*/
 }

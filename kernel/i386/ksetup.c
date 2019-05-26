@@ -1,5 +1,6 @@
 #include "mem.h"
 #include "multiboot.h"
+#include "idt.h"
 #include <string.h>
 
 // linker defined:
@@ -19,7 +20,7 @@ void _ksetup(struct mb_struct *mb)
       //      "ULMIX Operating System\n"
       //      "kernel @ %p - (size %S)\n");
 
-    //setup_idt();
+    setup_idt();
     //setup_timer();
 
     // TODO: refactor

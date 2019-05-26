@@ -1,7 +1,7 @@
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#ifndef EXC_H
+#define EXC_H
 
-#include "interrupts.h"
+#include <types.h>
 
 struct exc_context_struct
 {
@@ -25,6 +25,6 @@ struct exc_context_struct
     uint32_t eip;
 } __attribute__((packed));
 
-void setup_exception_handlers(void);
+void setup_exc(void);
 
-#endif // EXCEPTIONS_H
+#endif // EXC_H

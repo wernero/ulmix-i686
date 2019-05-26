@@ -1,6 +1,8 @@
 #ifndef ULMIX_TYPES_H
 #define ULMIX_TYPES_H
 
+#define NULL 0
+
 typedef signed char             int8_t;
 typedef signed short int        int16_t;
 typedef signed int              int32_t;
@@ -11,20 +13,8 @@ typedef unsigned short int      uint16_t;
 typedef unsigned int            uint32_t;
 typedef unsigned long long int  uint64_t;
 
-typedef unsigned long int       uid_t;
-typedef unsigned long int       gid_t;
-
-
-typedef uint32_t size_t;
-typedef int32_t ssize_t;
-
-typedef struct
-{
-    unsigned char addr[6];
-} __attribute__((packed)) mac_t;
-
-typedef uint32_t ipaddr_t;
-
+typedef unsigned long size_t;
+typedef signed long ssize_t;
 
 typedef __builtin_va_list va_list;
 #define va_start(v,l)	__builtin_va_start(v,l)
@@ -36,4 +26,4 @@ typedef __builtin_va_list va_list;
 #endif
 #define __va_copy(d,s)	__builtin_va_copy(d,s)
 
-#endif
+#endif // TYPES_H

@@ -1,7 +1,6 @@
 #include <util/util.h>
 #include <memory/kheap.h>
 #include <memory/paging.h>
-#include <interrupts.h>
 #include <timer.h>
 #include <sched/task.h>
 #include <sched/process.h>

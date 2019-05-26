@@ -1,7 +1,6 @@
 #include "keyboard.h"
 #include <devices/devices.h>
 #include <util/util.h>
-#include <interrupts.h>
 #include <kdebug.h>
 #include <errno.h>
 
@@ -93,7 +92,7 @@ void keyboard_setup(void)
     register_cd(MAJOR_KEYBOARD, 0, fops);
 
     // install irq handler
-    irq_install_handler(KBD_INTERRUPT, int_handler);
+    //irq_install_handler(KBD_INTERRUPT, int_handler);
 }
 
 void int_handler()

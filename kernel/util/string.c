@@ -1,16 +1,5 @@
 #include "string.h"
 
-size_t strlen(const char *str)
-{
-    size_t len = 0;
-    while (*str++)
-    {
-        len++;
-    }
-    return len;
-}
-
-
 int strcmp(char *s1, char *s2)
 {
     for (int i = 0; ; i++)
@@ -26,20 +15,6 @@ int strcmp(char *s1, char *s2)
         }
     }
 }
-
-void reverse(char *s)
-{
-    int i, j;
-    char c;
-
-    for (i = 0, j = strlen(s)-1; i<j; i++, j--)
-    {
-        c = s[i];
-        s[i] = s[j];
-        s[j] = c;
-    }
-}
-
 void strcat(char *dest, char *src)
 {
     while (*(dest++) != 0);
@@ -100,15 +75,6 @@ static void _itoa(uint32_t n, char *str, uint32_t base)
 
     *buf = '\0';
     reverse(str);
-}
-
-void strcpy(char *dest, char *src)
-{
-    while (*src)
-    {
-        *(dest++) = *(src++);
-    }
-    *dest = 0;
 }
 
 

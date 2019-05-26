@@ -1,6 +1,5 @@
 #include "block.h"
 #include <kdebug.h>
-#include "interrupts.h"
 #include "memory/kheap.h"
 
 extern thread_t *current_thread;
@@ -36,7 +35,7 @@ int waitirq(int irq)
         return -1;
     }
 
-    unblock_on_irq(irq, current_thread);
+    //unblock_on_irq(irq, current_thread);
     current_thread->state = SUSPENDED;
     scheduler_force();
 
