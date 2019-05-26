@@ -2,14 +2,19 @@ The ULMIX Operating System wants to be a Unix-like operating system with
 advanced memory management features and preemtive multitasking. It's currently
 under heavy development but getting more stable very fast.
 
-Userspace and Kernel currently have to be compiled seperatly. To build everything, run 'make' both in the tree root directory and in the userspace directory. You should do this under a Unix-like environment (nasm, binutils, ... installed).
+-> Update May 2019: After a low-phase from Feb-April 2019, Ulmix is being continued again. There
+is heavy refactoring going on to make Ulmix amd64-ready. The following documentation may become
+obsolete anytime soon and will be updated.
+
+Userspace and Kernel currently have to be compiled seperatly. To build everything, run 'make'
+both in the tree root directory and in the userspace directory. You should do this under a
+Unix-like environment (nasm, binutils, ... installed).
 
 kernel/		contains kernel sources
 userspace/	contains C library and a few userspace tools
 diskimage/	contains a makefile for building a disk image
-drivers/	contains driver-modules (not yet dynamically loadable)
 launch.sh	will launch qemu with well tested configuration and print
-		serial output to the terminal.
+		serial output to the terminal (stdout).
 vmulmix		is the kernel image in raw format (flat binary)
 vmulmix.elf	is the kernel image in ELF format (for grub or qemu -kernel)
 
