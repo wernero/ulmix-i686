@@ -79,7 +79,7 @@ typedef struct
 
 static void boot(multiboot_t* mb_struct);
 
-void main(multiboot_t* mb_struct)
+void _kmain(multiboot_t* mb_struct)
 {
     boot(mb_struct);
 

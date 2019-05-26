@@ -9,11 +9,12 @@
 ; 16M ->    dynamic allocation of both user and kernel stuff
 ;           grows towards end of physical memory
 
-jmp kernel_start
+section .mboot
+jmp _kstart
 
-MB_MAGIC	equ 0x1badb002
-MB_FLAGS	equ 0x2 ; 0x10002 for flat binary
-MB_CHECKSUM	equ -(MB_MAGIC + MB_FLAGS)
+MB_MAGIC	    equ 0x1badb002
+MB_FLAGS	    equ 0x2 ; 0x10002 for flat binary
+MB_CHECKSUM     equ -(MB_MAGIC + MB_FLAGS)
 MB_LOAD_ADDR    equ 0x100000
 MB_LOAD_END     equ 0x00        ; load the whole image
 MB_BSS_END      equ 0x00        ; we clear BSS ourselves
@@ -30,7 +31,8 @@ multiboot_header:
     dd MB_BSS_END
     dd MB_ENTRY_ADDR
 
-kernel_start:
+global _kstart
+_kstart:
     mov esp, 0x600000
 
     ; enable CPU cache
@@ -38,11 +40,11 @@ kernel_start:
     and eax, 0x9FFFFFFF
     mov cr0, eax
 
-    ; main.c: main()
+    ; main.c: _kmain()
     ; ebx points to struct multiboot
     push ebx
-    extern main
-    call   main
+    extern _kmain
+    call _kmain
 
     cli
     hlt
