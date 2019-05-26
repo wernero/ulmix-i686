@@ -62,7 +62,6 @@ int                 vaddr_info(pagedir_t *pagedir, unsigned long fault_addr, str
 unsigned long       get_physical(void *addr);
 pagetable_t *       mk_pagetables(int count, int pagedir_offset, pagedir_t *pagedir, int flags, char *description);
 
-uint32_t    setup_memory(void *mmap, uint32_t mmap_len);
 void        setup_paging(uint32_t phys_memory);
 
 pagedir_t * mk_user_pagedir(void);

@@ -170,26 +170,6 @@ pagedir_t *get_kernel_pagedir()
     return pagedir_kernel;
 }
 
-uint32_t setup_memory(void *mmap, uint32_t mmap_len)
-{
-    uint32_t physical_size = 0;
-    mmap_entry_t *end = (mmap_entry_t*)((char*)mmap + mmap_len);
-    for (mmap_entry_t *entry = mmap; entry < end; entry = (mmap_entry_t*)((char*)entry + entry->entry_size + 4))
-    {
-        if (entry->base_addr <= GB4 && entry->size != 0)
-        {
-            if (entry->base_addr + entry->size >= GB4)
-            {
-                entry->size = GB4 - entry->base_addr;
-            }
-        }
-        physical_size += entry->size;
-    }
-
-    klog(KLOG_INFO, "setup_memory(): detected %S of physical memory", physical_size);
-    return physical_size;
-}
-
 /*
  * mk_pagetables(): creates 'n' pagetables at 'offset' in  page directory 'pagedir'
  * uses 'flags' and the heap 'description' accordingly.
