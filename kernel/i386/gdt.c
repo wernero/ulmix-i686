@@ -1,19 +1,15 @@
 #include "gdt.h"
-#include <log.h>
+#include <ulmix.h>
 
-void gdt_write(gdt_descriptor_t *gdt_ptr);
-void tss_write(void);
+extern void gdt_write(struct gdtd_struct *gdt_ptr);
+extern void tss_write(void);
 
-#define GDT_ENTRIES 6 // null, kcode, kdata, ucode, udata, tss
+static struct gdte_struct gdt[GDT_ENTRIES];
+static struct tsse_struct tss = {};
 
-static gdt_entry_t gdt[GDT_ENTRIES];
-static tss_entry_t tss = {};
-
-static void setup_entry(int id,
-                        uint32_t base,
-                        uint32_t limit,
-                        uint8_t access,
-                        uint8_t flags)
+static void __init setup_entry(int id,
+        uint32_t base, uint32_t limit,
+        uint8_t access, uint8_t flags)
 {
     gdt[id].base_low    = base & 0xffff;
     gdt[id].base_middle = (base >> 16) & 0xff;
@@ -26,13 +22,11 @@ static void setup_entry(int id,
     gdt[id].access      = access;
 }
 
-void setup_gdt()
+void __init setup_gdt(void)
 {
-    gdt_descriptor_t gdt_descr;
-    gdt_descr.size = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
+    struct gdtd_struct gdt_descr;
+    gdt_descr.size = sizeof(struct gdte_struct) * GDT_ENTRIES - 1;
     gdt_descr.addr = (uint32_t)gdt;
-
-    klog(KLOG_INFO, "Global Descriptor Table at address 0x%x", gdt_descr.addr);
 
     setup_entry(0, 0, 0, 0, 0); // null descriptor required by design
 
@@ -57,7 +51,7 @@ void setup_gdt()
     tss_write();
 }
 
-void update_tss(uint32_t esp0)
+void update_tss(unsigned long sp)
 {
-    tss.esp0 = esp0;
+    tss.esp0 = sp;
 }

@@ -1,5 +1,4 @@
 #include <util/util.h>
-#include <memory/gdt.h>
 #include <memory/kheap.h>
 #include <memory/paging.h>
 #include <interrupts.h>
@@ -77,11 +76,10 @@ typedef struct
     uint16_t vbe_interface_len;
 } __attribute__((packed)) multiboot_t;
 
-static void boot(multiboot_t* mb_struct);
 
 void _kmain(multiboot_t* mb_struct)
 {
-    boot(mb_struct);
+    //boot(mb_struct);
 
     // creating kernel process
     kprocess = mk_process(pagedir_kernel,   // address space
@@ -97,25 +95,5 @@ void _kmain(multiboot_t* mb_struct)
     scheduler_enable();
     scheduler_force();
     for (;;) hlt();
-}
-
-static void boot(multiboot_t* mb_struct)
-{
-    bzero(&_bss_start, (&_bss_end) - (&_bss_start));
-
-    setup_gdt();
-
-    kdebug_init();
-    klog(KLOG_INFO, "ULMIX boot");
-    klog(KLOG_INFO, "kernel loaded at 0x%x, size=%S",
-         (int)&_kernel_beg,
-         (int)&_kernel_end - (int)&_kernel_beg);
-
-    setup_idt();
-    setup_timer();
-    // setup_cpu();
-
-    uint32_t ram_available = setup_memory(mb_struct->mmap, mb_struct->mmap_length);
-    setup_paging(ram_available);
 }
 

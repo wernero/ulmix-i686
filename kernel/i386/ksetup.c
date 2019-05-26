@@ -1,3 +1,4 @@
+#include "mem.h"
 #include "multiboot.h"
 #include <string.h>
 
@@ -12,7 +13,7 @@ void _ksetup(struct mb_struct *mb)
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
-    //setup_gdt();
+    setup_gdt();
 
     //kprintf(L_DEBUG, "lk 24:32\n"
       //      "ULMIX Operating System\n"

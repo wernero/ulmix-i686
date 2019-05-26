@@ -1,9 +1,9 @@
 #include "scheduler.h"
 #include "process.h"
-
 #include <util/util.h>
-#include <memory/gdt.h>
 #include <kdebug.h>
+
+#include <mem.h>
 
 volatile scheduler_state_t scheduler_state = SCHED_DISABLED;
 
