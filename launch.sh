@@ -2,6 +2,4 @@
 
 qemu-system-i386 \
     -kernel vmulmix.elf \
-    -initrd modules/* \
-    -serial file:/dev/stdout \
-    $1
+    -serial file:/dev/stdout

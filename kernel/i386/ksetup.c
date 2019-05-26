@@ -1,6 +1,7 @@
 #include "mem.h"
 #include "multiboot.h"
 #include "idt.h"
+#include <debug.h>
 #include <string.h>
 
 // linker defined:
@@ -16,9 +17,10 @@ void _ksetup(struct mb_struct *mb)
 
     setup_gdt();
 
-    //kprintf(L_DEBUG, "lk 24:32\n"
-      //      "ULMIX Operating System\n"
-      //      "kernel @ %p - (size %S)\n");
+    debug(L_INFO, "lk 24:32\n"
+          "ULMIX Operating System\n"
+          "kernel at %p (size %S)\n",
+          &_kernel_beg, (&_bss_start - &_kernel_beg));
 
     setup_idt();
     //setup_timer();

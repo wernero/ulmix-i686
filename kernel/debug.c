@@ -50,6 +50,14 @@ static void kprintf(const char *fmt, va_list ap)
                 kputs(xtoa(arg_int, sbuf));
                 break;
 
+            case 'S':
+
+            case 'p':
+                arg_int = va_arg(ap, unsigned long);
+                kputs("0x");
+                kputs(xtoa(arg_int, sbuf));
+                break;
+
             case 's':
                 arg_str = va_arg(ap, char*);
                 kputs(arg_str);
