@@ -43,8 +43,8 @@ _kstart:
     ; main.c: _kmain()
     ; ebx points to struct multiboot
     push ebx
-    extern _kmain
-    call _kmain
+    extern _ksetup
+    call _ksetup
 
     cli
     hlt

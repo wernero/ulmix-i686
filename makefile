@@ -9,9 +9,9 @@ AFLAGS	= -Ox -f elf
 CFLAGS	= -c -g -std=c11 -mtune=generic -Wshadow -Wstrict-prototypes -Wall -O2 \
 	-ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin \
 	-fno-stack-protector -fno-omit-frame-pointer -fno-common -fno-pic \
-	-fno-delete-null-pointer-checks
-LFLAGS	= -T $(LDSCRIPT) -nostdlib --warn-common -nmagic -gc-sections -s \
-	-Map=symbols.map 
+	-fno-delete-null-pointer-checks \
+	-I kernel/include
+LFLAGS	= -T $(LDSCRIPT) -nostdlib --warn-common -nmagic -gc-sections
 
 KIMG = vmulmix
 
