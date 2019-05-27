@@ -33,7 +33,7 @@ multiboot_header:
 
 global _kstart
 _kstart:
-    mov esp, 0x600000
+    mov esp, 0x80000
 
     ; enable CPU cache
     mov eax, cr0
