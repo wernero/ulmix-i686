@@ -1,12 +1,8 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-#include "sched/task.h"
+#include <types.h>
 
-pid_t sys_fork(void);
-void sys_exit(int status);
-pid_t sys_wait(int *wstatus);
-pid_t sys_waitpid(pid_t pid, int *wstatus, int options);
 
 struct syscall_context_struct
 {

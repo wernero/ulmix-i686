@@ -1,41 +1,33 @@
 #include "syscall.h"
 #include <util/util.h>
-#include <filesystem/path.h>
-#include <filesystem/fs_syscalls.h>
-#include <exec.h>
-#include <sched/process.h>
 #include <errno.h>
-#include <kdebug.h>
 #include <uname.h>
 
 #define nop 0
 
-/* every system call that is marked with *required is actually required
- * by the Newlib C Library and thus has to be implemented */
-
 void *syscalls[] =
 {
     nop,                // 0
-    sys_exit,           // 1    terminate program
-    sys_fork,           // 2    copy current process
-    sys_read,           // 3    read from file descriptor
-    sys_write,          // 4    write into file descriptor
-    sys_open,           // 5    open file or device
-    sys_close,          // 6    close file descriptor
-    sys_waitpid,        // 7    wait for an event to happen
-    sys_creat,          // 8    = open(path, O_WRONLY, O_TRUNC)
-    sys_link,           // 9    make a hard link to a file
-    sys_unlink,         // 10   delete a file
-    sys_execve,         // 11   replace process with a new one
-    sys_chdir,          // 12   change working directory
+nop, //    sys_exit,           // 1    terminate program
+nop, //    sys_fork,           // 2    copy current process
+nop, //    sys_read,           // 3    read from file descriptor
+nop, //    sys_write,          // 4    write into file descriptor
+nop, //    sys_open,           // 5    open file or device
+nop, //    sys_close,          // 6    close file descriptor
+nop, //    sys_waitpid,        // 7    wait for an event to happen
+nop, //    sys_creat,          // 8    = open(path, O_WRONLY, O_TRUNC)
+nop, //    sys_link,           // 9    make a hard link to a file
+nop, //    sys_unlink,         // 10   delete a file
+    nop, //sys_execve,         // 11   replace process with a new one
+nop, //    sys_chdir,          // 12   change working directory
     nop,                // 13   time()
     nop,                // 14   mknod()
     nop,                // 15   chmod()
     nop,                // 16   lchown16()
-    sys_kdebug,         // 17   kernel debugging features
+nop, //    sys_kdebug,         // 17   kernel debugging features
     nop,                // 18   stat()              *required
-    sys_lseek,          // 19   set seek offset in a file
-    sys_getpid,         // 20   get process id
+nop, //    sys_lseek,          // 19   set seek offset in a file
+    nop, //sys_getpid,         // 20   get process id
     nop,                // 21   mount()
     nop,                // 22   oldumount()
     nop,                // 23   setuid16()
@@ -69,7 +61,7 @@ void *syscalls[] =
     nop,                // 51
     nop,                // 52
     nop,                // 53
-    sys_ioctl,          // 54   send I/O command
+nop, //    sys_ioctl,          // 54   send I/O command
     nop,                // 55
     nop,                // 56
     nop,                // 57
@@ -79,7 +71,7 @@ void *syscalls[] =
     nop,                // 61
     nop,                // 62
     nop,                // 63
-    sys_getppid,        // 64   get parent process id
+    nop, //sys_getppid,        // 64   get parent process id
     nop,                // 65
     nop,                // 66
     nop,                // 67
@@ -198,16 +190,15 @@ void *syscalls[] =
     nop,                // 180
     nop,                // 181
     nop,                // 182
-    sys_getcwd          // 183
+nop, //    sys_getcwd          // 183
 };
 
-extern thread_t *current_thread;
 int syscall_handler(struct syscall_context_struct *context)
 {
     if (syscalls[context->eax] == NULL)
     {
-        klog(KLOG_DEBUG, "pid %d: called unimplemented system call (%d)",
-             current_thread->process->tgid, context->eax);
+        //klog(KLOG_DEBUG, "pid %d: called unimplemented system call (%d)",
+          //   current_thread->process->tgid, context->eax);
         return -ENOSYS;
     }
 
