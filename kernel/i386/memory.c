@@ -1,6 +1,6 @@
 #include <ulmix.h>
 #include <types.h>
-#include "mem.h"
+#include "memory.h"
 
 #define GB4 0xffffffff
 

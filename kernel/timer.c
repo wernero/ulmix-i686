@@ -1,6 +1,6 @@
 
 
-void irq_timer()
+void irq_timer(void)
 {
 
 }

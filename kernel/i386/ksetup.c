@@ -2,7 +2,7 @@
 #include <debug.h>
 #include <string.h>
 
-#include "mem.h"
+#include "memory.h"
 #include "multiboot.h"
 #include "idt.h"
 
@@ -13,34 +13,41 @@ extern char _kernel_beg;
 extern char _kernel_end;
 
 // param.c:
-extern unsigned long __kernel_start;
-extern unsigned long __kernel_end;
-extern unsigned long __bss_start;
-extern unsigned long __bss_end;
+extern void* __kernel_start;
+extern void* __kernel_end;
+extern void* __bss_start;
+extern void* __bss_end;
 extern unsigned long __ram_size;
+extern void* __init_brk;
 
 void __init _ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
-    __kernel_start = (unsigned long)&_kernel_beg;
-    __kernel_end = (unsigned long)&_bss_start;
-    __bss_start = (unsigned long)&_bss_start;
-    __bss_end = (unsigned long)&_bss_end;
+    __kernel_start = &_kernel_beg;
+    __kernel_end = &_bss_start;
+    __bss_start = &_bss_start;
+    __bss_end = &_bss_end;
 
     setup_gdt();
     setup_idt();
-
-    __ram_size = memscan(mb);
 
     debug(L_INFO, "lk 24:32\n"
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
           "GDT, IDT ok\n"
           "RAM size: %S\n",
-          &_kernel_beg, (&_bss_start - &_kernel_beg),
+          __kernel_start, (__bss_start - __kernel_start),
           __ram_size);
+
+    // TODO: load init ramdisk
+    __init_brk = __bss_end;
+
+    // initialize memory
+    __ram_size = memscan(mb);
+    setup_paging();
+
 
     //setup_timer();
     //setup_paging(ram_available);
