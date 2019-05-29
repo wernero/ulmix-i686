@@ -36,6 +36,8 @@ void setup_paging(void)
     mm_region(mm_kernel, (void*)0x00000000, __init_brk, MMR_EXEC | MMR_SUPV | MMR_RDWR);
     mm_region(mm_kernel, (void*)0xc0000000, (void*)0xffffffff, MMR_SUPV | MMR_RDWR);
 
+
+
   //  apply_pagedir(pagedir_kernel);
   //  paging_enable();
 }

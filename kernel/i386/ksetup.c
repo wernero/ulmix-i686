@@ -36,10 +36,8 @@ void __init _ksetup(struct mb_struct *mb)
     debug(L_INFO, "lk 24:32\n"
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
-          "GDT, IDT ok\n"
-          "RAM size: %S\n",
-          __kernel_start, (__bss_start - __kernel_start),
-          __ram_size);
+          "GDT, IDT ok\n",
+          __kernel_start, (__bss_start - __kernel_start));
 
     // TODO: load init ramdisk
     __init_brk = __bss_end;
