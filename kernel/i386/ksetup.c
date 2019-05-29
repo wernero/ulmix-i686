@@ -1,6 +1,7 @@
 #include <ulmix.h>
 #include <debug.h>
 #include <string.h>
+#include <heap.h>
 
 #include "memory.h"
 #include "multiboot.h"
@@ -18,7 +19,6 @@ extern void* __kernel_end;
 extern void* __bss_start;
 extern void* __bss_end;
 extern unsigned long __ram_size;
-extern void* __init_brk;
 
 void __init _ksetup(struct mb_struct *mb)
 {
@@ -39,15 +39,30 @@ void __init _ksetup(struct mb_struct *mb)
           "GDT, IDT ok\n",
           __kernel_start, (__bss_start - __kernel_start));
 
+    /* because the eventual kernel heap at 3GB - 4GB
+     * is not accessible in a pre-paging environment,
+     * an early heap has to be setup. In low memory,
+     * the region from 0x00000 - 0x80000 is used to
+     * accomodate the kernel's stack and heap.
+     *
+     * Early Kernel Stack: growing down from 0x80000
+     * Early Kernel Heap: growing up from 0x00001
+     *
+     * (0x00001 because null pointer is not allowed)
+     *
+     * Caution: Realmode IVT at 0x000-0x400 and BIOS
+     * data area at 0x400 - 0x500 may cause trouble. */
+    setup_heap((void*)0x00001, 0x80000);
+
     // TODO: load init ramdisk
-    __init_brk = __bss_end;
 
     // initialize memory
     __ram_size = memscan(mb);
     setup_paging();
 
+    // setup_timer();
+    // setup scheduler
 
-    //setup_timer();
-    //setup_paging(ram_available);
+    heap_dump();
 }
 

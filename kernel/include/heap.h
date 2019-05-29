@@ -29,7 +29,10 @@ struct kheape_struct
     const char *            description;    // description for debugging purposes
 } __attribute__((packed));
 
+void setup_heap(void *start_addr, size_t max_size);
 void* kmalloc(size_t size, size_t align, const char *description);
 void kfree(void *ptr);
+
+void heap_dump(void);
 
 #endif // KHEAP_H

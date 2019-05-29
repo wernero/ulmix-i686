@@ -2,44 +2,30 @@
 #include <heap.h>
 #include <debug.h>
 
-extern void *__init_brk;
-static int heap_enabled = 0;
+struct kheape_struct *_heap_start = NULL;
 
-static void* __init kmalloc_init(size_t size, size_t align, const char *description)
+void __init setup_heap(void *start_addr, size_t max_size)
 {
-    // place a heap struct
-    struct kheape_struct *entry = __init_brk;
-    entry->available = 0;
-    entry->description = description;
-    entry->size = size;
-    entry->start = (void*)entry + sizeof(struct kheape_struct);
+    struct kheape_struct *first_entry = (struct kheape_struct*)start_addr;
+    first_entry->available = 1;
+    first_entry->description = NULL;
+    first_entry->next = NULL;
+    first_entry->previous = NULL;
+    first_entry->size = max_size - sizeof(struct kheape_struct);
+    first_entry->start = start_addr + sizeof(struct kheape_struct);
 
-    // ensure alignment:
-    while ((unsigned long)entry->start % align != 0)
-        entry->start++;
-
-    // not used with init heap:
-    entry->previous = NULL;
-    entry->next = NULL;
-
-    // adjust heap break
-    __init_brk = entry->start + entry->size;
-    debug(L_DEBUG, "malloc() brk: start=%p, size=%S, brk=%p\n",
-          entry->start, entry->size, __init_brk);
-    return entry->start;
+    _heap_start = first_entry;
 }
 
-void* kmalloc(size_t size, size_t align, const char *description)
+void heap_dump(void)
 {
-    if (!heap_enabled)
-        return kmalloc_init(size, align, description);
-
-    // kmalloc()
-
-    return NULL;
-}
-
-void kfree(void *ptr)
-{
-
+    struct kheape_struct *entry;
+    for (entry = _heap_start; entry != NULL; entry = entry->next)
+    {
+        debug(L_DEBUG, "avlb=%s, start=%p, size=%S, \"%s\"\n",
+              entry->available ? "yes" : "no ",
+              entry->start,
+              entry->size,
+              entry->description);
+    }
 }

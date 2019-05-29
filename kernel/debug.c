@@ -60,7 +60,8 @@ static void kprintf(const char *fmt, va_list ap)
 
             case 's':
                 arg_str = va_arg(ap, char*);
-                kputs(arg_str);
+                if (arg_str)
+                    kputs(arg_str);
                 break;
 
             case '%':

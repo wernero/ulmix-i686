@@ -6,6 +6,5 @@ void * __bss_start;
 void * __bss_end;
 void * __modules_start;
 void * __modules_end;
-void * __init_brk;
 
 unsigned long __ram_size;

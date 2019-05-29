@@ -1,4 +1,5 @@
 #include <mem.h>
+#include <debug.h>
 
 static int mm_conflicts(struct mm_struct *mmap, void *start, void *end)
 {
@@ -32,6 +33,8 @@ int mm_region(struct mm_struct *mmap, void *start, void *end, enum mmr_flags fla
     mmap->regions = region;
     if (existing != NULL)
         region->next_region = existing;
+
+    debug(L_DEBUG, "region start=%p, end=%p\n", start, end);
 
     return 0;
 }

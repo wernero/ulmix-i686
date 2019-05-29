@@ -1,7 +1,9 @@
 #ifndef MEM_H
 #define MEM_H
 
-#define PAGESIZE 4096
+#define PAGESIZE    4096
+#define HEAP_START  0xc0000000
+#define HEAP_END    0xffffffff
 
 #include <heap.h>
 
@@ -45,6 +47,7 @@ struct mm_struct
     struct mmr_struct *regions;
 };
 
+struct mm_struct *mk_mmap(const char *description   );
 int mm_region(struct mm_struct *mmap, void *start, void *end, enum mmr_flags flags);
 
 #endif // MEM_H
