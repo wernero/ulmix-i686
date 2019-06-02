@@ -40,14 +40,16 @@ struct mmr_struct
     struct mmr_struct *next_region;
 };
 
+struct mm_ptab_struct;
 struct mm_struct
 {
-    void *tables;
+    struct mm_ptab_struct *tables;
     struct mmr_struct *kernel_regions;
     struct mmr_struct *regions;
 };
 
-struct mm_struct *mk_mmap(const char *description   );
+struct mm_struct *mk_mmap(const char *description);
+int mm_kregion(void *start, void *end);
 int mm_region(struct mm_struct *mmap, void *start, void *end, enum mmr_flags flags);
 
 #endif // MEM_H

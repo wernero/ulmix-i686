@@ -18,6 +18,7 @@ extern void* __kernel_start;
 extern void* __kernel_end;
 extern void* __bss_start;
 extern void* __bss_end;
+extern void* __modules_end;
 extern unsigned long __ram_size;
 
 void __init _ksetup(struct mb_struct *mb)
@@ -55,6 +56,7 @@ void __init _ksetup(struct mb_struct *mb)
     setup_heap((void*)0x00001, 0x80000);
 
     // TODO: load init ramdisk
+    __modules_end = __kernel_end;
 
     // initialize memory
     __ram_size = memscan(mb);
