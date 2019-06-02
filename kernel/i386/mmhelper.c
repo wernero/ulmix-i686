@@ -1,9 +1,60 @@
 #include <mem.h>
 #include <string.h>
+#include <debug.h>
 
 #include "paging.h"
 
 extern struct mm_struct *current_mm;
+
+static void map_pages(struct mm_struct *mmap, size_t start_page, size_t pages, void *start_addr, int crflags)
+{
+    size_t pt_offset = start_page % 1024;
+    size_t pd_offset = start_page / 1024;
+
+    size_t phys_addr = (size_t)start_addr & 0xfffff000;
+    while (pages--)
+    {
+        uint32_t *pt_entry = get_pt_entry(mmap, pd_offset, pt_offset);
+
+        if (*pt_entry & PG_PRESENT)
+        {
+            // TODO: deallocate old page
+        }
+
+        // phys_addr = get_free_page();
+        *pt_entry = phys_addr | PG_PRESENT | crflags;
+
+        phys_addr += PAGESIZE;
+        pt_offset++;
+        if (pt_offset == 1024)
+        {
+            pt_offset = 0;
+            pd_offset++;
+        }
+    }
+}
+
+void mm_map(struct mm_struct *mmap, void *start_virt, void *start_phys, size_t n, int crflags)
+{
+    if ((size_t)start_virt % PAGESIZE != 0
+            || (size_t)start_phys % PAGESIZE != 0)
+    {
+        debug(L_ERROR, "mm_map(): %p -> %p: addr not page aligned\n",
+              start_virt, start_phys);
+        return;
+    }
+
+    if (n < 1)
+        return;
+
+    // align size
+    size_t page_count = n / PAGESIZE;
+    if (n % PAGESIZE != 0)
+        page_count++;
+
+    size_t map_start = (size_t)start_virt / PAGESIZE;
+    map_pages(mmap, map_start, page_count, start_phys, crflags);
+}
 
 uint32_t *get_pt_entry(struct mm_struct *mmap, size_t pd_offset, size_t pt_offset)
 {
