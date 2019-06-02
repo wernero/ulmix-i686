@@ -41,6 +41,4 @@ void setup_paging(void)
 
     apply_mmap(mm_kernel);
     paging_enable();
-
-    // setup_heap(HEAP_START, HEAP_END - HEAP_START);
 }

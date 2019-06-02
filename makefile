@@ -1,5 +1,5 @@
 # Debug configuration:
-CDEBUG = -O0 -g
+CDEBUG = -O0 -g -D _DEBUG_
 
 # Release configuration:
 # CDEBUG = -O2

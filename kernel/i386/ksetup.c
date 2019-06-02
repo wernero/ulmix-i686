@@ -68,9 +68,10 @@ void __init _ksetup(struct mb_struct *mb)
     __ram_size = memscan(mb);
     setup_paging();
 
-    // setup_timer();
-    // setup scheduler
-
+#ifdef _DEBUG_
     heap_dump();
+#endif
+
+    setup_heap((void*)0xc0000000, 0xffffffff - 0xc0000000);
 }
 
