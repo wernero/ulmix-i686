@@ -1,38 +1,12 @@
-#include "memory.h"
 #include <mem.h>
 #include <debug.h>
 #include <string.h>
 
-#define PAGEDIR_SIZE (4*1024) // 1024 * 4 bytes
+#include "memory.h"
+#include "paging.h"
 
-#define PG_PRESENT  0x01
-#define PG_RDWR     0x02
-#define PG_RDONLY   0x00
-#define PG_USER     0x04
-#define PG_SUPV     0x00
-
-struct mm_ptab_struct
-{
-    uint32_t *pagedir;
-    uint32_t *ptables[1024];
-};
-
-extern void *__modules_end;
-extern unsigned long __ram_size;
-extern void paging_enable(void);
-
-static struct mm_struct *current_mm; // mmap currently in use
+struct mm_struct *current_mm; // mmap currently in use
 static struct mm_struct *mm_kernel;  // mmap with kernel mappings
-
-static void *mm_physical(void *addr)
-{
-    if (current_mm == NULL)
-        return addr;
-
-    uint32_t *ptable = current_mm->tables->ptables[(size_t)addr >> 22];
-    uint32_t phys_addr = ptable[((size_t)addr & 0x003ff000) >> 12] & 0xfffff000;
-    return (void*)(phys_addr + ((size_t)addr % PAGESIZE));
-}
 
 struct mm_struct *mk_mmap(const char *description)
 {
@@ -43,23 +17,6 @@ struct mm_struct *mk_mmap(const char *description)
     bzero(mm->tables->ptables, PAGEDIR_SIZE);
     mm->regions = NULL;
     return mm;
-}
-
-static uint32_t *get_pt_entry(struct mm_struct *mmap, size_t pd_offset, size_t pt_offset)
-{
-    uint32_t *ptable = mmap->tables->ptables[pd_offset];
-
-    if (ptable == NULL) // page table present?
-    {
-        ptable = kmalloc(PAGEDIR_SIZE, PAGESIZE, "mm_pagetable");
-        bzero(ptable, PAGEDIR_SIZE);
-        mmap->tables->ptables[pd_offset] = ptable;
-
-        mmap->tables->pagedir[pd_offset] =
-                (size_t)mm_physical(ptable) | PG_PRESENT | PG_USER | PG_RDWR;
-    }
-
-    return &(mmap->tables->ptables[pd_offset][pt_offset]);
 }
 
 static void map_pages(struct mm_struct *mmap, size_t start_page, size_t pages, void *start_addr, int crflags)
@@ -114,7 +71,6 @@ static void mm_map(struct mm_struct *mmap, void *start_virt, void *start_phys, s
 
 void apply_mmap(struct mm_struct *mmap)
 {
-    // get physical
     void *pagedir = mm_physical(mmap->tables->pagedir);
     current_mm = mmap;
     __asm__ volatile ("mov %0, %%cr3" : : "r"(pagedir));
