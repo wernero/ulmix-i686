@@ -41,9 +41,9 @@ void exc_handler(struct exc_context_struct *context)
 
     if (panic) {
         debug(L_FATAL, "*** PANIC: exception could not be handled\n"
-              "exc=%d (%s), error=0x%08x, eip=0x%08x\n"
-              "eax=0x%08x, eax=0x%08x, eax=0x%08x, eax=0x%08x,\n"
-              "eax=0x%08x, eax=0x%08x, eax=0x%08x, eax=0x%08x\n\n",
+              "exc=%d (%s), error=%p, eip=%p\n"
+              "eax=%p, eax=%p, eax=%p, eax=%p,\n"
+              "eax=%p, eax=%p, eax=%p, eax=%p\n\n",
               exc, exceptions[exc], error, context->eip,
               context->eax, context->ebx, context->ecx, context->edx,
               context->esi, context->edi, context->esp, context->ebp);

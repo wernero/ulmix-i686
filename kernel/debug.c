@@ -51,6 +51,7 @@ static void kprintf(const char *fmt, va_list ap)
                 break;
 
             case 'S':
+            case 'd':
 
             case 'p':
                 arg_int = va_arg(ap, unsigned long);
