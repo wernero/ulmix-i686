@@ -27,6 +27,9 @@ void __init _ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
+
+    /* multiboot structure has to go into BSS, otherwise
+     * heap or stack will overwrite it sooner or later. */
     multiboot = *mb;
     mb = &multiboot;
 
@@ -41,9 +44,8 @@ void __init _ksetup(struct mb_struct *mb)
     debug(L_INFO, "lk 24:32\n"
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
-          "GDT, IDT ok\n"
-          "Multiboot at %p\n",
-          __kernel_start, (__bss_start - __kernel_start), mb);
+          "GDT, IDT ok\n",
+          __kernel_start, (__bss_start - __kernel_start));
 
     /* because the eventual kernel heap at 3GB - 4GB
      * is not accessible in a pre-paging environment,
@@ -63,7 +65,6 @@ void __init _ksetup(struct mb_struct *mb)
     // TODO: load init ramdisk
     __modules_end = __bss_end;
 
-    // initialize memory
     __ram_size = memscan(mb);
     setup_paging();
 
