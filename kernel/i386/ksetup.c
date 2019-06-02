@@ -21,10 +21,14 @@ extern void* __bss_end;
 extern void* __modules_end;
 extern unsigned long __ram_size;
 
+static struct mb_struct multiboot;
+
 void __init _ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
+    multiboot = *mb;
+    mb = &multiboot;
 
     __kernel_start = &_kernel_beg;
     __kernel_end = &_bss_start;
@@ -37,8 +41,9 @@ void __init _ksetup(struct mb_struct *mb)
     debug(L_INFO, "lk 24:32\n"
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
-          "GDT, IDT ok\n",
-          __kernel_start, (__bss_start - __kernel_start));
+          "GDT, IDT ok\n"
+          "Multiboot at %p\n",
+          __kernel_start, (__bss_start - __kernel_start), mb);
 
     /* because the eventual kernel heap at 3GB - 4GB
      * is not accessible in a pre-paging environment,
