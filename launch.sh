@@ -1,5 +1,5 @@
 #!/bin/bash
 
 qemu-system-i386 \
-    -kernel vmulmix.elf \
+    -kernel vmulmix \
     -serial file:/dev/stdout

@@ -37,7 +37,7 @@ extern void exc1();
 static void __init setup_exc()
 {
     void *exc_ptr = exc0;
-    unsigned long exc_len = (unsigned long)&exc1 - (unsigned long)&exc1;
+    unsigned long exc_len = (unsigned long)&exc1 - (unsigned long)&exc0;
 
     for (int i = 0; i < 32; i++)
     {
