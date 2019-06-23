@@ -4,7 +4,7 @@
 
 void page_fault(void *fault_addr, unsigned long err_code)
 {
-    kprintf(" *** PAGE FAULT INFO *** \n"
+    kprintf("\n === PAGE FAULT INFO === \n"
             "   addr      = %p\n"
             "   cause     = %s\n"
             "   operation = %s\n"

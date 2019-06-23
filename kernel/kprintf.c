@@ -40,6 +40,7 @@ static void get_flags(int *iptr, int *fmt_flags, int *padding, const char *fmt_s
                 *buf_ptr++ = fmt_str[i++];
             *buf_ptr = 0;
 
+            i--;
             *padding = atoi(buf);
         }
         else if (fmt_str[i] == 'l')

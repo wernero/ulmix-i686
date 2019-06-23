@@ -31,7 +31,17 @@ void bzero(void *s, unsigned long n)
 }
 
 char *stpcpy(char *dest, const char *src);
-char *strcat(char *dest, const char *src);
+
+char *strcat(char *dest, const char *src)
+{
+    char *dest_ptr = dest;
+    while (*dest++);
+    dest--;
+    while (*src)
+        *dest++ = *src++;
+    return dest_ptr;
+}
+
 char *strchr(const char *s, int c);
 
 int strcmp(const char *s1, const char *s2);
@@ -92,7 +102,7 @@ int atoi(const char *nptr)
     int base = 1;
     for (int i = len - 1; i >= 0; i--)
     {
-        x += ((*nptr++) - '0') * base;
+        x += ((nptr[i]) - '0') * base;
         base *= 10;
     }
     return x;
@@ -100,13 +110,38 @@ int atoi(const char *nptr)
 
 char *itoa(long x, char *buf, int pad)
 {
-    *buf = 0;
+    if (x < 0)
+    {
+        x = -x;
+    }
+
+    utoa((unsigned)x, buf, pad);
     return buf;
 }
 
 char *utoa(unsigned long x, char *buf, int pad)
 {
-    *buf = 0;
+    if (x == 0)
+    {
+        strcpy(buf, "0");
+        return buf;
+    }
+
+    long i, rem;
+    for (i = 0; x > 0; i++)
+    {
+        rem = x % 10;
+        buf[i] = nchar(rem);
+
+        x /= 10;
+    }
+
+    pad -= i;
+    while (pad-- > 0)
+        buf[i++] = '0';
+    buf[i] = 0;
+
+    reverse(buf);
     return buf;
 }
 

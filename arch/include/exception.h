@@ -33,7 +33,7 @@ static const char* const exceptions[] =
     "breakpoint",
     "into detected overflow",
     "out of bounds",
-    "invalid opcode"
+    "invalid opcode",
     "no coprocessor",
     "double fault",
     "coprocessor segment overrun",

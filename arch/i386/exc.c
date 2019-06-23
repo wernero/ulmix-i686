@@ -46,10 +46,10 @@ void exc_handler(struct exc_context *context)
         return;
 
     kprintf(" === KERNEL PANIC === \n"
-            "unhandled %s exception (#%d)\n"
-            "eax=%p, ebx=%p, ecx=%p, edx=%p\n"
-            "esi=%p, edi=%p, ebp=%p, esp=%p\n"
-            "eip=%p\n\n"
+            "   unhandled %s exception (#%d)\n"
+            "   eax=%p, ebx=%p, ecx=%p, edx=%p\n"
+            "   esi=%p, edi=%p, ebp=%p, esp=%p\n"
+            "   eip=%p\n\n"
             "execution halted.",
             exceptions[context->id], context->id,
             context->eax, context->ebx, context->ecx, context->edx,
