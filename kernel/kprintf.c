@@ -5,7 +5,7 @@
 #define FMT_LONG BIT(0)
 #define PTR_PADDING 8
 
-static char dmesg_buffer[8192];
+/*static char dmesg_buffer[8192];
 static int dmesg_index = 0;
 
 static void kputc(char c)
@@ -13,7 +13,10 @@ static void kputc(char c)
     dmesg_buffer[dmesg_index++] = c;
     if (dmesg_index >= 8192)
         dmesg_index = 0;
-}
+}*/
+
+extern void debug_putchar(char c);
+#define kputc(c) debug_putchar(c)
 
 static void kputs(char *s)
 {
@@ -117,7 +120,8 @@ static void do_kprintf(const char *fmt, va_list ap)
 
             case 's':
                 ptr = va_arg(ap, char *);
-                kputs(ptr);
+                if (ptr)
+                    kputs(ptr);
                 break;
 
             case 'c':
