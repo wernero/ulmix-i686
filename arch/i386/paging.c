@@ -26,6 +26,8 @@ void apply_mmap(struct mm_struct *mmap)
     __asm__ volatile ("mov %0, %%cr3" : : "r"(pagedir));
 }
 
+extern char _bss_end;
+
 void setup_paging(void)
 {
     setup_pfalloc();
@@ -37,7 +39,7 @@ void setup_paging(void)
     /* actually map the kernel binary and data manually before
      * the activation of paging. otherwise, the CPU can't access
      * the page fault handler and the kernel will blow up -.- */
-    mm_map(mm_kernel, 0x0, 0x0, (size_t)__modules_end, PG_SUPV | PG_RDWR);
+    mm_map(mm_kernel, 0x0, 0x0, (size_t)&_bss_end, PG_SUPV | PG_RDWR);
 
     apply_mmap(mm_kernel);
     paging_enable();

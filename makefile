@@ -4,43 +4,66 @@ CDEBUG = -O0 -g -D _DEBUG_
 # Release configuration:
 # CDEBUG = -O2
 
-KERNEL	= vmulmix
+TARGET_ARCH	= i386
 
 CC		= gcc -m32
 LD		= ld
-LDINFO	= kernel/kernel.ld
 AS		= nasm
-AFLAGS	= -Ox -f elf
-CFLAGS	= -c -std=c11 -mtune=generic -Wshadow -Wstrict-prototypes -Wall \
+OBJCPY	= objcopy
+AR		= ar
+
+CCINCL	= -I arch/include -I kernel/include -I libc/include
+LDINFO	= arch/ld/$(TARGET_ARCH).ld
+
+ASFLAGS	= -Ox -f elf
+CCFLAGS	= -c -std=c11 -Wshadow -Wall $(ADD_FLAGS) \
 		-ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin \
 		-fno-stack-protector -fno-omit-frame-pointer -fno-common -fno-pic \
-		-fno-delete-null-pointer-checks -I kernel/include $(CDEBUG)
-LFLAGS	= -T $(LDINFO) -nostdlib --warn-common -nmagic -gc-sections
+		-fno-delete-null-pointer-checks $(CCINCL) $(CDEBUG)
+LDFLAGS	= -T $(LDINFO) -nostdlib --warn-common -nmagic -gc-sections
 
+LIBC	= libc/libc.a
+LIBK	= kernel/libk.a
+LIBA	= arch/$(TARGET_ARCH)/$(TARGET_ARCH).a
 
-KERN_H := $(wildcard kernel/*.h kernel/*/*.h)
-KERN_O := $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c)) \
-		$(patsubst %.s, %.o, $(wildcard kernel/*.s kernel/*/*.s)) \
-		$(patsubst %.c, %.o, $(wildcard drivers/*.c drivers/*/*.c))
+LIBC_O	:= $(patsubst %.c, %.o, $(wildcard libc/*.c libc/*/*.c))
+LIBK_O	:= $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c))
+ARCH_O	:= $(patsubst %.c, %.o, $(wildcard arch/$(TARGET_ARCH)/*.c)) \
+			$(patsubst %.s, %.o, $(wildcard arch/$(TARGET_ARCH)/*.s))
+
+KERNEL = vmulmix
 
 all: $(KERNEL)
 
-$(KERNEL): $(KERN_O) $(KERN_H)
+$(KERNEL): $(LIBC) $(LIBA) $(LIBK)
 	@ echo " LD  $(KERNEL)"
-	@ $(LD) $(LFLAGS) $(KERN_O) -o $(KERNEL)
-	@ $(LD) $(LFLAGS) $(KERN_O) --oformat elf32-i386 -o $(KERNEL).elf
+	@ $(LD) $(LDFLAGS) --start-group $(LIBC) $(LIBA) $(LIBK) -o $(KERNEL)
+	@ $(OBJCPY) $(KERNEL) -O binary $(KERNEL).bin
+
+
+$(LIBC): $(LIBC_O)
+	@ echo " AR  $@"
+	@ $(AR) crs $(LIBC) $(LIBC_O)
+
+$(LIBA): $(ARCH_O)
+	@ echo " AR  $@"
+	@ $(AR) crs $(LIBA) $(ARCH_O)
+
+$(LIBK): $(LIBK_O)
+	@ echo " AR  $@"
+	@ $(AR) crs $(LIBK) $(LIBK_O)
 
 %.o: %.c
 	@ echo " CC  $<"
-	@ $(CC) $< $(CFLAGS) -I kernel -o $@
+	@ $(CC) $< $(CCFLAGS) -I kernel -o $@
 
 %.o: %.s
 	@ echo " AS  $<"
-	@ $(AS) $< $(AFLAGS) -I kernel -o $@
+	@ $(AS) $< $(ASFLAGS) -I kernel -o $@
 
 .phony: all clean
-all: $(KERNEL)
 
 clean:
-	rm -f $(KERN_O)
-	rm -f $(KERNEL) $(KERNEL).elf
+	rm $(KERNEL) $(KERNEL).bin
+	rm $(LIBC) $(LIBK) $(LIBA)
+	rm $(LIBC_O) $(LIBK_O) $(ARCH_O)

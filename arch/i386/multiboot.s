@@ -10,15 +10,15 @@
 ;           grows towards end of physical memory
 
 section .mboot
-jmp _kstart
+jmp _start
 
 MB_MAGIC	    equ 0x1badb002
 MB_FLAGS	    equ 0x2 ; 0x10002 for flat binary
-MB_CHECKSUM     equ -(MB_MAGIC + MB_FLAGS)
-MB_LOAD_ADDR    equ 0x100000
-MB_LOAD_END     equ 0x00        ; load the whole image
-MB_BSS_END      equ 0x00        ; we clear BSS ourselves
-MB_ENTRY_ADDR   equ 0x100000
+MB_CHECKSUM         equ -(MB_MAGIC + MB_FLAGS)
+MB_LOAD_ADDR        equ 0x100000
+MB_LOAD_END         equ 0x00        ; load the whole image
+MB_BSS_END          equ 0x00        ; we clear BSS ourselves
+MB_ENTRY_ADDR       equ 0x100000
 
 align 4
 multiboot_header:
@@ -31,8 +31,8 @@ multiboot_header:
     dd MB_BSS_END
     dd MB_ENTRY_ADDR
 
-global _kstart
-_kstart:
+global _start
+_start:
     mov esp, 0x80000
 
     ; enable CPU cache
@@ -43,8 +43,8 @@ _kstart:
     ; main.c: _kmain()
     ; ebx points to struct multiboot
     push ebx
-    extern _ksetup
-    call _ksetup
+    extern ksetup
+    call ksetup
 
     cli
     hlt

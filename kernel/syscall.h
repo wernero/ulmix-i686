@@ -3,7 +3,6 @@
 
 #include <types.h>
 
-
 struct syscall_context_struct
 {
     uint32_t edi;

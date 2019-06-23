@@ -1,4 +1,3 @@
-#include <ulmix.h>
 #include <heap.h>
 #include <debug.h>
 
@@ -22,7 +21,7 @@ void heap_dump(void)
     struct kheape_struct *entry;
     for (entry = _heap_start; entry != NULL; entry = entry->next)
     {
-        debug(L_DEBUG, "avlb=%s, start=%p, size=%S, \"%s\"\n",
+        kprintf("avlb=%s, start=%p, size=%S, \"%s\"\n",
               entry->available ? "yes" : "no ",
               entry->start,
               entry->size,

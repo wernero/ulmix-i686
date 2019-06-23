@@ -1,20 +1,25 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef ASM_H
+#define ASM_H
 
-#include "util/types.h"
-#include "util/string.h"
-#include <errno.h>
+#include <types.h>
 
-#define _KERNEL_STACK_BASE_ 1024*1024*6
-
-#define NULL 0
-
-#define KERNEL_MODE 1 // TODO: determine if we are in kernel mode or not
-#define USERPTR(a) if (!KERNEL_MODE && a != NULL && (((void*)a) < (void*)0x100000 || ((void*)a) >= (void*)0xc0000000)) return -EFAULT
+// x86 Assembler:
 
 static inline void hlt(void) { __asm__ volatile ("hlt"); }
 static inline void sti(void) { __asm__ volatile ("sti"); }
 static inline void cli(void) { __asm__ volatile ("cli"); }
+
+static inline uint8_t inb(uint16_t port)
+{
+    uint8_t ret_val;
+    __asm__ volatile ("inb %1, %0" : "=a"(ret_val) : "Nd"(port));
+    return ret_val;
+}
+
+static inline void outb(uint16_t port, uint8_t val)
+{
+    __asm__ volatile ("outb %0, %1" :: "a"(val), "Nd"(port));
+}
 
 static inline uint32_t get_eflags(void)
 {
@@ -28,13 +33,6 @@ static inline uint32_t get_esp(void)
     uint32_t esp;
     __asm__ volatile ("mov %%esp, %0" : "=r" (esp));
     return esp;
-}
-
-static inline uint8_t inb(uint16_t port)
-{
-    uint8_t ret_val;
-    __asm__ volatile ("inb %1, %0" : "=a"(ret_val) : "Nd"(port));
-    return ret_val;
 }
 
 static inline uint16_t inw(uint16_t port)
@@ -73,15 +71,4 @@ static inline void outl(uint16_t port, uint32_t lng)
     __asm__ volatile ("outl %0, %1" :: "a"(lng), "Nd"(port));
 }
 
-static inline void outb(uint16_t port, uint8_t val)
-{
-    __asm__ volatile ("outb %0, %1" :: "a"(val), "Nd"(port));
-}
-
-
-void *memset(void *mem, uint8_t value, size_t len);
-void *memcpy(void *dest, void *src, size_t n);
-void *memmove(void *dest, void *src, size_t n);
-void *bzero(void *mem, size_t len);
-
-#endif
+#endif // ASM_H

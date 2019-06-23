@@ -1,6 +1,6 @@
 #include <string.h>
 
-void *memset(void *mem, unsigned char value, size_t n)
+void *memset(void *mem, unsigned char value, unsigned long n)
 {
     unsigned char *mptr = mem;
 
@@ -10,7 +10,7 @@ void *memset(void *mem, unsigned char value, size_t n)
     return mem;
 }
 
-void *memcpy(void *dest, void *src, size_t n)
+void *memcpy(void *dest, void *src, unsigned long n)
 {
     unsigned char *dstp = dest;
     unsigned char *srcp = src;
@@ -21,16 +21,13 @@ void *memcpy(void *dest, void *src, size_t n)
     return dest;
 }
 
-void *memmove(void *dest, void *src, size_t n);
+void *memmove(void *dest, void *src, unsigned long n);
 
-void *bzero(void *mem, size_t n)
+void bzero(void *s, unsigned long n)
 {
-    unsigned char *mptr = mem;
-
+    unsigned char *ptr = s;
     while (n--)
-        *(mptr++) = 0;
-
-    return mem;
+        *ptr++ = 0;
 }
 
 char *stpcpy(char *dest, const char *src);
@@ -49,9 +46,9 @@ char *strcpy(char *dest, const char *src)
     return ret;
 }
 
-size_t strlen(const char *s)
+unsigned long strlen(const char *s)
 {
-    size_t len = 0;
+    unsigned long len = 0;
 
     while (*(s++))
         ++len;
@@ -59,9 +56,9 @@ size_t strlen(const char *s)
     return len;
 }
 
-char *strncat(char *dest, const char *src, size_t n);
-char *strncmp(const char *s1, const char *s2, size_t n);
-char *strncpy(char *dest, const char *src, size_t n);
+char *strncat(char *dest, const char *src, unsigned long n);
+char *strncmp(const char *s1, const char *s2, unsigned long n);
+char *strncpy(char *dest, const char *src, unsigned long n);
 char *strstr(const char *haystack, const char *needle);
 
 char *reverse(char *s)
@@ -88,13 +85,41 @@ static char nchar(int x)
     return 'a' + x - 10;
 }
 
-char *xtoa(unsigned long x, char *buf)
+int atoi(const char *nptr)
 {
+    int x = 0;
+    unsigned len = strlen(nptr);
+    int base = 1;
+    for (int i = len - 1; i >= 0; i--)
+    {
+        x += ((*nptr++) - '0') * base;
+        base *= 10;
+    }
+    return x;
+}
+
+char *itoa(long x, char *buf, int pad)
+{
+    *buf = 0;
+    return buf;
+}
+
+char *utoa(unsigned long x, char *buf, int pad)
+{
+    *buf = 0;
+    return buf;
+}
+
+char *xtoa(unsigned long x, char *buf, int pad)
+{
+    if (pad == 0)
+        pad = 1;
+
     char *str = buf;
     int c, begin = 1;
     for (int i = (sizeof(unsigned long) * 2) -1; i >= 0; i--) {
         c = nchar((x >> i*4) & 0xf);
-        if (c == '0' && begin) {
+        if (c == '0' && begin && i >= pad) {
             continue;
         } else {
             begin = 0;
@@ -104,4 +129,3 @@ char *xtoa(unsigned long x, char *buf)
     *buf = 0;
     return str;
 }
-

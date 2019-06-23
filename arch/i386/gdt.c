@@ -1,5 +1,4 @@
 #include "gdt.h"
-#include <ulmix.h>
 
 extern void gdt_write(struct gdtd_struct *gdt_ptr);
 extern void tss_write(void);

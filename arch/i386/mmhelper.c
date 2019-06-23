@@ -39,7 +39,7 @@ void mm_map(struct mm_struct *mmap, void *start_virt, void *start_phys, size_t n
     if ((size_t)start_virt % PAGESIZE != 0
             || (size_t)start_phys % PAGESIZE != 0)
     {
-        debug(L_ERROR, "mm_map(): %p -> %p: addr not page aligned\n",
+        kprintf("mm_map(): %p -> %p: addr not page aligned\n",
               start_virt, start_phys);
         return;
     }

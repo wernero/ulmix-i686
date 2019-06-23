@@ -1,5 +1,4 @@
 #include "syscall.h"
-#include <util/util.h>
 #include <errno.h>
 #include <uname.h>
 

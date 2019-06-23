@@ -1,11 +1,11 @@
-OUTPUT_FORMAT(binary)
+OUTPUT_FORMAT(elf32-i386)
 OUTPUT_ARCH(i386)
-ENTRY(_kstart)
+ENTRY(_start)
 
 SECTIONS
 {
     . = 0x00100000;
-    _kernel_beg = .;
+    _kernel_start = .;
     .mboot  : { _ro_start = .;   *(.mboot*)                KEEP(*(.mboot))  }
     .text   : {                  *(.text*)                 KEEP(*(.text))   }
     .rodata : {                  *(.rodata*) _ro_end = .;  KEEP(*(.rodata)) }

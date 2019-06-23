@@ -87,6 +87,6 @@ kmalloc(size_t size, size_t align, const char *description)
             return alloc_entry(entry, start_offset, size, description);
     }
 
-    debug(L_ERROR, "kmalloc(): error: no more memory (%s)\n", description);
+    kprintf("kmalloc(): error: no more memory (%s)\n", description);
     return NULL;
 }

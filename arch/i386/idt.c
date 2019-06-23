@@ -1,14 +1,8 @@
 #include <asm.h>
-#include <ulmix.h>
 
 #include "idt.h"
-#include "exc.h"
 
 static struct idt_entry_struct idt[IDT_ENTRIES];
-
-extern void idt_write(struct idt_desc_struct *desc);
-extern void irq_asm_handler(void);
-extern char irq_asm_handler_end;
 
 static void __init pic_init(void)
 {
@@ -37,33 +31,45 @@ void set_idt_entry(int id, void (*handler)(void), int flags)
     idt[id].selector     = 0x0008;
 }
 
-void __init setup_idt(void)
+extern void exc0();
+extern void exc1();
+
+static void __init setup_exc()
+{
+    void *exc_ptr = exc0;
+    unsigned long exc_len = (unsigned long)&exc1 - (unsigned long)&exc1;
+
+    for (int i = 0; i < 32; i++)
+    {
+        set_idt_entry(i, exc_ptr, INT_PRESENT | INT_GATE | INT_SUPV);
+        exc_ptr += exc_len;
+    }
+}
+
+static void idt_write(struct idt_desc_struct *desc)
+{
+    __asm__ volatile ("lidt %0" : : "g"(*desc));
+}
+
+void __init setup_idt()
 {
     struct idt_desc_struct idt_desc;
     idt_desc.size = 8 * IDT_ENTRIES - 1;
     idt_desc.addr = (uint32_t)idt;
 
-    uint32_t handler_size =
-    (uint32_t)&irq_asm_handler_end -
-    (uint32_t)&irq_asm_handler;
-
-    int i;
-
-    // CPU exception handlers
-    for (i = 0; i < 32; i++)
-        set_idt_entry(i, NULL, 0);
+    // install exception handlers
     setup_exc();
 
     // IO interrupts
-    for (i = 0; i < 16; i++) {
+    /*for (i = 0; i < 16; i++) {
         set_idt_entry(i + 32,
                     irq_asm_handler + handler_size * i,
                     INT_GATE | INT_PRESENT | INT_SUPV);
-    }
+    }*/
 
 
     // don't set handlers for the other one's
-    for (i = 32+16; i < IDT_ENTRIES; i++)
+    for (int i = 32+16; i < IDT_ENTRIES; i++)
         set_idt_entry(i, NULL, 0);
 
     // System call interrupt

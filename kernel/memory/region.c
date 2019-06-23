@@ -39,7 +39,7 @@ int mm_region(struct mm_struct *mmap, void *start, void *end, enum mmr_flags fla
     if (existing != NULL)
         region->next_region = existing;
 
-    debug(L_DEBUG, "region start=%p, end=%p\n", start, end);
+    kprintf("region start=%p, end=%p\n", start, end);
 
     return 0;
 }
