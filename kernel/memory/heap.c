@@ -1,6 +1,8 @@
 #include <heap.h>
 #include <debug.h>
+#include <sync.h>
 
+mutex_t _heap_mtx;
 struct kheape_struct *_heap_start = NULL;
 
 void __init setup_heap(void *start_addr, size_t max_size)
@@ -14,6 +16,8 @@ void __init setup_heap(void *start_addr, size_t max_size)
     first_entry->start = start_addr + sizeof(struct kheape_struct);
 
     _heap_start = first_entry;
+
+    mutex_init(&_heap_mtx);
 }
 
 void heap_dump(void)

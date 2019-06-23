@@ -1,7 +1,10 @@
 #include <heap.h>
 #include <debug.h>
 #include <mem.h>
+#include <sync.h>
 
+
+extern mutex_t _heap_mtx;
 extern struct kheape_struct *_heap_start;
 
 static struct kheape_struct *
@@ -74,6 +77,8 @@ next_aligned_addr(void *addr, size_t align)
 void *
 kmalloc(size_t size, size_t align, const char *description)
 {
+    mutex_lock(&_heap_mtx);
+
     struct kheape_struct *entry;
     size_t start_offset, min_size;
 
@@ -84,9 +89,16 @@ kmalloc(size_t size, size_t align, const char *description)
         min_size = size + start_offset;
 
         if (entry->available && entry->size >= min_size)
-            return alloc_entry(entry, start_offset, size, description);
+        {
+            void *mptr = alloc_entry(entry, start_offset, size, description);
+
+            mutex_unlock(&_heap_mtx);
+            return mptr;
+        }
     }
 
     kprintf("kmalloc(): error: no more memory (%s)\n", description);
+
+    mutex_unlock(&_heap_mtx);
     return NULL;
 }
