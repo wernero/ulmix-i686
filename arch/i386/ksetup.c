@@ -1,5 +1,6 @@
 #include <debug.h>
 #include <string.h>
+#include <sysinfo.h>
 #include <heap.h>
 
 #include "memory.h"
@@ -14,11 +15,11 @@ extern char _kernel_end;
 
 unsigned long __ram_size;
 
-static struct mb_struct multiboot;
+static struct mb_struct __initdata multiboot;
 
 extern void setup_vga();
 
-static void iosetup()
+static void __init iosetup()
 {
     setup_vga();
 }
@@ -39,8 +40,10 @@ void __init ksetup(struct mb_struct *mb)
     kprintf("lk 24:32\n"
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
-          "GDT, IDT ok\n",
-          &_kernel_start, ((unsigned long)&_bss_start - (unsigned long)&_kernel_start));
+          "GDT, IDT ok\n"
+          "cpu signature = \"%s\"\n\n",
+          &_kernel_start, ((unsigned long)&_bss_start - (unsigned long)&_kernel_start),
+          cpu_vendor());
 
     /* because the eventual kernel heap at 3GB - 4GB
      * is not accessible in a pre-paging environment,
