@@ -10,24 +10,24 @@ void mutex_init(mutex_t *mtx)
 void mutex_lock(mutex_t *mtx)
 {
     check_mutex:
-    cli();
+    //cli();
 
     if (mtx->locked)
     {
         // suspend_task(current_task);
-        sti();
+        //sti();
         // schedule();
 
         goto check_mutex;
     }
 
     mtx->locked = 1;
-    sti();
+    //sti();
 }
 
 void mutex_unlock(mutex_t *mtx)
 {
-    cli();
+    //cli();
 
     mtx->locked = 0;
 
@@ -37,5 +37,5 @@ void mutex_unlock(mutex_t *mtx)
         mtx->waiting = mtx->waiting->next_waiting;
     }
 
-    sti();
+    //sti();
 }

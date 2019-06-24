@@ -36,6 +36,7 @@ extern int generic_exception(unsigned id);
 void exc_handler(struct exc_context *context)
 {
     fault_code = context->error_code;
+    fault_addr = (void*)context->eip;
 
     if (context->id == EXC_PAGEFAULT)
     {
@@ -45,7 +46,7 @@ void exc_handler(struct exc_context *context)
     if (generic_exception(context->id) == EXC_STATUS_OK)
         return;
 
-    kprintf(" === KERNEL PANIC === \n"
+    kprintf("\n === KERNEL PANIC === \n"
             "   unhandled %s exception (#%d)\n"
             "   eax=%p, ebx=%p, ecx=%p, edx=%p\n"
             "   esi=%p, edi=%p, ebp=%p, esp=%p\n"
@@ -53,7 +54,7 @@ void exc_handler(struct exc_context *context)
             "execution halted.",
             exceptions[context->id], context->id,
             context->eax, context->ebx, context->ecx, context->edx,
-            context->eax, context->ebx, context->ecx, context->edx,
+            context->esi, context->edi, context->ebp, context->esp,
             context->eip);
 
     cli();

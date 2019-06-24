@@ -26,6 +26,8 @@ LIBC	= libc/libc.a
 LIBK	= kernel/libk.a
 LIBA	= arch/$(TARGET_ARCH)/$(TARGET_ARCH).a
 
+DRIV_O	:= $(patsubst %.c, %.o, $(wildcard drivers/*.c drivers/*/*.c))
+
 LIBC_O	:= $(patsubst %.c, %.o, $(wildcard libc/*.c libc/*/*.c))
 LIBK_O	:= $(patsubst %.c, %.o, $(wildcard kernel/*.c kernel/*/*.c))
 ARCH_O	:= $(patsubst %.c, %.o, $(wildcard arch/$(TARGET_ARCH)/*.c)) \
@@ -35,11 +37,10 @@ KERNEL = vmulmix
 
 all: $(KERNEL)
 
-$(KERNEL): $(LIBC) $(LIBA) $(LIBK)
+$(KERNEL): $(LIBC) $(LIBA) $(LIBK) $(DRIV_O)
 	@ echo " LD  $(KERNEL)"
-	@ $(LD) $(LDFLAGS) --start-group $(LIBC) $(LIBA) $(LIBK) -o $(KERNEL)
+	@ $(LD) $(LDFLAGS) --start-group $(LIBC) $(DRIV_O) $(LIBA) $(LIBK) -o $(KERNEL)
 	@ $(OBJCPY) $(KERNEL) -O binary $(KERNEL).bin
-
 
 $(LIBC): $(LIBC_O)
 	@ echo " AR  $@"

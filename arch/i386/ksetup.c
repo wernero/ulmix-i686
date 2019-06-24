@@ -16,6 +16,13 @@ unsigned long __ram_size;
 
 static struct mb_struct multiboot;
 
+extern void setup_vga();
+
+static void iosetup()
+{
+    setup_vga();
+}
+
 void __init ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
@@ -59,6 +66,8 @@ void __init ksetup(struct mb_struct *mb)
 #ifdef _DEBUG_
     heap_dump();
 #endif
+
+    iosetup();
 
     setup_heap((void*)0xc0000000, 0xffffffff - 0xc0000000);
 }
