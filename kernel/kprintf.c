@@ -1,9 +1,12 @@
 #include <debug.h>
 #include <types.h>
 #include <string.h>
+#include <sync.h>
 
 #define FMT_LONG BIT(0)
 #define PTR_PADDING 8
+
+static mutex_t kprintf_mtx = {};
 
 /*static char dmesg_buffer[8192];
 static int dmesg_index = 0;
@@ -172,6 +175,8 @@ void kprintf(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
+    mutex_lock(&kprintf_mtx);
     do_kprintf(fmt, args);
+    mutex_unlock(&kprintf_mtx);
     va_end(args);
 }
