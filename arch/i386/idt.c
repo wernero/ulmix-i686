@@ -22,7 +22,7 @@ static void __init pic_init(void)
     outb(0xA1, 0x00);   // unmask all interrupts PIC2
 }
 
-void set_idt_entry(int id, void (*handler)(void), int flags)
+void __init set_idt_entry(int id, void (*handler)(void), int flags)
 {
     idt[id].offset_low   = (uint32_t)handler & 0x0000ffff;
     idt[id].offset_high  = ((uint32_t)handler & 0xffff0000) >> 16;
@@ -46,7 +46,7 @@ static void __init setup_exc()
     }
 }
 
-static void idt_write(struct idt_desc_struct *desc)
+static void __init idt_write(struct idt_desc_struct *desc)
 {
     __asm__ volatile ("lidt %0" : : "g"(*desc));
 }
