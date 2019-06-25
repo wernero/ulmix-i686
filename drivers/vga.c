@@ -84,16 +84,20 @@ static void text_putc(char c)
     case '\t':
         tmp = 4;
         while (tmp--)
-        {
-            *mptr++ = 0;
-            *mptr++ = current_color;
-            text_x++;
-        }
+            text_putc(0);
         break;
     default:
+        if (text_x == COLUMNS)
+        {
+            text_putc('\n');
+            text_putc(c);
+        }
+        else
+        {
         *mptr++ = c;
         *mptr = current_color;
         text_x++;
+        }
     }
 }
 
