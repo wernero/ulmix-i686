@@ -12,15 +12,16 @@
 #define PG_USER     0x04
 #define PG_SUPV     0x00
 
-struct mm_ptab_struct
+struct mm_tables_struct
 {
-    uint32_t *pagedir;
-    uint32_t *ptables[1024];
+    uint64_t *ptr_table;
+    uint64_t *page_dirs[4];     // 4 page directories
+                                // for now, we're using 1
+    uint64_t *page_tables[512];
 };
 
 extern void *__modules_end;
 extern unsigned long __ram_size;
-extern void paging_enable(void);
 
 // paging helper functions:
 
@@ -33,7 +34,7 @@ void *mm_physical(void *addr);
  * entry determined by offset in the page directory and offset
  * in the page table.
  * if the page table does not exist, it is created. */
-uint32_t *get_pt_entry(struct mm_struct *mmap, size_t pd_offset, size_t pt_offset);
+uint64_t *get_pt_entry(struct mm_struct *mmap, size_t pd_offset, size_t pt_offset);
 
 /* mm_map() maps a virtual memory region directly to a contiguous
  * region of physical memory. this can also be used to create

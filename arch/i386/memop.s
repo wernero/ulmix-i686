@@ -24,13 +24,3 @@ tss_write:
     mov ax, 0x2b
     ltr ax
     ret
-
-paging_enable:
-    push ebp
-    mov ebp, esp
-    mov eax, cr0
-    or eax, 0x80010000
-    mov cr0, eax
-    mov esp, ebp
-    pop ebp
-    ret

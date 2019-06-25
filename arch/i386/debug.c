@@ -42,3 +42,15 @@ void debug_putchar(char c)
     while ((inb(port + 5) & 0x20) == 0);
     outb(port, c);
 }
+
+void panic(const char *msg)
+{
+
+    kprintf("\n === PANIC ===\n\n"
+            "%s\n\n"
+            "execution halted.\n",
+            msg);
+
+    cli();
+    hlt();
+}

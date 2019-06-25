@@ -23,11 +23,11 @@ void update_tss(unsigned long sp);
  */
 enum mmr_flags
 {
-    MMR_USER        = 0x01,
-    MMR_RDWR        = 0x02,
-    MMR_READONLY    = 0x04,
-    MMR_SUPV        = 0x08,
-    MMR_EXEC        = 0x10
+    MMR_USER        = BIT(0),
+    MMR_RDWR        = BIT(1),
+    MMR_READONLY    = BIT(2),
+    MMR_SUPV        = BIT(3),
+    MMR_EXEC        = BIT(4)
 };
 
 struct mmr_struct
@@ -40,10 +40,10 @@ struct mmr_struct
     struct mmr_struct *next_region;
 };
 
-struct mm_ptab_struct;
+struct mm_tables_struct;
 struct mm_struct
 {
-    struct mm_ptab_struct *tables;
+    struct mm_tables_struct *tables;
     struct mmr_struct *kernel_regions;
     struct mmr_struct *regions;
 };
