@@ -2,6 +2,7 @@
 #include <debug.h>
 #include <types.h>
 #include <exception.h>
+#include <heap.h>
 
 #include "idt.h"
 
@@ -45,6 +46,8 @@ void exc_handler(struct exc_context *context)
 
     if (generic_exception(context->id) == EXC_STATUS_OK)
         return;
+
+    heap_dump();
 
     kprintf("\n === KERNEL PANIC === \n"
             "   unhandled %s exception (#%d)\n"

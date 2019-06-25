@@ -67,10 +67,6 @@ void __init ksetup(struct mb_struct *mb)
     __ram_size = memscan(mb);
     setup_paging();
 
-#ifdef _DEBUG_
-    heap_dump();
-#endif
-
     iosetup();
 
     setup_heap((void*)0xc0000000, 0xffffffff - 0xc0000000);
