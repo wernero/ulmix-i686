@@ -37,9 +37,23 @@ get_cpu_vendor:
     ret
 
 get_cpu_flags:
+    push ebp
+    mov ebp, esp
+    call is_cpuid_supported
+    cmp eax, 0
+    je cpuid_not_supported
+    push ebx
     mov eax, 1
+    cpuid
+    mov edi, [ebp+8]
+    mov [edi], edx
+    mov [edi+4], ecx
+    pop ebx
+    pop ebp
+    xor eax,eax
     ret
 
 cpuid_not_supported:
+    pop ebp
     mov eax, 1
     ret

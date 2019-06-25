@@ -41,9 +41,10 @@ void __init ksetup(struct mb_struct *mb)
           "ULMIX Operating System\n"
           "kernel at %p (size %S)\n"
           "GDT, IDT ok\n"
-          "cpu signature = \"%s\"\n\n",
+          "cpu signature = \"%s\", cpu features: ",
           &_kernel_start, ((unsigned long)&_bss_start - (unsigned long)&_kernel_start),
           cpu_vendor());
+    print_cpu_flags();
 
     /* because the eventual kernel heap at 3GB - 4GB
      * is not accessible in a pre-paging environment,
