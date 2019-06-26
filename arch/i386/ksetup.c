@@ -18,10 +18,12 @@ unsigned long __ram_size;
 static struct mb_struct __initdata multiboot;
 
 extern void setup_vga();
+extern void setup_pci();
 
 static void __init iosetup()
 {
     setup_vga();
+    setup_pci();
 }
 
 void __init ksetup(struct mb_struct *mb)
