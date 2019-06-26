@@ -18,16 +18,20 @@ static void kputc(char c)
         dmesg_index = 0;
 }*/
 
+extern void debug_putchar(char c);
 extern ssize_t vga_write(void *buf, size_t count);
 
 static void kputc(char c)
 {
+    debug_putchar(c);
     vga_write(&c, 1);
 }
 
 static void kputs(char *s)
 {
     vga_write(s, strlen(s));
+    while (*s)
+        debug_putchar(*s++);
 }
 
 static void get_flags(int *iptr, int *fmt_flags, int *padding, const char *fmt_str)
