@@ -22,6 +22,7 @@ void __init setup_heap(void *start_addr, size_t max_size)
 
 void heap_dump(void)
 {
+    kprintf("=== KERNEL HEAP DUMP === \n");
     struct kheape_struct *entry;
     for (entry = _heap_start; entry != NULL; entry = entry->next)
     {

@@ -1,11 +1,11 @@
 #include <sysinfo.h>
 #include <debug.h>
 
-static uint64_t flags = 0;
-static char cpu_vendor_str[13];
+static int flags_loaded = 0;
+static uint32_t ft_flags_edx = 0;
+static uint32_t ft_flags_ecx = 0;
 
-extern int get_cpu_vendor(char *s);
-extern int get_cpu_flags(uint64_t *flags);
+static char cpu_vendor_str[13];
 
 static const char *cpu_flags[] = {
     "fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
@@ -14,6 +14,8 @@ static const char *cpu_flags[] = {
     "fxsr", "sse", "sse2", "ss", "htt", "tm1", "ia64", "pbe"
 };
 
+extern int get_cpu_vendor(char *str);
+
 char *cpu_vendor()
 {
     get_cpu_vendor(cpu_vendor_str);
@@ -21,23 +23,41 @@ char *cpu_vendor()
     return cpu_vendor_str;
 }
 
+extern int cpuid32(
+        unsigned long *eax,
+        unsigned long *ebx,
+        unsigned long *ecx,
+        unsigned long *edx
+);
 
-int cpu_has(uint64_t flag)
+
+int cpu_supports(int feature)
 {
-    if (flags == 0)
-        get_cpu_flags(&flags);
+    if (flags_loaded == 0)
+    {
+        unsigned long eax = 1, ebx, ecx, edx;
+        if (cpuid32(&eax, &ebx, &ecx, &edx) < 0)
+            return 0;
+        ft_flags_ecx = ecx;
+        ft_flags_edx = edx;
 
-    if ((flag & flags))
-        return 1;
+        flags_loaded = 1;
+    }
+
+    if (feature < 32)  return ((ft_flags_edx & BIT(feature)));
+    if (feature < 64)  return ((ft_flags_ecx & BIT(feature - 32)));
+
     return 0;
 }
 
 void print_cpu_flags()
 {
-    get_cpu_flags(&flags);
+    // just load the flags
+    cpu_supports(0);
+
     for (int i = 0; i < 32; i++)
     {
-        if ((flags & (1 << i)))
+        if ((ft_flags_edx & (1 << i)))
         {
             if (i == 31)
                 kprintf("%s\n", cpu_flags[i]);

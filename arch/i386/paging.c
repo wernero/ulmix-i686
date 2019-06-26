@@ -59,7 +59,7 @@ static void apply_mmap(struct mm_struct *mmap)
 void setup_paging(void)
 {
     // check for PAE and MSR support
-    pae_support = cpu_has(CPU_PAE);
+    pae_support = cpu_supports(CPU_PAE);
 
     // for now, assume these are not supported:
     smep_support = 0;
@@ -90,6 +90,7 @@ struct mm_struct *mk_mmap(const char *description)
     struct mm_struct *mm = kmalloc(sizeof(struct mm_struct), 1, description);
     mm->tables = kmalloc(sizeof(struct mm_tables_struct), 1, "mm_tables");
 
+    // create a first page directory
     mm->tables->page_dirs[0] = kmalloc(PAGEDIR_SIZE, PAGESIZE, "mm_pagedir0");
     bzero(mm->tables->page_dirs[0], PAGEDIR_SIZE);
 
