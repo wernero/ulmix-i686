@@ -59,10 +59,8 @@ void print_cpu_flags()
     {
         if ((ft_flags_edx & (1 << i)))
         {
-            if (i == 31)
-                kprintf("%s\n", cpu_flags[i]);
-            else
-                kprintf("%s, ", cpu_flags[i]);
+            kprintf(" %s", cpu_flags[i]);
         }
     }
+    kprintf("\n");
 }
