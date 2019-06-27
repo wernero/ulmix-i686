@@ -40,8 +40,12 @@ struct pcidev_struct
     uint8_t slot_no;
     uint8_t function_no;
 
-    uint16_t device;
-    uint16_t vendor;
+    uint16_t device_id;
+    uint16_t vendor_id;
+    uint8_t revision;
+    uint8_t prog_if;
+    uint8_t subclass;
+    uint8_t class;
 };
 
 void setup_pci();
