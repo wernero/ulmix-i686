@@ -39,6 +39,7 @@ char *strcat(char *dest, const char *src)
     dest--;
     while (*src)
         *dest++ = *src++;
+    *dest = 0;
     return dest_ptr;
 }
 
@@ -52,6 +53,7 @@ char *strcpy(char *dest, const char *src)
 
     while (*src)
         *dest++ = *src++;
+    *dest = 0;
 
     return ret;
 }
@@ -121,11 +123,8 @@ char *itoa(long x, char *buf, int pad)
 
 char *utoa(unsigned long x, char *buf, int pad)
 {
-    if (x == 0)
-    {
-        strcpy(buf, "0");
-        return buf;
-    }
+    if (pad < 1)
+        pad = 1;
 
     long i, rem;
     for (i = 0; x > 0; i++)
@@ -147,7 +146,7 @@ char *utoa(unsigned long x, char *buf, int pad)
 
 char *xtoa(unsigned long x, char *buf, int pad)
 {
-    if (pad == 0)
+    if (pad < 1)
         pad = 1;
 
     char *str = buf;
