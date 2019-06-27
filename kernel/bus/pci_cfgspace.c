@@ -27,12 +27,12 @@ uint16_t pci_cfg_read16(const struct pcidev_struct *device, uint8_t offset)
     return ((data >> ((offset & 2) * 8)) & 0xffff);
 }
 
-int pci_is_present(const uint8_t bus, const uint8_t slot)
+int pci_is_present(uint8_t bus, uint8_t slot, uint8_t fnc)
 {
     const struct pcidev_struct dev = {
         .bus_no = bus,
         .slot_no = slot,
-        .function_no = 0
+        .function_no = fnc
     };
 
     if (pci_cfg_read16(&dev, 0x00) == 0xffff)
