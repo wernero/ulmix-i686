@@ -26,10 +26,10 @@ void heap_dump(void)
     struct kheape_struct *entry;
     for (entry = _heap_start; entry != NULL; entry = entry->next)
     {
-        kprintf("avlb=%s, start=%p, size=%S, \"%s\"\n",
+        kprintf("avlb=%s, start=%p, size=%S %s\n",
               entry->available ? "yes" : "no ",
               entry->start,
               entry->size,
-              entry->description);
+              (entry->description == NULL) ? "(free)" : entry->description);
     }
 }
