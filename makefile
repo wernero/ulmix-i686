@@ -16,10 +16,8 @@ CCINCL	= -I arch/include -I kernel/include -I libc/include
 LDINFO	= arch/ld/$(TARGET_ARCH).ld
 
 ASFLAGS	= -Ox -f elf
-CCFLAGS	= -c -std=c11 -Wshadow -Wall $(ADD_FLAGS) \
-		-ffreestanding -nostdinc -fno-strict-aliasing -fno-builtin \
-		-fno-stack-protector -fno-omit-frame-pointer -fno-common -fno-pic \
-		-fno-delete-null-pointer-checks $(CCINCL) $(CDEBUG)
+CCFLAGS = -c -std=c11 -Wshadow -Wall $(ADD_FLAGS) \
+	  -fno-builtin $(CCINCL) $(CDEBUG)
 LDFLAGS	= -T $(LDINFO) -nostdlib --warn-common -nmagic -gc-sections
 
 LIBC	= libc/libc.a
