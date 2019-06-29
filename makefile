@@ -4,13 +4,13 @@ CDEBUG = -O0 -g -D _DEBUG_
 # Release configuration:
 # CDEBUG = -O2
 
-TARGET_ARCH	= i386
+TARGET_ARCH	= i686
 
-CC		= gcc -m32
-LD		= ld
+CC		= $(TARGET_ARCH)-elf-gcc
+LD		= $(TARGET_ARCH)-elf-ld
 AS		= nasm
-OBJCPY	= objcopy
-AR		= ar
+OBJCPY		= $(TARGET_ARCH)-elf-objcopy
+AR		= $(TARGET_ARCH)-elf-ar
 
 CCINCL	= -I arch/include -I kernel/include -I libc/include
 LDINFO	= arch/ld/$(TARGET_ARCH).ld
