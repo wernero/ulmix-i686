@@ -48,9 +48,24 @@ struct pcidev_struct
     uint8_t class;
 };
 
+struct pci_idpair_struct
+{
+    unsigned short vendor_id;
+    unsigned short device_id;
+};
+
+struct pci_driver_struct
+{
+    const struct pci_idpair_struct *ids;
+    int (*driver_probe)(struct pcidev_struct *dev);
+};
+
+int pci_register_driver(const struct pci_driver_struct *drv);
+
 void setup_pci();
 
 // read configuration space
+uint8_t  pci_cfg_read8(const struct pcidev_struct *device, uint8_t offset);
 uint16_t pci_cfg_read16(const struct pcidev_struct *device, uint8_t offset);
 uint32_t pci_cfg_read32(const struct pcidev_struct *device, uint8_t offset);
 
