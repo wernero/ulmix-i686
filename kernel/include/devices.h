@@ -4,6 +4,15 @@
 #include <types.h>
 #include <fops.h>
 
+#define MAJOR_ATA0  4
+#define MAJOR_ATA1  5
+#define MAJOR_ATA2  6
+#define MAJOR_ATA3  7
+#define MAJOR_ATA4  8
+#define MAJOR_ATA5  9
+#define MAJOR_ATA6  10
+#define MAJOR_ATA7  11
+
 struct chardev_struct
 {
     unsigned int major;
@@ -34,6 +43,8 @@ struct gendisk_struct
     // initialized by partition table reader:
     size_t part_count;
     struct hd_struct part_list[4];
+
+    void *drv_struct;
 };
 
 int register_chardev(struct chardev_struct *cd);

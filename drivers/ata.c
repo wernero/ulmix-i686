@@ -10,6 +10,7 @@
 #include <debug.h>
 #include <mem.h>
 #include <asm.h>
+#include <devices.h>
 
 #define PRIMARY1_BASE    0x1f0
 #define PRIMARY1_CTRL    0x3f6
@@ -37,6 +38,8 @@
 #define ATA_DEVCTRL 0x00    // W:   reset bus, en/disable irq   8 bit
 
 #define CMD_IDENTIFY    0xec
+
+#define BLOCK_SIZE  512
 
 enum ata_errors
 {
@@ -128,6 +131,21 @@ static int get_ports(unsigned controller, enum ata_types type, unsigned *base_io
     return 0;
 }
 
+static ssize_t ata_read(void *drv_struct, unsigned char *buffer, size_t count, size_t offset)
+{
+    return -ENOSYS;
+}
+
+static ssize_t ata_write(void *drv_struct, unsigned char *buffer, size_t count, size_t offset)
+{
+    return -ENOSYS;
+}
+
+static const struct fops_struct ata_fops = {
+    .read = ata_read,
+    .write = ata_write
+};
+
 static int ata_pci_probe(struct pcidev_struct *dev)
 {
     if (dev->class != 1 && dev->subclass != 1)
@@ -148,7 +166,20 @@ static int ata_pci_probe(struct pcidev_struct *dev)
                     kmalloc(sizeof(struct ata_dev_struct), 1, "ata_dev_struct");
             *drv_struct = ata_dev;
 
-            // register device file
+            struct gendisk_struct *bd = kmalloc(sizeof(struct gendisk_struct), 1, "gendisk_struct");
+            bd->capacity = 0;
+            bd->io_size = BLOCK_SIZE;
+            bd->major = MAJOR_ATA0;
+            bd->minor = 0;
+            bd->fops = ata_fops;
+            bd->drv_struct = drv_struct;
+
+            if (register_blkdev(bd) < 0)
+            {
+                // ERROR
+                // kfree(bd);
+                // kfree(drv_struct);
+            }
 
             continue;
         }
