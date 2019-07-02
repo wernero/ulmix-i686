@@ -27,6 +27,8 @@ struct hd_struct
     size_t sect_count;
 
     unsigned char fs_type;
+
+    struct gendisk_struct *bd;
 };
 
 struct gendisk_struct

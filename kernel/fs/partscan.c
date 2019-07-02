@@ -29,6 +29,7 @@ static void bd_add_part(struct gendisk_struct *bd, struct mbr_entry_struct entry
     part->fs_type = entry.fs_id;
     part->sect_count = entry.sector_count;
     part->sect_offset = entry.start_sector;
+    part->bd = bd;
 }
 
 void gendisk_partscan(struct gendisk_struct *bd)
@@ -56,10 +57,12 @@ void gendisk_partscan(struct gendisk_struct *bd)
         if (entry.sector_count == 0 || entry.start_sector == 0)
             continue;
 
-        kprintf("    part #%d: fs_type=%s, start_sector=%ld\n",
-                i,
+        kprintf("    part #%d: fs_type=%s, start_sector=%ld\n", i,
                 (entry.fs_id == 0x83) ? "linux" : "unknown",
                 entry.start_sector);
+
+        // probe_fs();
+
         bd_add_part(bd, entry);
     }
 }
