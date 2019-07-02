@@ -10,6 +10,7 @@
 #include <debug.h>
 #include <mem.h>
 #include <asm.h>
+#include <sync.h>
 #include <devices.h>
 
 #define PRIMARY1_BASE    0x1f0
@@ -37,9 +38,13 @@
 #define ATA_DRV_ADR 0x01    // R:   drive and head select       8 bit
 #define ATA_DEVCTRL 0x00    // W:   reset bus, en/disable irq   8 bit
 
-#define CMD_IDENTIFY    0xec
-
 #define BLOCK_SIZE  512
+
+enum ata_commands
+{
+    CMD_IDENTIFY    = 0xEC,
+    CMD_READ_EXT    = 0x24
+};
 
 enum ata_errors
 {
@@ -80,6 +85,7 @@ struct ata_dev_struct
     unsigned base_io;
     unsigned ctrl_io;
     unsigned short data[256];
+    mutex_t *controller_lock;
 };
 
 static int ata_identify(struct ata_dev_struct *dev)
@@ -131,9 +137,59 @@ static int get_ports(unsigned controller, enum ata_types type, unsigned *base_io
     return 0;
 }
 
+static inline void wait_bsy(unsigned iobase)
+{
+    while (inb(iobase + ATA_STATUS) & BSY);
+}
+
+static inline void wait_drq(unsigned iobase)
+{
+    while (!(inb(iobase + ATA_STATUS) & DRQ));
+}
+
 static ssize_t ata_read(void *drv_struct, unsigned char *buffer, size_t count, size_t offset)
 {
-    return -ENOSYS;
+    if (count == 0)
+        return 0;
+
+    struct ata_dev_struct *dev = (struct ata_dev_struct *)drv_struct;
+
+    if ((dev->pci->prog_if & BIT(7)))
+    {
+        // Controller supports DMA -> use it
+    }
+    //else
+    {
+        mutex_lock(dev->controller_lock);
+
+        // Controller only supports Port I/O
+        outb(dev->base_io + ATA_DR_HD, (dev->type % 2 == 0) ? 0x40 : 0x50);
+        outb(dev->base_io + ATA_SCOUNT, (count >> 8) & 0xff);
+        outb(dev->base_io + ATA_LBALO, (offset >> 24) & 0xff);
+        outb(dev->base_io + ATA_LBAMID, (sizeof(size_t) == 4) ? 0 : ((offset >> 32) & 0xff));
+        outb(dev->base_io + ATA_LBAHI, (sizeof(size_t) == 4) ? 0 : ((offset >> 40) & 0xff));
+        outb(dev->base_io + ATA_SCOUNT, count & 0xff);
+        outb(dev->base_io + ATA_LBALO, offset & 0xff);
+        outb(dev->base_io + ATA_LBAMID, (offset >> 8) & 0xff);
+        outb(dev->base_io + ATA_LBAHI, (offset >> 16) & 0xff);
+
+        wait_bsy(dev->base_io);
+
+        // issue read command
+        outb(dev->base_io + ATA_COMMND, CMD_READ_EXT);
+
+        for (size_t i = 0; i < count; i++)
+        {
+            wait_bsy(dev->base_io);
+            wait_drq(dev->base_io);
+
+            repinsw(dev->base_io + ATA_DATA, (uint16_t*)(buffer + BLOCK_SIZE * i), BLOCK_SIZE / 2);
+        }
+
+        mutex_unlock(dev->controller_lock);
+    }
+
+    return count;
 }
 
 static ssize_t ata_write(void *drv_struct, unsigned char *buffer, size_t count, size_t offset)
@@ -141,7 +197,7 @@ static ssize_t ata_write(void *drv_struct, unsigned char *buffer, size_t count, 
     return -ENOSYS;
 }
 
-static const struct fops_struct ata_fops = {
+static const struct bd_fops_struct ata_fops = {
     .read = ata_read,
     .write = ata_write
 };
@@ -151,40 +207,47 @@ static int ata_pci_probe(struct pcidev_struct *dev)
     if (dev->class != 1 && dev->subclass != 1)
         return -ENOSYS;
 
+    mutex_t *mtx = NULL;
     struct ata_dev_struct ata_dev;
+    ata_dev.pci = dev;
+
     for (int i = 0; i < 4; i++)
     {
         ata_dev.type = i;
         if (get_ports(0, ata_dev.type, &ata_dev.base_io, &ata_dev.ctrl_io) < 0)
             return -EIO;
-        ata_dev.pci = dev;
 
         if (ata_identify(&ata_dev))
         {
-            kprintf("ata%d: disk attached\n", i);
+            kprintf("  ata%d: disk attached\n", i);
             struct ata_dev_struct *drv_struct =
                     kmalloc(sizeof(struct ata_dev_struct), 1, "ata_dev_struct");
+
+            if (mtx == NULL)
+            {
+                mtx = kmalloc(sizeof(mutex_t), 1, "mutex_t ata controller");
+                mutex_init(mtx);
+                ata_dev.controller_lock = mtx;
+            }
             *drv_struct = ata_dev;
 
             struct gendisk_struct *bd = kmalloc(sizeof(struct gendisk_struct), 1, "gendisk_struct");
             bd->capacity = 0;
             bd->io_size = BLOCK_SIZE;
             bd->major = MAJOR_ATA0;
-            bd->minor = 0;
             bd->fops = ata_fops;
             bd->drv_struct = drv_struct;
 
             if (register_blkdev(bd) < 0)
             {
                 // ERROR
-                // kfree(bd);
-                // kfree(drv_struct);
+                panic("error: cannot register blockdevice\n");
             }
 
             continue;
         }
 
-        kprintf("ata%d: medium is not present or not ATA\n", i);
+        // kprintf("ata%d: medium is not present or not ATA\n", i);
     }
 
     return 0;
