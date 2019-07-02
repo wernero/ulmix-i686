@@ -88,36 +88,6 @@ struct ata_dev_struct
     mutex_t *controller_lock;
 };
 
-static int ata_identify(struct ata_dev_struct *dev)
-{
-    outb(dev->base_io + ATA_DR_HD, (dev->type % 2 == 0) ? 0xa0 : 0xb0);
-    outb(dev->base_io + ATA_SCOUNT, 0x0);
-    outb(dev->base_io + ATA_LBALO,  0x0);
-    outb(dev->base_io + ATA_LBAMID, 0x0);
-    outb(dev->base_io + ATA_LBAHI,  0x0);
-    outb(dev->base_io + ATA_COMMND, CMD_IDENTIFY);
-
-    if (inb(dev->base_io + ATA_STATUS) == 0x0)
-        return 0;
-
-    // poll until device becomes ready
-    while ((inb(dev->base_io + ATA_STATUS) & BSY));
-
-    if (inb(dev->base_io + ATA_LBAMID) != 0
-        || inb(dev->base_io + ATA_LBAHI) != 0)
-        return 0;
-
-    while ((inb(dev->base_io + ATA_STATUS) & (DRQ | ERROR)) == 0);
-
-    if ((inb(dev->base_io + ATA_STATUS) & ERROR) == 0)
-    {
-        repinsw(dev->base_io + ATA_DATA, dev->data, 256);
-        return 1;
-    }
-
-    return 0;
-}
-
 static int get_ports(unsigned controller, enum ata_types type, unsigned *base_io, unsigned *ctrl_io)
 {
     if (controller != 0)
@@ -145,6 +115,36 @@ static inline void wait_bsy(unsigned iobase)
 static inline void wait_drq(unsigned iobase)
 {
     while (!(inb(iobase + ATA_STATUS) & DRQ));
+}
+
+static int ata_identify(struct ata_dev_struct *dev)
+{
+    outb(dev->base_io + ATA_DR_HD, (dev->type % 2 == 0) ? 0xa0 : 0xb0);
+    outb(dev->base_io + ATA_SCOUNT, 0x0);
+    outb(dev->base_io + ATA_LBALO,  0x0);
+    outb(dev->base_io + ATA_LBAMID, 0x0);
+    outb(dev->base_io + ATA_LBAHI,  0x0);
+    outb(dev->base_io + ATA_COMMND, CMD_IDENTIFY);
+
+    if (inb(dev->base_io + ATA_STATUS) == 0x0)
+        return 0;
+
+    // poll until device becomes ready
+    wait_bsy(dev->base_io);
+
+    if (inb(dev->base_io + ATA_LBAMID) != 0
+        || inb(dev->base_io + ATA_LBAHI) != 0)
+        return 0;
+
+    while ((inb(dev->base_io + ATA_STATUS) & (DRQ | ERROR)) == 0);
+
+    if ((inb(dev->base_io + ATA_STATUS) & ERROR) == 0)
+    {
+        repinsw(dev->base_io + ATA_DATA, dev->data, 256);
+        return 1;
+    }
+
+    return 0;
 }
 
 static ssize_t ata_read(void *drv_struct, unsigned char *buffer, size_t count, size_t offset)
@@ -250,17 +250,20 @@ static int ata_pci_probe(struct pcidev_struct *dev)
         // kprintf("ata%d: medium is not present or not ATA\n", i);
     }
 
-    return 0;
+    return SUCCESS;
 }
 
 static const struct pci_idpair_struct ata_pcidevices[] = {
-    // { 0x8086, 0x7111 }, // Intel 82371AB/EB/MB PIIX4 IDE Controller
+    // list of vendor/device id pairs this driver can handle
+    // essentially, any PCI IDE controller should work with this driver
+    { 0x8086, 0x7111 }, // Intel 82371AB/EB/MB PIIX4 IDE Controller (not tested)
     { 0x8086, 0x7010 }, // Intel 82371SB PIIX3 IDE Controller [Natoma/Triton II]
     { NULL, NULL }
 };
 
 static const struct pci_driver_struct ata_driver = {
-    ata_pcidevices, ata_pci_probe
+    .ids = ata_pcidevices,
+    .driver_probe = ata_pci_probe
 };
 
 void __init init_ata()
