@@ -18,7 +18,7 @@ struct chardev_struct
     unsigned int major;
     unsigned int minor;
 
-    struct fops_struct fops;
+    struct cd_fops_struct fops;
 };
 
 struct hd_struct
@@ -33,9 +33,8 @@ struct gendisk_struct
 {
     // to be initialized by the device driver:
     unsigned int major;
-    unsigned int minor;
 
-    struct fops_struct fops;
+    struct bd_fops_struct fops;
 
     size_t io_size;
     size_t capacity;
@@ -51,6 +50,6 @@ int register_chardev(struct chardev_struct *cd);
 int register_blkdev(struct gendisk_struct *bd);
 
 struct chardev_struct *get_chardev(unsigned int major, unsigned int minor);
-struct gendisk_struct *get_blkdev(unsigned int major, unsigned int minor);
+struct gendisk_struct *get_blkdev(unsigned int major); // minors are part of gendisk_struct
 
 #endif // DEVICES_H

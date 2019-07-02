@@ -1,3 +1,4 @@
+#include <fs.h>
 #include <devices.h>
 
 #define MAX_DEVICES 32
@@ -26,6 +27,7 @@ int register_blkdev(struct gendisk_struct *bd)
         if (bd_list[i] == NULL)
         {
             bd_list[i] = bd;
+            gendisk_partscan(bd);
             return 0;
         }
     }
@@ -48,14 +50,13 @@ struct chardev_struct *get_chardev(unsigned int major, unsigned int minor)
     return NULL;
 }
 
-struct gendisk_struct *get_blkdev(unsigned int major, unsigned int minor)
+struct gendisk_struct *get_blkdev(unsigned int major)
 {
     for (int i = 0; i < MAX_DEVICES; i++)
     {
         if (bd_list[i] != NULL)
         {
-            if (bd_list[i]->major == major
-                    && bd_list[i]->minor == minor)
+            if (bd_list[i]->major == major)
                 return bd_list[i];
         }
     }
