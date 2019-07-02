@@ -18,6 +18,7 @@ unsigned long __ram_size;
 static struct mb_struct __initdata multiboot;
 
 extern void init_ata();
+extern void init_ext2();
 
 extern void setup_vga();
 extern void setup_pci();
@@ -26,6 +27,7 @@ static void __init iosetup()
 {
     // Setup all the drivers
     init_ata();
+    init_ext2();
 
     setup_vga();
 

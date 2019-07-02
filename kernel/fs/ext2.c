@@ -77,16 +77,17 @@ struct ext2fs_struct
 static ssize_t hdd_read(struct ext2fs_struct *fs, unsigned char *buffer,
                         size_t sectors, size_t lba)
 {
-    return fs->part->bd->fops.read(fs->partition->bd->drv_struct,
-                     buffer, sectors + fs->part->sect_offset, lba);
+    return fs->part->bd->fops.read(fs->part->bd->drv_struct,
+                     buffer, sectors, lba + fs->part->sect_offset);
 }
 
-static ssize_t hdd_read(struct ext2fs_struct *fs, unsigned char *buffer,
+// commented out as long as not used
+/*static ssize_t hdd_write(struct ext2fs_struct *fs, unsigned char *buffer,
                         size_t sectors, size_t lba)
 {
-    return fs->part->bd->fops.write(fs->partition->bd->drv_struct,
-                     buffer, sectors + fs->part->sect_offset, lba);
-}
+    return fs->part->bd->fops.write(fs->part->bd->drv_struct,
+                     buffer, sectors, lba + fs->part->sect_offset);
+}*/
 
 static int ext2_probe(struct hd_struct *part)
 {
@@ -94,7 +95,8 @@ static int ext2_probe(struct hd_struct *part)
     struct ext2fs_struct fs = { .part = part };
 
     // fetch ext2 superblock from disk
-    if (hdd_read(&fs, &sb, SB_SECT_OFFSET, SB_SECT_SIZE) < SB_SECT_SIZE)
+    if (hdd_read(&fs, (unsigned char *)&sb,
+            SB_SECT_OFFSET, SB_SECT_SIZE) < SB_SECT_SIZE)
         return -EIO;
 
     // if the signature matches, we're in
@@ -106,13 +108,16 @@ static int ext2_probe(struct hd_struct *part)
     return -ENOTSUP;
 }
 
-static const struct fs_fops_struct ext2_fops = {
+static const struct fs_struct ext2_info = {
     .name = "ext2",
-    .fs_probe = ext2_probe
+    .mbr_id = 0x83,
+    .fops = {
+        .fs_probe = ext2_probe
+    }
 };
 
-void __init ext2_init()
+void __init init_ext2()
 {
-
+    register_fs(&ext2_info);
 }
 
