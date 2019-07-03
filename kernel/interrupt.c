@@ -26,3 +26,9 @@ int unregister_irq(unsigned irq)
 
     return -1;
 }
+
+void irq_handler(int irq)
+{
+    if (irq_handlers[irq] != NULL)
+        irq_handlers[irq]();
+}

@@ -4,7 +4,7 @@ section .text
 
 global irq0
 global irq1
-extern irq_handler
+extern irq_handler_i686
 
 %macro IRQ_HANDLER 1
     pushad
@@ -18,7 +18,7 @@ extern irq_handler
     mov fs, ax
     mov gs, ax
     push dword %1
-    call irq_handler
+    call irq_handler_i686
     add esp, 4
     pop gs
     pop fs

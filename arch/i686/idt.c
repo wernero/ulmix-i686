@@ -92,9 +92,12 @@ void __init setup_idt()
     sti();
 }
 
-void irq_handler(uint32_t irq)
+extern void irq_handler(int);
+
+void irq_handler_i686(uint32_t irq)
 {
     // handle interrupt
+    irq_handler(irq);
 
     /* end of interrupt -> notify PIC */
     if (irq >= 32 && irq < 32+16) {
