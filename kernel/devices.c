@@ -50,7 +50,7 @@ struct chardev_struct *get_chardev(unsigned int major, unsigned int minor)
     return NULL;
 }
 
-struct gendisk_struct *get_blkdev(unsigned int major)
+struct gendisk_struct *get_gendisk(unsigned int major)
 {
     for (int i = 0; i < MAX_DEVICES; i++)
     {
@@ -62,4 +62,16 @@ struct gendisk_struct *get_blkdev(unsigned int major)
     }
 
     return NULL;
+}
+
+struct hd_struct *get_hdstruct(unsigned int major, unsigned int minor)
+{
+    struct gendisk_struct *bd = get_gendisk(major);
+    if (bd == NULL)
+        return NULL;
+
+    if (bd->part_count < minor)
+        return NULL;
+
+    return &(bd->part_list[minor - 1]);
 }

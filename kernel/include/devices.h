@@ -52,6 +52,7 @@ int register_chardev(struct chardev_struct *cd);
 int register_blkdev(struct gendisk_struct *bd);
 
 struct chardev_struct *get_chardev(unsigned int major, unsigned int minor);
-struct gendisk_struct *get_blkdev(unsigned int major); // minors are part of gendisk_struct
+struct gendisk_struct *get_gendisk(unsigned int major); // minors are part of gendisk_struct
+struct hd_struct *get_hdstruct(unsigned int major, unsigned int minor);
 
 #endif // DEVICES_H
