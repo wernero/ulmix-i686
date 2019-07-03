@@ -27,4 +27,6 @@ char *utoa(unsigned long x, char *buf, int pad);
 char *itoa(long x, char *buf, int pad);
 char *xtoa(unsigned long x, char *buf, int pad);
 
+const char *strerror(unsigned err);
+
 #endif // STRING_H
