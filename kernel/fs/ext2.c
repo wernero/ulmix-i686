@@ -11,6 +11,7 @@
  */
 
 #include <fs.h>
+#include <vfs.h>
 #include <errno.h>
 #include <debug.h>
 #include <mem.h>
@@ -108,11 +109,17 @@ static int ext2_probe(struct hd_struct *part)
     return -ENOTSUP;
 }
 
+static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
+{
+    return -ENOSYS;
+}
+
 static const struct fs_struct ext2_info = {
     .name = "ext2",
     .mbr_id = 0x83,
     .fops = {
-        .fs_probe = ext2_probe
+        .fs_probe = ext2_probe,
+        .fs_mount = ext2_mount
     }
 };
 
