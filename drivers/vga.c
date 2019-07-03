@@ -102,7 +102,7 @@ static void text_putc(char c)
 }
 
 static int setup = 0;
-void __init setup_vga()
+void __init init_vga()
 {
     if (setup)
         return;
@@ -115,7 +115,7 @@ void __init setup_vga()
 ssize_t vga_write(void *buf, size_t len)
 {
     if (!setup)
-        setup_vga();
+        init_vga();
 
     size_t i = len;
     char *buf_ptr = buf;

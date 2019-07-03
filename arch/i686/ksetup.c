@@ -1,6 +1,4 @@
-#include <debug.h>
 #include <string.h>
-#include <sysinfo.h>
 #include <heap.h>
 
 #include "memory.h"
@@ -17,45 +15,20 @@ unsigned long __ram_size;
 
 static struct mb_struct __initdata multiboot;
 
-extern void init_ata();
-extern void init_ext2();
-
-extern void setup_vga();
-extern void setup_pci();
-
-static void __init iosetup()
-{
-    // Setup all the drivers
-    init_ata();
-    init_ext2();
-
-    setup_vga();
-
-    // Setup PCI bus
-    setup_pci();
-}
+extern void kmain();
 
 void __init ksetup(struct mb_struct *mb)
 {
     // clear uninitialized data
     bzero(&_bss_start, (&_bss_end) - (&_bss_start));
 
-    /* multiboot structure has to go into BSS, otherwise
+    /* multiboot structure has to be saved, otherwise
      * heap or stack will overwrite it sooner or later. */
     multiboot = *mb;
     mb = &multiboot;
 
     setup_gdt();
     setup_idt();
-
-    kprintf("lk 24:32\n"
-          "ULMIX Operating System\n"
-          "kernel at %p (size %S)\n"
-          "GDT, IDT ok\n"
-          "cpu signature = \"%s\", cpu features: ",
-          &_kernel_start, ((unsigned long)&_bss_start - (unsigned long)&_kernel_start),
-          cpu_vendor());
-    print_cpu_flags();
 
     /* because the eventual kernel heap at 3GB - 4GB
      * is not accessible in a pre-paging environment,
@@ -78,8 +51,6 @@ void __init ksetup(struct mb_struct *mb)
     __ram_size = memscan(mb);
     setup_paging();
 
-    iosetup();
-
-    setup_heap((void*)0xc0000000, 0xffffffff - 0xc0000000);
+    kmain();
 }
 
