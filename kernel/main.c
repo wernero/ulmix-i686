@@ -18,17 +18,32 @@
 
 #include <debug.h>
 #include <heap.h>
+#include <fs.h>
+#include <string.h>
+#include <devices.h>
 #include <sysinfo.h>
 
 extern void iosetup();
 
-void kmain()
+void kmain(int argc, char *argv[])
 {
     kprintf("starting generic system init\n"
             "    CPU:   %s\n", cpu_vendor());
 
+    // parse command line
+
     // let all the drivers register their services
     iosetup();
 
+    // mount root file system
+    int err;
+    if ((err = do_mount(MAJOR_ATA0, 1, "/")) < 0)
+    {
+        panic("mount(): %s\n"
+              "fatal: cannot mount root filesystem\n",
+              strerror(-err));
+    }
+
+    // install the final heap at 3GB - 4GB
     setup_heap((void*)0xc0000000, 0xffffffff - 0xc0000000);
 }

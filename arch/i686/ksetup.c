@@ -15,7 +15,7 @@ unsigned long __ram_size;
 
 static struct mb_struct __initdata multiboot;
 
-extern void kmain();
+extern void kmain(int argc, char *argv[]);
 
 void __init ksetup(struct mb_struct *mb)
 {
@@ -51,6 +51,6 @@ void __init ksetup(struct mb_struct *mb)
     __ram_size = memscan(mb);
     setup_paging();
 
-    kmain();
+    kmain(0, NULL);
 }
 
