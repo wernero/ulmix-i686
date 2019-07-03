@@ -34,6 +34,9 @@ void __init set_idt_entry(int id, void (*handler)(void), int flags)
 extern void exc0();
 extern void exc1();
 
+extern void irq0();
+extern void irq1();
+
 static void __init setup_exc()
 {
     void *exc_ptr = exc0;
@@ -44,6 +47,21 @@ static void __init setup_exc()
         set_idt_entry(i, exc_ptr, INT_PRESENT | INT_GATE | INT_SUPV);
         exc_ptr += exc_len;
     }
+}
+
+static void __init setup_irq()
+{
+    void *irq_ptr = irq0;
+    unsigned long irq_len = (unsigned long)&irq1 - (unsigned long)&irq0;
+
+    for (int i = 32; i < 32+16; i++)
+    {
+        set_idt_entry(i, irq_ptr, INT_PRESENT | INT_GATE | INT_SUPV);
+        irq_ptr += irq_len;
+    }
+
+    // initialize programmable interrupt controller
+    pic_init();
 }
 
 static void __init idt_write(struct idt_desc_struct *desc)
@@ -60,13 +78,7 @@ void __init setup_idt()
     // install exception handlers
     setup_exc();
 
-    // IO interrupts
-    /*for (i = 0; i < 16; i++) {
-        set_idt_entry(i + 32,
-                    irq_asm_handler + handler_size * i,
-                    INT_GATE | INT_PRESENT | INT_SUPV);
-    }*/
-
+    setup_irq();
 
     // don't set handlers for the other one's
     for (int i = 32+16; i < IDT_ENTRIES; i++)
@@ -75,13 +87,14 @@ void __init setup_idt()
     // System call interrupt
     //set_idt_entry(0x80, irq_syscall, INT_TRAP | INT_PRESENT | INT_USER);
 
-    pic_init();
+    // apply IDT and enable interrupts
     idt_write(&idt_desc);
+    sti();
 }
 
 void irq_handler(uint32_t irq)
 {
-    // Do stuff
+    // handle interrupt
 
     /* end of interrupt -> notify PIC */
     if (irq >= 32 && irq < 32+16) {
