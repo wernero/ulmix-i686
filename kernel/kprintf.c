@@ -2,6 +2,7 @@
 #include <types.h>
 #include <string.h>
 #include <sync.h>
+#include <asm.h>
 
 #define FMT_LONG BIT(0)
 #define PTR_PADDING 8
@@ -184,3 +185,19 @@ void kprintf(const char *fmt, ...)
     mutex_unlock(&kprintf_mtx);
     va_end(args);
 }
+
+void panic(const char *fmt, ...)
+{
+    cli();
+    kprintf("\n === PANIC ===\n");
+
+    va_list args;
+    va_start(args, fmt);
+
+    do_kprintf(fmt, args);
+
+    va_end(args);
+
+    hlt();
+}
+
