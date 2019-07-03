@@ -300,7 +300,8 @@ static const char *err_messages[] = {
     "state not recoverable",
     "operation not possible due to rf-kill",
     "memory page has hardware error",
-    "operation not supported"
+    "operation not supported",
+    "filesystem not supported"
 };
 
 const char *strerror(unsigned err)

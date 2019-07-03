@@ -138,4 +138,6 @@
 #define EHWPOISON 133
 #define ENOTSUP 95
 
+#define EFSNOTSUP 134
+
 #endif // ERRNO_H
