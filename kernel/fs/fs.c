@@ -19,7 +19,7 @@ int register_fs(const struct fs_struct *fs)
     return -EAGAIN;
 }
 
-int probe_fs(struct hd_struct *part)
+const struct fs_struct *probe_fs(struct hd_struct *part)
 {
     for (int i = 0; i < MAX_FILESYSTEMS; i++)
     {
@@ -28,10 +28,10 @@ int probe_fs(struct hd_struct *part)
             if (filesystems[i]->mbr_id == part->fs_type)
             {
                 if (filesystems[i]->fops.fs_probe(part) == SUCCESS)
-                    return SUCCESS;
+                    return filesystems[i];
             }
         }
     }
 
-    return -ENOTSUP;
+    return NULL;
 }

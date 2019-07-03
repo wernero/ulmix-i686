@@ -30,8 +30,6 @@ static void bd_add_part(struct gendisk_struct *bd, struct mbr_entry_struct entry
     part->sect_count = entry.sector_count;
     part->sect_offset = entry.start_sector;
     part->bd = bd;
-
-    probe_fs(part);
 }
 
 void gendisk_partscan(struct gendisk_struct *bd)
