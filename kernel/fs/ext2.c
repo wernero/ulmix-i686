@@ -158,9 +158,9 @@ static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
 
     // locate the group descriptor table and fetch it into memory
     unsigned gdt_lba = (fsinfo->block_size == 0x400) ? 2 : 1;
-    unsigned gdt_size = (fsinfo->gd_count * sizeof(struct gd_struct) / BLOCK_SIZE) + 1;
+    unsigned gdt_size = ((fsinfo->gd_count * sizeof(struct gd_struct)) / BLOCK_SIZE) + 1;
 
-    fsinfo->group_descriptors = kmalloc(sizeof(struct gd_struct) * fsinfo->gd_count,
+    fsinfo->group_descriptors = kmalloc(gdt_size * BLOCK_SIZE,
                                            1, "ext2 gd_struct[]");
     if ((error = hdd_read(fsinfo, (unsigned char*)fsinfo->group_descriptors,
                           gdt_size, gdt_lba)) < 0)
