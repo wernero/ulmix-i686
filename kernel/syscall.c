@@ -1,32 +1,36 @@
-#include "syscall.h"
 #include <errno.h>
 #include <uname.h>
+
+// syscall declarations:
+#include <fs.h>
+#include <time.h>
+#include <sched.h>
 
 #define nop 0
 
 void *syscalls[] =
 {
     nop,                // 0
-nop, //    sys_exit,           // 1    terminate program
-nop, //    sys_fork,           // 2    copy current process
-nop, //    sys_read,           // 3    read from file descriptor
-nop, //    sys_write,          // 4    write into file descriptor
-nop, //    sys_open,           // 5    open file or device
-nop, //    sys_close,          // 6    close file descriptor
-nop, //    sys_waitpid,        // 7    wait for an event to happen
-nop, //    sys_creat,          // 8    = open(path, O_WRONLY, O_TRUNC)
-nop, //    sys_link,           // 9    make a hard link to a file
-nop, //    sys_unlink,         // 10   delete a file
-    nop, //sys_execve,         // 11   replace process with a new one
-nop, //    sys_chdir,          // 12   change working directory
+    sys_exit,           // 1    terminate program
+    sys_fork,           // 2    copy current process
+    sys_read,           // 3    read from file descriptor
+    sys_write,          // 4    write into file descriptor
+    sys_open,           // 5    open file or device
+    sys_close,          // 6    close file descriptor
+    nop,                // 7    wait for an event to happen
+    nop,                // 8    = open(path, O_WRONLY, O_TRUNC)
+    sys_link,           // 9    make a hard link to a file
+    sys_unlink,         // 10   delete a file
+    sys_execve,         // 11   replace process with a new one
+    sys_chdir,          // 12   change working directory
     nop,                // 13   time()
     nop,                // 14   mknod()
     nop,                // 15   chmod()
     nop,                // 16   lchown16()
-nop, //    sys_kdebug,         // 17   kernel debugging features
-    nop,                // 18   stat()              *required
-nop, //    sys_lseek,          // 19   set seek offset in a file
-    nop, //sys_getpid,         // 20   get process id
+    nop,                // 17
+    sys_stat,           // 18   stat()
+    sys_lseek,          // 19   set seek offset in a file
+    sys_getpid,         // 20   get process id
     nop,                // 21   mount()
     nop,                // 22   oldumount()
     nop,                // 23   setuid16()
@@ -34,7 +38,7 @@ nop, //    sys_lseek,          // 19   set seek offset in a file
     nop,                // 25   stime()
     nop,                // 26   ptrace()
     nop,                // 27   alarm()
-    nop,                // 28   fstat()             * required
+    sys_fstat,          // 28   fstat()
     nop,                // 29   pause()
     nop,                // 30   utime()
     nop,                // 31
@@ -43,15 +47,15 @@ nop, //    sys_lseek,          // 19   set seek offset in a file
     nop,                // 34   nice()
     nop,                // 35
     nop,                // 36   sync()
-    nop,                // 37   kill()              * required
+    sys_kill,           // 37   kill()
     nop,                // 38   rename()
     nop,                // 39   mkdir()
     nop,                // 40   rmdir()
     nop,                // 41   dup()
     nop,                // 42   pipe()
-    nop,                // 43   times()             *required
+    sys_times,          // 43   times()
     nop,                // 44
-    nop,                // 45   brk()               *required
+    sys_brk,            // 45   brk()
     nop,                // 46   setgid16()
     nop,                // 47   getgid16()
     nop,                // 48   signal()
@@ -84,7 +88,7 @@ nop, //    sys_ioctl,          // 54   send I/O command
     nop,                // 75
     nop,                // 76
     nop,                // 77
-    nop,                // 78
+    sys_gettimeofday,   // 78   gettimeofday()
     nop,                // 79
     nop,                // 80
     nop,                // 81
@@ -189,38 +193,5 @@ nop, //    sys_ioctl,          // 54   send I/O command
     nop,                // 180
     nop,                // 181
     nop,                // 182
-nop, //    sys_getcwd          // 183
+    sys_getcwd          // 183
 };
-
-int syscall_handler(struct syscall_context_struct *context)
-{
-    if (syscalls[context->eax] == NULL)
-    {
-        //klog(KLOG_DEBUG, "pid %d: called unimplemented system call (%d)",
-          //   current_thread->process->tgid, context->eax);
-        return -ENOSYS;
-    }
-
-    // call actual syscall handler
-    int ret;
-    __asm__ (
-        "push %1;"
-        "push %2;"
-        "push %3;"
-        "push %4;"
-        "push %5;"
-        "call *%6;"
-        "add $20, %%esp;"
-        :
-        "=a"(ret)
-        :
-        "g"(context),
-        "g"(context->esi),
-        "g"(context->edx),
-        "g"(context->ecx),
-        "g"(context->ebx),
-        "g"(syscalls[context->eax])
-        );
-
-    return ret;
-}
