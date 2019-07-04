@@ -3,6 +3,20 @@
 #include <string.h>
 
 static struct dir_struct root_dir;
+static struct direntry_struct root_direntry;
+
+void __init setup_fs()
+{
+    root_dir.dir_entry = &root_direntry;
+    root_dir.entries = NULL;
+    root_dir.mnt_point = NULL;
+    root_dir.parent = &root_dir;
+
+    root_direntry.directory = &root_dir;
+    root_direntry.type = F_DIR;
+    root_direntry.next = NULL;
+    root_direntry.parent = &root_dir;
+}
 
 void get_direntries(struct dir_struct *dir)
 {
