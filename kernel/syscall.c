@@ -8,7 +8,7 @@
 
 #define nop 0
 
-void *syscalls[] =
+void *syscall_table[] =
 {
     nop,                // 0
     sys_exit,           // 1    terminate program

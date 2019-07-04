@@ -37,6 +37,8 @@ extern void exc1();
 extern void irq0();
 extern void irq1();
 
+extern void syscall_handler();
+
 static void __init setup_exc()
 {
     void *exc_ptr = exc0;
@@ -85,7 +87,7 @@ void __init setup_idt()
         set_idt_entry(i, NULL, 0);
 
     // System call interrupt
-    //set_idt_entry(0x80, irq_syscall, INT_TRAP | INT_PRESENT | INT_USER);
+    set_idt_entry(0x80, syscall_handler, INT_GATE | INT_PRESENT | INT_USER);
 
     // apply IDT and enable interrupts
     idt_write(&idt_desc);
