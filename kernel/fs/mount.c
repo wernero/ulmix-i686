@@ -13,8 +13,10 @@ int do_mount(int dev_major, int dev_minor, const char *mount_path)
     if (fs == NULL)
         return -EFSNOTSUP;
 
-    // TODO: resolve pathname
-    struct dir_struct *mnt_point = NULL;
+    int error;
+    struct direntry_struct *de;
+    if ((error = namei(mount_path, &de)) < 0)
+        return error;
 
-    return fs->fops.fs_mount(part, mnt_point);
+    return fs->fops.fs_mount(part, de->directory);
 }

@@ -22,6 +22,7 @@ struct fs_fops_struct
 {
     int (*fs_probe)(struct hd_struct *part);
     int (*fs_mount)(struct hd_struct *part, struct dir_struct *mnt_point);
+    int (*fs_get_direntries)(struct dir_struct *dir);
 };
 
 #endif // FOPS_H

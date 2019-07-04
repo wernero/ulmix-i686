@@ -69,10 +69,26 @@ typedef struct
     uint32_t orphan_head;
 } __attribute__((aligned(1024))) sb_t;
 
+struct gd_struct
+{
+    uint32_t bg_block_bitmap;       /* Blocks bitmap block */
+    uint32_t bg_inode_bitmap;       /* Inodes bitmap block */
+    uint32_t bg_inode_table;        /* Inodes table block */
+    uint16_t bg_free_blocks_count;  /* Free blocks count */
+    uint16_t bg_free_inodes_count;  /* Free inodes count */
+    uint16_t bg_used_dirs_count;    /* Directories count */
+} __attribute__((aligned(32)));
+
 struct ext2fs_struct
 {
+    sb_t superblock;
     struct hd_struct *part;
 
+    unsigned long block_size;
+
+    // group descriptor table:
+    unsigned long gd_count;
+    struct gd_struct *group_descriptors;
 };
 
 static ssize_t hdd_read(struct ext2fs_struct *fs, unsigned char *buffer,
@@ -97,7 +113,7 @@ static int ext2_probe(struct hd_struct *part)
 
     // fetch ext2 superblock from disk
     if (hdd_read(&fs, (unsigned char *)&sb,
-            SB_SECT_OFFSET, SB_SECT_SIZE) < SB_SECT_SIZE)
+            SB_SECT_SIZE, SB_SECT_OFFSET) < SB_SECT_SIZE)
         return -EIO;
 
     // if the signature matches, we're in
@@ -109,22 +125,77 @@ static int ext2_probe(struct hd_struct *part)
     return -ENOTSUP;
 }
 
-static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
+static int ext2_get_direntries(struct dir_struct *dir)
 {
-    return -ENOSYS;
+    return SUCCESS;
 }
 
-static const struct fs_struct ext2_info = {
+static const struct fs_struct ext2fs;
+static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
+{
+    int error;
+    if ((error = ext2_probe(part)) < 0)
+        return error;
+
+    // create the data structures describing the file system
+    struct ext2fs_struct *fsinfo = kmalloc(sizeof(struct ext2fs_struct), 1, "ext2_info");
+    fsinfo->part = part;
+
+    struct mntp_struct *mnt_info = kmalloc(sizeof(struct mntp_struct), 1, "mntp_struct");
+    mnt_info->part = part;
+    mnt_info->fs_info = &ext2fs;
+    mnt_info->fs_data = fsinfo;
+
+    // fetch the superblock from disk
+    if ((error = hdd_read(fsinfo, (unsigned char*)&fsinfo->superblock,
+                 SB_SECT_SIZE, SB_SECT_OFFSET)) < SB_SECT_SIZE)
+        goto no_mount;
+
+    // initialize some variables
+    fsinfo->block_size = 0x400 << fsinfo->superblock.block_size_log;
+    fsinfo->gd_count = fsinfo->superblock.total_blocks
+            / fsinfo->superblock.blocks_per_group + 1;
+
+    // locate the group descriptor table and fetch it into memory
+    unsigned gdt_lba = (fsinfo->block_size == 0x400) ? 2 : 1;
+    unsigned gdt_size = (fsinfo->gd_count * sizeof(struct gd_struct) / BLOCK_SIZE) + 1;
+
+    fsinfo->group_descriptors = kmalloc(sizeof(struct gd_struct) * fsinfo->gd_count,
+                                           1, "ext2 gd_struct[]");
+    if ((error = hdd_read(fsinfo, (unsigned char*)fsinfo->group_descriptors,
+                          gdt_size, gdt_lba)) < 0)
+        goto no_mount;
+
+    // fetch the root inode and it's immediate children
+    mnt_point->inode_no = 2;
+    if ((error = ext2_get_direntries(mnt_point)) < 0)
+        goto no_mount;
+
+    // define the directory as mount point and give it the
+    // information on where to find filesystem functions
+    mnt_point->fs_info = mnt_info;
+    mnt_point->mnt_point = mnt_point;
+
+    return SUCCESS;
+
+no_mount:
+    kfree(fsinfo);
+    kfree(mnt_info);
+    return error;
+}
+
+static const struct fs_struct ext2fs = {
     .name = "ext2",
     .mbr_id = 0x83,
     .fops = {
         .fs_probe = ext2_probe,
-        .fs_mount = ext2_mount
+        .fs_mount = ext2_mount,
+        .fs_get_direntries = ext2_get_direntries
     }
 };
 
 void __init init_ext2()
 {
-    register_fs(&ext2_info);
+    register_fs(&ext2fs);
 }
 
