@@ -46,7 +46,21 @@ char *strcat(char *dest, const char *src)
 
 char *strchr(const char *s, int c);
 
-int strcmp(const char *s1, const char *s2);
+int strcmp(const char *s1, const char *s2)
+{
+    for (int i = 0; ; i++)
+    {
+        if (s1[i] != s2[i])
+        {
+            return s1[i] < s2[i] ? -1 : 1;
+        }
+
+        if (s1[i] == '\0')
+        {
+            return 0;
+        }
+    }
+}
 
 char *strcpy(char *dest, const char *src)
 {
