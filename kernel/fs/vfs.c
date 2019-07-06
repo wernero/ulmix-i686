@@ -95,3 +95,31 @@ int namei(const char *pathname, struct direntry_struct **node)
 
     return namei_recursive(pathname, working_dir, node);
 }
+
+#ifdef _DEBUG_
+#include <debug.h>
+
+static void print_dir(struct dir_struct *dir, int level)
+{
+    struct direntry_struct *file;
+    get_direntries(dir);
+    for (file = dir->entries; file != NULL; file = file->next)
+    {
+        if (strcmp(file->name, ".") != 0 && strcmp(file->name, "..") != 0)
+        {
+            int level_cpy = level;
+            while (level_cpy--)
+                kprintf(" ");
+            kprintf("%s\n", file->name);
+            if ((file->type & F_DIR))
+                print_dir(file->directory, level +1);
+        }
+    }
+}
+
+void print_file_tree()
+{
+    kprintf("/\n");
+    print_dir(&root_dir, 1);
+}
+#endif
