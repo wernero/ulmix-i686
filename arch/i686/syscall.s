@@ -27,6 +27,12 @@ syscall_handler:
     add edi, eax
     mov edi, [edi]
 
+    ; check if syscall number is valid
+    ; if not, issue ENOSYS (function not implemented)
+    mov eax, -38
+    test edi, edi
+    jz .not_implemented
+
     ; set segment selectors
     mov ax, 0x10
     mov ds, ax
@@ -37,6 +43,7 @@ syscall_handler:
     ; call the handler
     call edi
 
+.not_implemented:
     ; restore context
     pop ebx
     pop ecx
