@@ -16,7 +16,7 @@
 #include <debug.h>
 #include <mem.h>
 
-#define BLOCK_SIZE  512
+#define IO_BLOCK_SIZE   512
 #define SB_SECT_OFFSET  2
 #define SB_SECT_SIZE    2
 
@@ -158,18 +158,21 @@ static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
 
     // locate the group descriptor table and fetch it into memory
     unsigned gdt_lba = (fsinfo->block_size == 0x400) ? 2 : 1;
-    unsigned gdt_size = ((fsinfo->gd_count * sizeof(struct gd_struct)) / BLOCK_SIZE) + 1;
+    unsigned gdt_size = fsinfo->gd_count * sizeof(struct gd_struct);
+    unsigned gdt_size_sectors = gdt_size / IO_BLOCK_SIZE;
+    if (gdt_size % IO_BLOCK_SIZE != 0)
+        gdt_size_sectors += 1;
 
-    fsinfo->group_descriptors = kmalloc(gdt_size * BLOCK_SIZE,
+    fsinfo->group_descriptors = kmalloc(gdt_size_sectors * IO_BLOCK_SIZE,
                                            1, "ext2 gd_struct[]");
     if ((error = hdd_read(fsinfo, (unsigned char*)fsinfo->group_descriptors,
-                          gdt_size, gdt_lba)) < 0)
-        goto no_mount;
+                          gdt_size_sectors, gdt_lba)) < 0)
+        goto no_mount_free_gdt;
 
     // fetch the root inode and it's immediate children
     mnt_point->inode_no = 2;
     if ((error = ext2_get_direntries(mnt_point)) < 0)
-        goto no_mount;
+        goto no_mount_free_gdt;
 
     // define the directory as mount point and give it the
     // information on where to find filesystem functions
@@ -178,6 +181,8 @@ static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
 
     return SUCCESS;
 
+no_mount_free_gdt:
+    kfree(fsinfo->group_descriptors);
 no_mount:
     kfree(fsinfo);
     kfree(mnt_info);
