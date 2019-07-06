@@ -226,9 +226,41 @@ static int fetch_inode(unsigned long inode_no, struct mntp_struct *mnt_info, str
     return SUCCESS;
 }
 
-static int get_direntry(struct direntry_struct *file)
+static struct inode_struct *direntry_get_inode(struct direntry_struct *direntry)
 {
-    return -ENOSYS;
+    // allocate memory for the inode if necessary
+    struct inode_struct **inode = (struct inode_struct**)&(direntry->payload);
+    if (*inode == NULL)
+        *inode = kmalloc(sizeof(struct inode_struct), 1, "ext2 inode_struct");
+
+    int error;
+    if ((error = fetch_inode(direntry->inode_no, direntry->parent->fs_info, *inode)) < 0)
+    {
+        kfree(*inode);
+        direntry->payload = NULL;
+        return NULL;
+    }
+
+    return *inode;
+}
+
+static int get_direntry(struct direntry_struct *direntry)
+{
+    ASSERT(direntry != NULL);
+    ASSERT(direntry->parent->fs_info != NULL);
+
+    struct inode_struct *inode = direntry_get_inode(direntry);
+    if (inode == NULL)
+        return -EIO;
+
+    direntry->mode = inode->i_mode;
+    direntry->type = direntry->mode & 0xf000;
+    direntry->size = inode->i_size;
+    direntry->blocks = inode->i_blocks;
+
+    // create block pointer table
+
+    return 0;
 }
 
 static int ext2_get_direntries(struct dir_struct *dir)
@@ -247,69 +279,69 @@ static int ext2_get_direntries(struct dir_struct *dir)
     }
 
     // fetch the inode from disk
-    struct inode_struct *inode = kmalloc(sizeof(struct inode_struct), 1, "ext2 inode");
-    if ((error = fetch_inode(dir->inode_no, dir->fs_info, inode)) < 0)
-    {
-        kfree(inode);
-        return error;
-    }
-    dir->dir_entry->payload = inode;
+    struct inode_struct *inode = direntry_get_inode(dir->dir_entry);
 
     struct ext2_direntry_struct fs_dir_entry;
     struct direntry_struct *current_entry;
     struct direntry_struct **last_next_ptr = &dir->entries;
 
-    // get block(s) containing the file list
-    // while (file list not complete)
+    int get_new_block = 1;
+    long current_block = 0;
+    unsigned char direntry_buf[fsinfo->block_size];
+    for (int i = 0; i < fsinfo->block_size; ) // TODO: read more blocks
     {
-        unsigned char direntry_buf[fsinfo->block_size];
-        if ((error = hdd_read(fsinfo, direntry_buf, fsinfo->block_size / IO_BLOCK_SIZE,
-                 inode->i_block[0] * (fsinfo->block_size / IO_BLOCK_SIZE))) < 0)
-            return error;
-
-        for (int i = 0; i < inode->i_size; )
+        if (get_new_block)
         {
-            current_entry = kmalloc(sizeof(struct direntry_struct), 1, "direntry_struct");
-            *last_next_ptr = current_entry;
-            last_next_ptr = &current_entry->next;
+            get_new_block = 0;
+            if ((error = hdd_read(fsinfo, direntry_buf, fsinfo->block_size / IO_BLOCK_SIZE,
+                     inode->i_block[current_block++] * (fsinfo->block_size / IO_BLOCK_SIZE))) < 0)
+                return error;
+        }
 
-            // get the actual filesystem specific entry from the buffer
-            memcpy(&fs_dir_entry, direntry_buf + i, sizeof(struct ext2_direntry_struct));
-            memcpy(current_entry->name, direntry_buf + sizeof(struct ext2_direntry_struct) + i, fs_dir_entry.name_len);
-            i += fs_dir_entry.rec_len;
-            i += (i % 4) ? 4 - (i % 4) : 0;
+        current_entry = kmalloc(sizeof(struct direntry_struct), 1, "direntry_struct");
 
-            current_entry->name[fs_dir_entry.name_len] = 0;
-            current_entry->inode_no = fs_dir_entry.inode;
-            current_entry->parent = dir;
-            current_entry->directory = NULL;
+        // get the actual filesystem specific entry from the buffer
+        memcpy(&fs_dir_entry, direntry_buf + i, sizeof(struct ext2_direntry_struct));
+        memcpy(current_entry->name, direntry_buf + sizeof(struct ext2_direntry_struct) + i, fs_dir_entry.name_len);
+        i += fs_dir_entry.rec_len;
+        i += (i % 4) ? 4 - (i % 4) : 0;
 
-            ASSERT(get_direntry(current_entry) >= 0);
+        current_entry->name[fs_dir_entry.name_len] = 0;
+        current_entry->inode_no = fs_dir_entry.inode;
+        current_entry->parent = dir;
+        current_entry->directory = NULL;
 
-            if (current_entry->mode & F_DIR)
+        if (fs_dir_entry.file_type == 2) // is directory?
+        {
+            if (current_entry->inode_no == dir->inode_no)
             {
-                if (current_entry->inode_no == dir->inode_no)
-                {
-                    current_entry->directory = dir;
-                }
-                else if (current_entry->inode_no == dir->parent->inode_no)
-                {
-                    current_entry->directory = dir->parent;
-                }
-                else
-                {
-                    current_entry->directory = kmalloc(sizeof(struct dir_struct), 1, "dir_struct");
-                    current_entry->directory->parent = dir;
-                    current_entry->directory->mnt_point = dir->mnt_point;
-                    current_entry->directory->fs_info = dir->fs_info;
-                    current_entry->directory->entries = NULL;
-                    current_entry->directory->inode_no = current_entry->inode_no;
-                    current_entry->directory->dir_entry = current_entry;
-                }
+                current_entry->directory = dir;
+                current_entry->payload = dir->dir_entry->payload;
+            }
+            else if (current_entry->inode_no == dir->parent->inode_no)
+            {
+                current_entry->directory = dir->parent;
+                current_entry->payload = dir->parent->dir_entry->payload;
+            }
+            else
+            {
+                current_entry->directory = kmalloc(sizeof(struct dir_struct), 1, "dir_struct");
+                current_entry->directory->parent = dir;
+                current_entry->directory->mnt_point = dir->mnt_point;
+                current_entry->directory->fs_info = dir->fs_info;
+                current_entry->directory->entries = NULL;
+                current_entry->directory->inode_no = current_entry->inode_no;
+                current_entry->directory->dir_entry = current_entry;
             }
         }
+
+        ASSERT(get_direntry(current_entry) >= 0);
+
+        *last_next_ptr = current_entry;
+        last_next_ptr = &current_entry->next;
     }
 
+    *last_next_ptr = NULL;
     return SUCCESS;
 }
 
@@ -362,6 +394,7 @@ static int ext2_mount(struct hd_struct *part, struct dir_struct *mnt_point)
 
     // fetch the root inode and it's immediate children
     mnt_point->inode_no = 2;
+    mnt_point->dir_entry->inode_no = 2;
     if ((error = ext2_get_direntries(mnt_point)) < 0)
         goto no_mount_unmount;
 
