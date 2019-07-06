@@ -14,8 +14,8 @@ syscall_handler:
 
     push esp
     push ebp
-    push esi
     push edi
+    push esi
     push edx
     push ecx
     push ebx
@@ -41,8 +41,8 @@ syscall_handler:
     pop ebx
     pop ecx
     pop edx
-    pop edi
     pop esi
+    pop edi
     pop ebp
     pop esp
 
