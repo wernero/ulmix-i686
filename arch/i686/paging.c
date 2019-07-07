@@ -18,8 +18,8 @@ static int pae_support = 0;     // PAE (physical address extension)
 static int smep_support = 0;    // SMEP (supervisor mode execution prevention)
 static int nx_support = 0;      // NX (no execute bit)
 
-struct mm_struct *current_mm; // mmap currently in use
-static struct mm_struct *mm_kernel;  // mmap with kernel mappings
+struct mm_struct *current_mm;         // mmap currently in use
+static struct mm_struct *mm_default;  // mmap with kernel mappings
 
 extern char _bss_end;
 
@@ -73,14 +73,14 @@ void setup_paging(void)
 
     setup_pfalloc();
 
-    mm_kernel = mk_mmap("mm_kernel");
+    mm_default = mk_mmap("mm_default");
 
     /* actually map the kernel binary and data manually before
      * the activation of paging. otherwise, the CPU can't access
      * the page fault handler and the kernel will blow up -.- */
-    mm_map(mm_kernel, 0x0, 0x0, (size_t)&_bss_end, PG_SUPV | PG_RDWR);
+    mm_map(mm_default, 0x0, 0x0, (size_t)&_bss_end, PG_SUPV | PG_RDWR);
 
-    apply_mmap(mm_kernel);
+    apply_mmap(mm_default);
     paging_enable();
 }
 
