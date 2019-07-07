@@ -15,7 +15,7 @@ static struct kheape_struct *merge_entries(
     first->start = first + 1;
     second->next->previous = first;
     first->size = ((unsigned long)second->start + second->size)
-            - first->start;
+            - (unsigned long)first->start;
 
     return first;
 }
@@ -25,7 +25,7 @@ void kfree(void *ptr)
     mutex_lock(&_heap_mtx);
 
     // do not free NULL pointers or obviously invalid ones
-    if (ptr < sizeof(struct kheape_struct))
+    if ((unsigned long)ptr < sizeof(struct kheape_struct))
         return;
 
     struct kheape_struct *heap_entry =
