@@ -4,6 +4,7 @@ extern void init_ata();
 extern void init_ext2();
 extern void init_vga();
 
+extern void setup_timer();
 extern void setup_fs();
 extern void setup_pci();
 
@@ -15,6 +16,7 @@ void __init iosetup()
     init_vga();
 
     setup_fs();
+    setup_timer();
 
     // perform PCI enumeration
     // PCI drivers should already be in place
