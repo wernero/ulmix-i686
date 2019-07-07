@@ -6,18 +6,19 @@ CDEBUG = -O0 -g -D _DEBUG_
 
 TARGET_ARCH	= i686
 
-CC		= $(TARGET_ARCH)-elf-gcc
-LD		= $(TARGET_ARCH)-elf-ld
+CC		= gcc -m32
+LD		= ld
 AS		= nasm
-OBJCPY		= $(TARGET_ARCH)-elf-objcopy
-AR		= $(TARGET_ARCH)-elf-ar
+OBJCPY	= objcopy
+AR		= ar
 
 CCINCL	= -I arch/include -I kernel/include -I libc/include
 LDINFO	= arch/ld/$(TARGET_ARCH).ld
 
 ASFLAGS	= -Ox -f elf
 CCFLAGS = -c -std=c11 -Wshadow -Wall $(ADD_FLAGS) \
-	  -fno-builtin $(CCINCL) $(CDEBUG)
+		  -fno-builtin -ffreestanding -fno-omit-frame-pointer \
+		  $(CCINCL) $(CDEBUG)
 LDFLAGS	= -T $(LDINFO) -nostdlib --warn-common -nmagic -gc-sections
 
 LIBC	= libc/libc.a
