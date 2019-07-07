@@ -1,7 +1,6 @@
 [Bits 32]
 
 extern exc_handler
-extern irq_handler
 
 ; EXCEPTION HANDLER
 

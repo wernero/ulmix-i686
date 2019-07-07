@@ -1,6 +1,6 @@
 #include <heap.h>
 #include <debug.h>
-#include <mem.h>
+#include <mmap.h>
 #include <sync.h>
 
 

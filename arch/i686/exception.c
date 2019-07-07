@@ -49,8 +49,7 @@ void exc_handler(struct exc_context *context)
 
     heap_dump();
 
-    kprintf("\n === KERNEL PANIC === \n"
-            "   unhandled %s exception (#%d)\n"
+    panic(  "   unhandled %s exception (#%d)\n"
             "   eax=%p, ebx=%p, ecx=%p, edx=%p\n"
             "   esi=%p, edi=%p, ebp=%p, esp=%p\n"
             "   eip=%p\n\n"

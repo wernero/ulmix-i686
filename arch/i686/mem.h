@@ -1,5 +1,5 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef MEM_H
+#define MEM_H
 
 #include "multiboot.h"
 #include <types.h>
@@ -19,4 +19,4 @@ size_t get_free_page(void);
 size_t alloc_page(void *phys_addr);
 void release_page(size_t id);
 
-#endif // MEMORY_H
+#endif // MEM_H

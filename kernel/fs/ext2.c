@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <debug.h>
 #include <string.h>
-#include <mem.h>
+#include <mmap.h>
 
 #define IO_BLOCK_SIZE   512
 #define SB_SECT_OFFSET  2

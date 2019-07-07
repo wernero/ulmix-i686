@@ -1,5 +1,6 @@
-#include "memory.h"
-#include <mem.h>
+#include "mem.h"
+#include <memory.h>
+#include <heap.h>
 #include <types.h>
 
 /*

@@ -1,7 +1,7 @@
 #ifndef PAGING_H
 #define PAGING_H
 
-#include <mem.h>
+#include <mmap.h>
 #include <types.h>
 
 #define PAGEDIR_SIZE (4*1024)

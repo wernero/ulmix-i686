@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <types.h>
 #include <debug.h>
-#include <mem.h>
+#include <mmap.h>
 #include <asm.h>
 #include <sync.h>
 #include <devices.h>

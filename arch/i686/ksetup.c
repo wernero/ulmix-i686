@@ -1,7 +1,7 @@
 #include <string.h>
 #include <heap.h>
 
-#include "memory.h"
+#include "mem.h"
 #include "multiboot.h"
 #include "idt.h"
 

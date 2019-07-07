@@ -1,5 +1,5 @@
 #include <types.h>
-#include "memory.h"
+#include "mem.h"
 
 #define GB4 0xffffffff
 

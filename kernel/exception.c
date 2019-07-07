@@ -1,8 +1,9 @@
 #include <debug.h>
 #include <types.h>
 #include <exception.h>
+#include <memory.h>
 
-void page_fault(void *fault_addr, unsigned long err_code)
+static int page_fault(void *fault_addr, unsigned long err_code)
 {
     kprintf("\n === PAGE FAULT INFO === \n"
             "   addr      = %p\n"
@@ -16,9 +17,10 @@ void page_fault(void *fault_addr, unsigned long err_code)
             (err_code & BIT(2)) ? "user" : "kernel",
             (err_code & BIT(4)) ? "yes" : "no"
     );
+    return EXC_STATUS_FATAL;
 }
 
-void protection_fault(void *fault_addr, unsigned long err_code)
+static int protection_fault(void *fault_addr, unsigned long err_code)
 {
     kprintf("\n === PROTECTION FAULT INFO === \n"
             "   addr             = %p\n"
@@ -28,6 +30,7 @@ void protection_fault(void *fault_addr, unsigned long err_code)
             (err_code) ? "yes" : "no",
             err_code
     );
+    return EXC_STATUS_FATAL;
 }
 
 
@@ -38,11 +41,11 @@ int generic_exception(unsigned id)
 {
     if (id == EXC_PAGEFAULT)
     {
-        page_fault(fault_addr, fault_code);
+        return page_fault(fault_addr, fault_code);
     }
     else if (id == EXC_PROTECTION)
     {
-        protection_fault(fault_addr, fault_code);
+        return protection_fault(fault_addr, fault_code);
     }
 
     return EXC_STATUS_FATAL;

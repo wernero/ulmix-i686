@@ -1,21 +1,8 @@
-#ifndef MEM_H
-#define MEM_H
-
-#define PAGESIZE    4096
-#define HEAP_START  0xc0000000
-#define HEAP_END    0xffffffff
+#ifndef MMAP_H
+#define MMAP_H
 
 #include <heap.h>
-
-/*
- * updates the value stored in the Task State
- * Segment within the GDT that is assigned to
- * the stack pointer whenever a context switch
- * into kernel mode happens.
- *
- * (more info in i386/gdt.h)
- */
-void update_tss(unsigned long sp);
+#include <memory.h>
 
 /*
  * Memory Regions:
@@ -44,7 +31,6 @@ struct mm_tables_struct;
 struct mm_struct
 {
     struct mm_tables_struct *tables;
-    struct mmr_struct *kernel_regions;
     struct mmr_struct *regions;
 };
 
@@ -52,4 +38,4 @@ struct mm_struct *mk_mmap(const char *description);
 int mm_kregion(void *start, void *end);
 int mm_region(struct mm_struct *mmap, void *start, void *end, enum mmr_flags flags);
 
-#endif // MEM_H
+#endif // MMAP_H

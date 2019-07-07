@@ -1,9 +1,9 @@
-#include <mem.h>
+#include <memory.h>
 #include <debug.h>
 #include <string.h>
 #include <sysinfo.h>
 
-#include "memory.h"
+#include "mem.h"
 #include "paging.h"
 
 #define PTR_TABLE_SIZE  32      // 4 entries x 8 Bytes

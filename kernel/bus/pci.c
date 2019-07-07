@@ -1,7 +1,7 @@
 #include <pci.h>
 #include <errno.h>
 #include <debug.h>
-#include <mem.h>
+#include <mmap.h>
 
 #define DEVICES 128
 #define DRIVERS 128
