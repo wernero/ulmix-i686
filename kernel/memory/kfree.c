@@ -35,7 +35,10 @@ void kfree(void *ptr)
     if (heap_entry->available ||
         heap_entry->size == 0 ||
         heap_entry->start == NULL)
+    {
+        mutex_unlock(&_heap_mtx);
         return;
+    }
 
     // mark the entry as free
     heap_entry->available = 1;
