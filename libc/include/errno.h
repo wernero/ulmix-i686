@@ -139,5 +139,6 @@
 #define ENOTSUP 95
 
 #define EFSNOTSUP 134
+#define ECONFLICT 135
 
 #endif // ERRNO_H

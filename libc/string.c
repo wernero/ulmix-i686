@@ -315,7 +315,8 @@ static const char *err_messages[] = {
     "operation not possible due to rf-kill",
     "memory page has hardware error",
     "operation not supported",
-    "filesystem not supported"
+    "filesystem not supported",
+    "interference conflict"
 };
 
 const char *strerror(unsigned err)
