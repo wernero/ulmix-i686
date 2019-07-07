@@ -100,7 +100,7 @@ struct mm_struct *mk_mmap(const char *description)
     bzero(mm->tables->ptr_table, PTR_TABLE_SIZE);
     mm->tables->ptr_table[0] = (unsigned long)(mm->tables->page_dirs[0]) | PG_PRESENT;
 
-    mm->regions = NULL;
+    mm->user_regions = NULL;
     return mm;
 }
 
